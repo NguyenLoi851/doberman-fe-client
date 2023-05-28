@@ -8,6 +8,7 @@ import {
   useSignMessage,
 } from 'wagmi'
 import { useRouter } from 'next/router';
+import { shortenAddress } from './shortenAddress';
 
 export default function ConnectWallet() {
   const { address, connector, isConnected } = useAccount()
@@ -17,7 +18,7 @@ export default function ConnectWallet() {
   if (isConnected && connector) {
     return (
       <div>
-        <button>{address}</button>
+        {shortenAddress(address as any)}
       </div>
     )
   }

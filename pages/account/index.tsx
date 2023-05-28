@@ -7,6 +7,7 @@ import { setAccessTokenState, selectAccessTokenState } from "../../store/accessT
 import { contractAddr } from "@/commons/contractAddress";
 import UniqueIdentity from "../../abi/UniqueIdentity.json"
 import { useRouter } from "next/router";
+import Header from "@/components/header";
 
 export default function AccountPage() {
     const dispatch = useDispatch();
@@ -92,6 +93,7 @@ export default function AccountPage() {
 
     return (
         <div>
+            <Header />
             <div>Account</div>
             <div>UID and Wallet</div>
             {data2 != 0 ? (
