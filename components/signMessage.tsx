@@ -11,8 +11,8 @@ export const SignMessage = () => {
             <button disabled={isLoading} onClick={() => signMessage()}>
                 Sign message
             </button>
-            {isSuccess && <div>Signature: {data}</div>}
-            {isError && <div>Error signing message</div>}
+            {/* {isSuccess && <div>Signature: {data}</div>} */}
+            {/* {isError && <div>Error signing message</div>} */}
         </div>
     )
 }

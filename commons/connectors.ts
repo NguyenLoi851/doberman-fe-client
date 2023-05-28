@@ -12,7 +12,7 @@ import { WalletConnectConnector } from 'wagmi/connectors/walletConnect'
 // Two popular providers are Alchemy (alchemy.com) and Infura (infura.io)
 const { chains, publicClient, webSocketPublicClient } = configureChains(
   [mainnet, sepolia],
-  [alchemyProvider({ apiKey: 'yourAlchemyApiKey' }), publicProvider()],
+  [alchemyProvider({ apiKey: 'CWqhHk2pxO8SxEqYe7m_hQaQB9Bx-rFv' }), publicProvider()],
 )
 
 // Set up wagmi config
