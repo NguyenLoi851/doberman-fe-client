@@ -17,22 +17,24 @@ export default function Header() {
   const router = useRouter()
   return (
     <div>
-    <div style={{display: 'flex', flexDirection: 'row'}}>
-      <Image src={Logo} alt="Logo" width='30' height='30' onClick={() => router.push('/earn')} />
-      <div>
-        <button onClick={() => router.push('/earn')}>Deals</button>
+      <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
+        <Image src={Logo} alt="Logo" width='30' height='30' onClick={() => router.push('/earn')} />
+        <div style={{ display: 'flex', flexDirection: 'row' }}>
+          <div>
+            <button onClick={() => router.push('/earn')}>Deals</button>
+          </div>
+          <div>
+            <button onClick={() => router.push('/borrow')}>Borrow</button>
+          </div>
+          <div>
+            <button onClick={() => router.push('/dashboard')}>Dashboard</button>
+          </div>
+        </div>
+        <div style={{ float: 'right' }}>
+          <ConnectWallet />
+        </div>
       </div>
-      <div>
-        <button onClick={() => router.push('/borrow')}>Borrow</button>
-      </div>
-      <div>
-        <button onClick={() => router.push('/dashboard')}>Dashboard</button>
-      </div>
-      <div style={{float: 'right'}}>
-      <ConnectWallet />
-      </div>
-    </div>
-    <hr />
+      <hr />
     </div>
   )
 }

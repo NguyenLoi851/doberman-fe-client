@@ -5,22 +5,36 @@ import {
   useDisconnect,
   useEnsAvatar,
   useEnsName,
+  useNetwork,
   useSignMessage,
+  useSwitchNetwork,
 } from 'wagmi'
 import { useRouter } from 'next/router';
 import { shortenAddress } from './shortenAddress';
+import { constants } from '@/commons/constants';
 
 export default function ConnectWallet() {
   const { address, connector, isConnected } = useAccount()
   const { connect, connectors, error, isLoading, pendingConnector } =
     useConnect()
+  const { chain } = useNetwork()
+  const { switchNetwork } = useSwitchNetwork()
 
   if (isConnected && connector) {
-    return (
-      <div>
-        {shortenAddress(address as any)}
-      </div>
-    )
+
+    if (chain?.id == constants.SEPOLIA_CHAIN_ID) {
+      return (
+        <div>
+          {shortenAddress(address as any)}
+        </div>
+      )
+    }else{
+      return (
+        <div>
+          <button onClick={() => switchNetwork?.(11155111)}>Wrong network</button>
+        </div>
+      )
+    }
   }
 
   return (

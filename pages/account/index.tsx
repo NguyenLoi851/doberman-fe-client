@@ -8,6 +8,7 @@ import { contractAddr } from "@/commons/contractAddress";
 import UniqueIdentity from "../../abi/UniqueIdentity.json"
 import { useRouter } from "next/router";
 import Header from "@/components/header";
+import Footer from "@/components/footer";
 
 export default function AccountPage() {
     const dispatch = useDispatch();
@@ -94,34 +95,36 @@ export default function AccountPage() {
     return (
         <div>
             <Header />
-            <div>Account</div>
-            <div>UID and Wallet</div>
-            {data2 != 0 ? (
-                <div>You already own UID token</div>
-            ) :
-                isSuccess ? (
-                    <div>
-                        Successfully minted your UID token
+            <div style={{ height: 'calc(100vh - 64px - 30px)' }}>
+                <div>Account</div>
+                <div>UID and Wallet</div>
+                {data2 != 0 ? (
+                    <div>You already own UID token</div>
+                ) :
+                    isSuccess ? (
                         <div>
-                            <a href={`https://sepolia.etherscan.io/tx/${data?.hash}`}>Etherscan</a>
+                            Successfully minted your UID token
+                            <div>
+                                <a href={`https://sepolia.etherscan.io/tx/${data?.hash}`}>Etherscan</a>
+                            </div>
                         </div>
-                    </div>
-                ) : (
-                    kycStatus ? (
-                        kycVerifiedStatus ?
-                            (<div>
-                                <button onClick={write as any}>Mint UID token</button>
-                            </div>) : (
-                                <div>
-                                    Wait to be validate KYC info by admin
-                                </div>
-                            )
                     ) : (
-                        <button onClick={handleSetUpUID}>Begin UID setup</button>
+                        kycStatus ? (
+                            kycVerifiedStatus ?
+                                (<div>
+                                    <button onClick={write as any}>Mint UID token</button>
+                                </div>) : (
+                                    <div>
+                                        Wait to be validate KYC info by admin
+                                    </div>
+                                )
+                        ) : (
+                            <button onClick={handleSetUpUID}>Begin UID setup</button>
+                        )
                     )
-                )
-            }
-
+                }
+            </div>
+            <Footer />
         </div>
     )
 }

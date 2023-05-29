@@ -15,6 +15,7 @@ import UniqueIdentity from "@/abi/UniqueIdentity.json"
 import { constants } from '@/commons/constants';
 import { useEffect, useState } from 'react';
 import Header from '@/components/header';
+import Footer from '@/components/footer';
 
 export default function EarnPage() {
   const router = useRouter()
@@ -22,29 +23,37 @@ export default function EarnPage() {
   const [uidStatus, setUidStatus] = useState(false)
 
   const { address } = useAccount()
-  const {data} = useContractRead({
+  const { data } = useContractRead({
     address: contractAddr.sepolia.uniqueIdentity as any,
     abi: UniqueIdentity,
     functionName: 'balanceOf',
-    args: [address, constants.UID_ID]
+    args: [address || '0x0000000000000000000000000000000000000001', constants.UID_ID],
+    chainId: 11155111,
+    onError(error) {
+      console.log("line33", error)
+    }
   })
-  
+
   useEffect(() => {
     setUidStatus(data == 0 ? false : true)
-  
+
   }, [data])
-  
+
 
   return (
     <div>
       <Header />
-      {!uidStatus && (
-        <div>
-          <div>Set up your UID to start</div>
-          <div>Unique Identity (UID) is a non-transferrable NFT representing KYC-verification on-chain. A UID is required to participate in the Doberman lending protocol. No personal information is stored on-chain.</div>
-          <button onClick={()=>router.push('/account')}>Go to my account</button>
-        </div>
-      )}
+      <div style={{height: 'calc(100vh - 64px - 30px)'}}>
+
+        {!uidStatus && (
+          <div>
+            <div>Set up your UID to start</div>
+            <div>Unique Identity (UID) is a non-transferrable NFT representing KYC-verification on-chain. A UID is required to participate in the Doberman lending protocol. No personal information is stored on-chain.</div>
+            <button onClick={() => router.push('/account')}>Go to my account</button>
+          </div>
+        )}
+      </div>
+      <Footer />
     </div>
   )
 }

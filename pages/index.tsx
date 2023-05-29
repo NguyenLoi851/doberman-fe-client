@@ -10,34 +10,6 @@ import {
 import { useRouter } from 'next/router';
 
 export default function LandingPage() {
-  // const { address, connector, isConnected } = useAccount()
-  // const { connect, connectors, error, isLoading, pendingConnector } =
-  //   useConnect()
-
-  // if (isConnected && connector) {
-  //   return (
-  //     <div>
-  //       <div>{address}</div>
-  //       <div>Connected to {connector.name}</div>
-  //       <SignMessage />
-  //     </div>
-  //   )
-  // }
-
-  // return (
-  //   <div>
-  //     {connectors.map((connector) => (
-  //       <button
-  //         key={connector.id}
-  //         onClick={() => connect({ connector })}
-  //       >
-  //         {connector.name}
-  //       </button>
-  //     ))}
-
-  //     {error && <div>{error.message}</div>}
-  //   </div>
-  // )
   const router = useRouter();
 
   return (
