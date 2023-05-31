@@ -24,11 +24,11 @@ export default function EarnPage() {
 
   const { address } = useAccount()
   const { data } = useContractRead({
-    address: contractAddr.sepolia.uniqueIdentity as any,
+    address: contractAddr.mumbai.uniqueIdentity as any,
     abi: UniqueIdentity,
     functionName: 'balanceOf',
     args: [address || '0x0000000000000000000000000000000000000001', constants.UID_ID],
-    chainId: 11155111,
+    chainId: constants.MUMBAI_ID,
     onError(error) {
       console.log("line33", error)
     }

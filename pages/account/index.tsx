@@ -34,7 +34,7 @@ export default function AccountPage() {
     // })
 
     const { write, data } = useContractWrite({
-        address: contractAddr.sepolia.uniqueIdentity as any,
+        address: contractAddr.mumbai.uniqueIdentity as any,
         abi: UniqueIdentity,
         functionName: 'mint',
         args: [constants.UID_ID, constants.EXPIRES_AT, mintSignature],
@@ -48,7 +48,7 @@ export default function AccountPage() {
     })
 
     const { data: data2 } = useContractRead({
-        address: contractAddr.sepolia.uniqueIdentity as any,
+        address: contractAddr.mumbai.uniqueIdentity as any,
         abi: UniqueIdentity,
         functionName: 'balanceOf',
         args: [address, constants.UID_ID]
@@ -95,35 +95,40 @@ export default function AccountPage() {
     return (
         <div>
             <Header />
-            <div style={{ height: 'calc(100vh - 64px - 30px)' }}>
-                <div>Account</div>
-                <div>UID and Wallet</div>
-                {data2 != 0 ? (
-                    <div>You already own UID token</div>
-                ) :
-                    isSuccess ? (
-                        <div>
-                            Successfully minted your UID token
+            {chain?.id != constants.MUMBAI_ID ? (
+                <div style={{ height: 'calc(100vh - 64px - 30px)' }}>Wrong network</div>
+            ) : (
+                <div style={{ height: 'calc(100vh - 64px - 30px)' }}>
+                    <div>Account</div>
+                    <div>UID and Wallet</div>
+                    {data2 != 0 ? (
+                        <div>You already own UID token</div>
+                    ) :
+                        isSuccess ? (
                             <div>
-                                <a href={`https://sepolia.etherscan.io/tx/${data?.hash}`}>Etherscan</a>
+                                Successfully minted your UID token
+                                <div>
+                                    <a href={`https://sepolia.etherscan.io/tx/${data?.hash}`}>Etherscan</a>
+                                </div>
                             </div>
-                        </div>
-                    ) : (
-                        kycStatus ? (
-                            kycVerifiedStatus ?
-                                (<div>
-                                    <button onClick={write as any}>Mint UID token</button>
-                                </div>) : (
-                                    <div>
-                                        Wait to be validate KYC info by admin
-                                    </div>
-                                )
                         ) : (
-                            <button onClick={handleSetUpUID}>Begin UID setup</button>
+                            kycStatus ? (
+                                kycVerifiedStatus ?
+                                    (<div>
+                                        <button onClick={write as any}>Mint UID token</button>
+                                    </div>) : (
+                                        <div>
+                                            Wait to be validate KYC info by admin
+                                        </div>
+                                    )
+                            ) : (
+                                <button onClick={handleSetUpUID}>Begin UID setup</button>
+                            )
                         )
-                    )
-                }
-            </div>
+                    }
+                </div>
+            )}
+
             <Footer />
         </div>
     )

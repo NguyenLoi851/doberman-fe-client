@@ -22,7 +22,7 @@ export default function ConnectWallet() {
 
   if (isConnected && connector) {
 
-    if (chain?.id == constants.SEPOLIA_CHAIN_ID) {
+    if (chain?.id == constants.MUMBAI_ID) {
       return (
         <div>
           {shortenAddress(address as any)}
@@ -31,7 +31,7 @@ export default function ConnectWallet() {
     }else{
       return (
         <div>
-          <button onClick={() => switchNetwork?.(11155111)}>Wrong network</button>
+          <button onClick={() => switchNetwork?.(constants.MUMBAI_ID)}>Wrong network</button>
         </div>
       )
     }
