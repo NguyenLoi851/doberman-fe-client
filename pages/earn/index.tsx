@@ -13,11 +13,16 @@ import ConnectWallet from '@/components/connectWallet';
 import { contractAddr } from '@/commons/contractAddress';
 import UniqueIdentity from "@/abi/UniqueIdentity.json"
 import { constants } from '@/commons/constants';
-import { useEffect, useState } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import Header from '@/components/header';
 import Footer from '@/components/footer';
+import PageLayout from '@/components/layouts/PageLayout';
 
-export default function EarnPage() {
+interface Props {
+  children: ReactNode;
+}
+
+export default function EarnPage(){
   const router = useRouter()
 
   const [uidStatus, setUidStatus] = useState(false)
@@ -42,7 +47,7 @@ export default function EarnPage() {
 
   return (
     <div>
-      <Header />
+      {/* <Header /> */}
       <div style={{height: 'calc(100vh - 64px - 30px)'}}>
 
         {!uidStatus && (
@@ -53,7 +58,9 @@ export default function EarnPage() {
           </div>
         )}
       </div>
-      <Footer />
+      {/* <Footer /> */}
     </div>
   )
 }
+
+EarnPage.Layout = (props: Props) => PageLayout({children: props.children});

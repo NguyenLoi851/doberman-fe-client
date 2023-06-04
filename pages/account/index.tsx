@@ -1,6 +1,6 @@
 import { constants } from "@/commons/constants"
 import axios from "axios";
-import { useEffect, useState } from "react";
+import { useEffect, useState, ReactNode } from "react";
 import { useAccount, useContractRead, useContractWrite, useNetwork, usePrepareContractWrite, useSignMessage, useWaitForTransaction } from "wagmi";
 import { useDispatch, useSelector } from "react-redux";
 import { setAccessTokenState, selectAccessTokenState } from "../../store/accessTokenSlice"
@@ -9,6 +9,13 @@ import UniqueIdentity from "../../abi/UniqueIdentity.json"
 import { useRouter } from "next/router";
 import Header from "@/components/header";
 import Footer from "@/components/footer";
+import { toast } from "react-toastify";
+import PageLayout from "@/components/layouts/PageLayout";
+import { signMessage } from '@wagmi/core'
+
+interface Props {
+    children: ReactNode;
+}
 
 export default function AccountPage() {
     const dispatch = useDispatch();
@@ -16,21 +23,18 @@ export default function AccountPage() {
 
     const { chain } = useNetwork()
     const { address } = useAccount()
-    const timestamp = Math.round(Date.now() / 1000)
+    // const timestamp = Math.round(Date.now() / 1000)
     const [kycStatus, setKycStatus] = useState(false)
     const [kycVerifiedStatus, setKycVerifiedStatus] = useState(false)
     const [mintSignature, setMintSignature] = useState('0x')
+    const [chainId, setChainId] = useState(0)
 
-    const { signMessage, signMessageAsync } = useSignMessage({
-        message: process.env.NEXT_PUBLIC_APP_ID + '#' + timestamp + '#' + chain?.id,
-    })
+    useEffect(() => {
+        setChainId(chain?.id || 0)
+    }, [chain])
 
-    // const {config} = usePrepareContractWrite({
-    //     address: contractAddr.sepolia.uniqueIdentity as any,
-    //     abi: UniqueIdentity,
-    //     functionName: 'mint',
-    //     args: [constants.UID_ID, constants.EXPIRES_AT, mintSignature],
-
+    // const { signMessage, signMessageAsync } = useSignMessage({
+    //     message: process.env.NEXT_PUBLIC_APP_ID + '#' + timestamp + '#' + chain?.id,
     // })
 
     const { write, data } = useContractWrite({
@@ -39,7 +43,13 @@ export default function AccountPage() {
         functionName: 'mint',
         args: [constants.UID_ID, constants.EXPIRES_AT, mintSignature],
         value: constants.MINT_COST as any,
-        chainId: chain?.id
+        chainId: chain?.id,
+        onSuccess() {
+            toast.success("Mint UID token successfully")
+        },
+        onError() {
+            toast.error("Mint UID token fail")
+        }
     })
 
     const { isSuccess } = useWaitForTransaction({
@@ -59,11 +69,14 @@ export default function AccountPage() {
 
         // if(!token) {
         // setTimestemp(Math.round(Date.now()/1000))
-        const signature = await signMessageAsync()
+        const timestamp = Math.round(Date.now() / 1000)
+        const signature = await signMessage({
+            message: process.env.NEXT_PUBLIC_APP_ID + '#' + timestamp + '#' + chainId,
+        })
         console.log('signature', signature);
 
         const res = await axios.post(process.env.NEXT_PUBLIC_API_BASE_URL + '/auth/signin', {
-            address,
+            address: (address as string).toLowerCase(),
             sign: signature,
             timestamp,
             chainId: chain?.id
@@ -94,9 +107,8 @@ export default function AccountPage() {
 
     return (
         <div>
-            <Header />
-            {chain?.id != constants.MUMBAI_ID ? (
-                <div style={{ height: 'calc(100vh - 64px - 30px)' }}>Wrong network</div>
+            {chainId != constants.MUMBAI_ID ? (
+                <div style={{ height: 'calc(100vh - 64px - 30px)' }}>Wrong network or not connect wallet</div>
             ) : (
                 <div style={{ height: 'calc(100vh - 64px - 30px)' }}>
                     <div>Account</div>
@@ -128,8 +140,8 @@ export default function AccountPage() {
                     }
                 </div>
             )}
-
-            <Footer />
         </div>
     )
 }
+
+AccountPage.Layout = (props: Props) => PageLayout({ children: props.children });

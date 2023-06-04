@@ -12,6 +12,7 @@ import {
 import { useRouter } from 'next/router';
 import { shortenAddress } from './shortenAddress';
 import { constants } from '@/commons/constants';
+import { useEffect, useState } from 'react';
 
 export default function ConnectWallet() {
   const { address, connector, isConnected } = useAccount()
@@ -19,34 +20,36 @@ export default function ConnectWallet() {
     useConnect()
   const { chain } = useNetwork()
   const { switchNetwork } = useSwitchNetwork()
+  const [chainId, setChainId] = useState(0)
 
-  if (isConnected && connector) {
+  useEffect(() => {
+    setChainId(chain?.id || 0)
 
-    if (chain?.id == constants.MUMBAI_ID) {
-      return (
-        <div>
-          {shortenAddress(address as any)}
-        </div>
-      )
-    }else{
-      return (
-        <div>
-          <button onClick={() => switchNetwork?.(constants.MUMBAI_ID)}>Wrong network</button>
-        </div>
-      )
-    }
-  }
+  }, [chain])
 
   return (
     <div>
-      {connectors.map((connector) => (
-        <button
-          key={connector.id}
-          onClick={() => connect({ connector })}
-        >
-          Connect Metamask Wallet
-        </button>
-      ))}
+      {isConnected && connector ? (
+        chainId == constants.MUMBAI_ID ? (
+          <div>
+            {shortenAddress(address as any)}
+          </div>
+        ) : (
+          <div>
+            <button onClick={() => switchNetwork?.(constants.MUMBAI_ID)}>Wrong network</button>
+          </div>
+        )
+      ) : (
+        connectors.map((connector) => (
+          <button
+            key={connector.id}
+            onClick={() => connect({ connector })}
+          >
+            Connect Metamask Wallet
+          </button>
+        ))
+      )
+      }
 
       {error && <div>{error.message}</div>}
     </div>
