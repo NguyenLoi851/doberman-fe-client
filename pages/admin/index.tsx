@@ -8,6 +8,7 @@ import { useRouter } from "next/router";
 import { ReactNode, useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { useAccount, useConnect, useNetwork, useSwitchNetwork } from "wagmi";
+import 'react-toastify/dist/ReactToastify.css';
 
 interface Props {
     children: ReactNode;
@@ -49,7 +50,7 @@ export default function AdminSignInPage() {
                 chainId: chain?.id
             })
 
-            // toast.success("Login successfully");
+            toast.success("Login successfully");
             localStorage.setItem(constants.ACCESS_TOKEN_ADMIN, res.data.accessToken)
             // dispatch(setAccessTokenState(res.data.accessToken))
 

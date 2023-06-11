@@ -1,12 +1,12 @@
 import Footer from "@/components/footer";
 import Header from "@/components/header";
-import { useRouter } from "next/router";
+import Router, { useRouter } from "next/router";
 import { ApolloClient, InMemoryCache, gql } from '@apollo/client'
 import { useAccount, useContractWrite, useNetwork } from "wagmi";
 import { contractAddr } from "@/commons/contractAddress";
 import DobermanFactory from "../../abi/DobermanFactory.json";
 import { useState, ReactNode, useEffect } from "react";
-import { Button, Modal } from 'antd';
+import { Button, List, Modal } from 'antd';
 import { toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 import PageLayout from "@/components/layouts/PageLayout";
@@ -22,6 +22,7 @@ export default function BorrowPage() {
     const { chain } = useNetwork()
     const [borrowerCreated, setBorrowerCreated] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [userLoans, setUserLoans] = useState([])
 
     const showModal = async () => {
         setIsModalOpen(true);
@@ -62,14 +63,18 @@ export default function BorrowPage() {
     })
 
     const getLoansByOwnerAddress = async () => {
-        await axios.get(process.env.NEXT_PUBLIC_API_BASE_URL + '/loans/')
+        const res = await axios.get(process.env.NEXT_PUBLIC_API_BASE_URL + `/loans/getLoanByFilter`, {
+            params: {
+                address: address
+            }
+        })
+        setUserLoans(res.data.loans)
     }
 
     useEffect(() => {
-      
-    
-    }, [])
-    
+        getLoansByOwnerAddress();
+    }, [address])
+
 
     const handleApplyLoan = async () => {
         const res = await client.query({
@@ -94,6 +99,16 @@ export default function BorrowPage() {
         }
     }
 
+    const handleDetailLoanInfo = (item: any, index: any) => {
+        Router.push({
+            pathname: `/borrow/loans/${item.id}`,
+            query: {
+                ...item,
+                index
+            }
+        })
+    }
+
     return (
         <div>
             <div style={{ height: 'calc(100vh - 64px - 30px)' }}>
@@ -113,6 +128,23 @@ export default function BorrowPage() {
                         </ul>
                     </div>
                 </Modal>
+                <List
+                    itemLayout="horizontal"
+                    dataSource={userLoans}
+                    renderItem={(item, index) => (
+                        <List.Item
+                            style={{ cursor: 'pointer', margin: '24px' }}
+                            actions={[<button onClick={() => handleDetailLoanInfo(item, index+1)}>View Detail</button>]}
+                        >
+                            <List.Item.Meta
+                                avatar={index + 1 + '.'}
+                                title={(item as any).projectName}
+                                description={(item as any).projectIntro}
+                            />
+                            <div>{(item as any).deployed ? 'Deployed' : 'Undeployed'}</div>
+                        </List.Item>
+                    )}
+                />
             </div>
         </div>
     )

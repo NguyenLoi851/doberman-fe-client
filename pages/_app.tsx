@@ -7,6 +7,7 @@ import Header from '@/components/header';
 import Footer from '@/components/footer';
 import DefaultLayout from '@/components/layouts/DefaultLayout';
 import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 type ComponentWithLayout = AppProps & {
   Component: AppProps['Component'] & {

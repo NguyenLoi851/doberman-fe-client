@@ -39,13 +39,14 @@ const items: MenuItem[] = [
 
     getItem('User', 'sub1', <UserOutlined />, [
         getItem('Register', '1'),
+        getItem('Accepted KYC', '4'),
         // getItem('User', '2'),
         // getItem('Bill', '4'),
         // getItem('Alex', '5'),
     ]),
     getItem('Loan', 'sub2', <TeamOutlined />, [
         getItem('Applied', '2'), 
-        getItem('Deployed', '3')
+        getItem('Deployed', '3'),
     ]),
     // getItem('Option 1', '1', <PieChartOutlined />),
     // getItem('Option 2', '2', <DesktopOutlined />),
@@ -63,6 +64,7 @@ const AdminLayout: FC<Props> = ({ children }) => {
         if(key == '1') router.push('/admin/users/register')
         if(key == '2') router.push('/admin/loans/applied')
         if(key == '3') router.push('/admin/loans/deployed')
+        if(key == '4') router.push('/admin/users/accepted')
     }
     return (
         <div>

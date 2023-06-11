@@ -17,7 +17,7 @@ interface Props {
     children: ReactNode;
 }
 
-export default function LoanDetailPage() {
+export default function AppliedLoanDetailPage() {
     const router = useRouter()
     const props = router.query
     const [borrowerProxy, setBorrowerProxy] = useState(zeroAddress)
@@ -151,4 +151,4 @@ export default function LoanDetailPage() {
     )
 }
 
-LoanDetailPage.Layout = (props: Props) => AdminLayout({ children: props.children });
+AppliedLoanDetailPage.Layout = (props: Props) => AdminLayout({ children: props.children });

@@ -10,25 +10,25 @@ interface Props {
     children: ReactNode;
 }
 
-export default function AdminLoansAppliedPage() {
-    const [appliedLoans, setAppliedLoans] = useState([])
+export default function AdminLoansDeployedPage() {
+    const [deployedLoans, setDeployedLoans] = useState([])
     const router = useRouter();
 
-    const getAppliedLoans = async () => {
+    const getDeployedLoans = async () => {
         const accessToken = localStorage.getItem(constants.ACCESS_TOKEN_ADMIN)
 
-        const res = await axios.get(process.env.NEXT_PUBLIC_API_BASE_URL + '/loans/undeployed')
-        setAppliedLoans(res.data.loans)
+        const res = await axios.get(process.env.NEXT_PUBLIC_API_BASE_URL + '/loans/deployed')
+        setDeployedLoans(res.data.loans)
     }
 
     useEffect(() => {
-        getAppliedLoans()
+        getDeployedLoans()
 
     }, [])
 
     const handleDetailLoanInfo = (item: any) => {
         Router.push({
-            pathname: `/admin/loans/applied/${item.id}`,
+            pathname: `/admin/loans/deployed/${item.id}`,
             query: {
                 ...item
             }
@@ -43,7 +43,7 @@ export default function AdminLoansAppliedPage() {
             
             <List
                 itemLayout="horizontal"
-                dataSource={appliedLoans}
+                dataSource={deployedLoans}
                 renderItem={(item, index) => (
                     <List.Item
                     actions={[<button onClick={() => handleDetailLoanInfo(item)}>View Detail</button>]}
@@ -60,4 +60,4 @@ export default function AdminLoansAppliedPage() {
     )
 }
 
-AdminLoansAppliedPage.Layout = (props: Props) => AdminLayout({ children: props.children });
+AdminLoansDeployedPage.Layout = (props: Props) => AdminLayout({ children: props.children });

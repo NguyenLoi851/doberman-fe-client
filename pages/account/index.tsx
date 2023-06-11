@@ -12,6 +12,7 @@ import Footer from "@/components/footer";
 import { toast } from "react-toastify";
 import PageLayout from "@/components/layouts/PageLayout";
 import { signMessage } from '@wagmi/core'
+import jwtDecode from "jwt-decode";
 
 interface Props {
     children: ReactNode;
@@ -29,9 +30,7 @@ export default function AccountPage() {
     const [mintSignature, setMintSignature] = useState('0x')
     const [chainId, setChainId] = useState(0)
 
-    useEffect(() => {
-        setChainId(chain?.id || 0)
-    }, [chain])
+
 
     // const { signMessage, signMessageAsync } = useSignMessage({
     //     message: process.env.NEXT_PUBLIC_APP_ID + '#' + timestamp + '#' + chain?.id,
@@ -43,7 +42,7 @@ export default function AccountPage() {
         functionName: 'mint',
         args: [constants.UID_ID, constants.EXPIRES_AT, mintSignature],
         value: constants.MINT_COST as any,
-        chainId: chain?.id,
+        chainId: chainId,
         onSuccess() {
             toast.success("Mint UID token successfully")
         },
@@ -65,26 +64,32 @@ export default function AccountPage() {
     })
 
     const handleSetUpUID = async () => {
-        // const token = localStorage.getItem(constants.ACCESS_TOKEN);
+        let token = localStorage.getItem(constants.ACCESS_TOKEN);
+        try {
+            const { exp, address: jwtAddress } = jwtDecode(token as any) as any
+            if (!token || exp < Date.now() / 1000 || (address as any).toLowerCase() != jwtAddress.toLowerCase()) {
+                // sign again
+                const timestamp = Math.round(Date.now() / 1000)
+                const signature = await signMessage({
+                    message: process.env.NEXT_PUBLIC_APP_ID + '#' + timestamp + '#' + chainId,
+                })
+                console.log('signature', signature);
 
-        // if(!token) {
-        // setTimestemp(Math.round(Date.now()/1000))
-        const timestamp = Math.round(Date.now() / 1000)
-        const signature = await signMessage({
-            message: process.env.NEXT_PUBLIC_APP_ID + '#' + timestamp + '#' + chainId,
-        })
-        console.log('signature', signature);
+                const res = await axios.post(process.env.NEXT_PUBLIC_API_BASE_URL + '/auth/signin', {
+                    address: (address as string).toLowerCase(),
+                    sign: signature,
+                    timestamp,
+                    chainId: chainId
+                })
 
-        const res = await axios.post(process.env.NEXT_PUBLIC_API_BASE_URL + '/auth/signin', {
-            address: (address as string).toLowerCase(),
-            sign: signature,
-            timestamp,
-            chainId: chain?.id
-        })
+                localStorage.setItem(constants.ACCESS_TOKEN, res.data.accessToken)
+                // dispatch(setAccessTokenState(res.data.accessToken))
+                token = localStorage.getItem(constants.ACCESS_TOKEN);
+            }
+        } catch (error) {
+            console.log(error)
+        }
 
-        localStorage.setItem(constants.ACCESS_TOKEN, res.data.accessToken)
-        // }
-        dispatch(setAccessTokenState(res.data.accessToken))
 
         // check whether KYCed or not
         const resKYCed = true;
@@ -93,17 +98,31 @@ export default function AccountPage() {
         // check whether approved by admin or not (get mint signature)
         try {
             const res2 = await axios.get(process.env.NEXT_PUBLIC_API_BASE_URL + '/kyc/info', {
-                headers: { Authorization: `Bearer ${res.data.accessToken}` }
+                headers: { Authorization: `Bearer ${token}` }
             })
             if (res2.data != '') {
                 setKycVerifiedStatus(true);
                 setMintSignature(res2.data.mintSignature)
+            } else {
+                await axios.post(process.env.NEXT_PUBLIC_API_BASE_URL + '/kyc/requestMintUIDSignature', {
+                    userAddr: (address as string).toLowerCase()
+                }, {
+                    headers: { Authorization: `Bearer ${token}` }
+                }
+                )
             }
         } catch (error) {
             console.log(error)
         }
 
     }
+
+    useEffect(() => {
+        setChainId(chain?.id || 0)
+        if(isSuccess == true){
+            router.reload()
+        }
+    }, [chain, isSuccess])
 
     return (
         <div>
@@ -130,7 +149,7 @@ export default function AccountPage() {
                                         <button onClick={write as any}>Mint UID token</button>
                                     </div>) : (
                                         <div>
-                                            Wait to be validate KYC info by admin
+                                            Wait to be validated KYC info by admin
                                         </div>
                                     )
                             ) : (

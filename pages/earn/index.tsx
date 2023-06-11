@@ -17,6 +17,7 @@ import { ReactNode, useEffect, useState } from 'react';
 import Header from '@/components/header';
 import Footer from '@/components/footer';
 import PageLayout from '@/components/layouts/PageLayout';
+import axios from 'axios';
 
 interface Props {
   children: ReactNode;
@@ -24,6 +25,7 @@ interface Props {
 
 export default function EarnPage(){
   const router = useRouter()
+  const [deployedLoans, setDeployedLoans] = useState([])
 
   const [uidStatus, setUidStatus] = useState(false)
 
@@ -35,19 +37,23 @@ export default function EarnPage(){
     args: [address || '0x0000000000000000000000000000000000000001', constants.UID_ID],
     chainId: constants.MUMBAI_ID,
     onError(error) {
-      console.log("line33", error)
+      console.log("line38", error)
     }
   })
 
+  const getDeployedLoans = async() => {
+    const res = await axios.get(process.env.NEXT_PUBLIC_API_BASE_URL + '/loans/deployed')
+    setDeployedLoans(res.data.loans)
+  }
+
   useEffect(() => {
     setUidStatus(data == 0 ? false : true)
-
+    getDeployedLoans()
   }, [data])
 
 
   return (
     <div>
-      {/* <Header /> */}
       <div style={{height: 'calc(100vh - 64px - 30px)'}}>
 
         {!uidStatus && (
@@ -57,8 +63,9 @@ export default function EarnPage(){
             <button onClick={() => router.push('/account')}>Go to my account</button>
           </div>
         )}
+
+        
       </div>
-      {/* <Footer /> */}
     </div>
   )
 }
