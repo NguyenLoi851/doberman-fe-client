@@ -13,7 +13,8 @@ import { polygonMumbai } from 'viem/chains'
 // Two popular providers are Alchemy (alchemy.com) and Infura (infura.io)
 const { chains, publicClient, webSocketPublicClient } = configureChains(
   [mainnet, sepolia, polygonMumbai],
-  [alchemyProvider({ apiKey: 'CWqhHk2pxO8SxEqYe7m_hQaQB9Bx-rFv' }), publicProvider(), alchemyProvider({apiKey: '74V0171KCA0RskRmn-PzGyrENBMVWPJW'})],
+  // [alchemyProvider({ apiKey: 'CWqhHk2pxO8SxEqYe7m_hQaQB9Bx-rFv' }), publicProvider(), alchemyProvider({apiKey: '74V0171KCA0RskRmn-PzGyrENBMVWPJW'})],
+  [alchemyProvider({ apiKey: '74V0171KCA0RskRmn-PzGyrENBMVWPJW' }), publicProvider(), alchemyProvider({ apiKey: '74V0171KCA0RskRmn-PzGyrENBMVWPJW' })],
 )
 
 // Set up wagmi config

@@ -92,6 +92,7 @@ export default function ApplyNewLoan() {
             router.push('/borrow')
         } catch (error) {
             console.log(error);
+            toast.error("Fail to apply new loan.")
         }
 
     }
