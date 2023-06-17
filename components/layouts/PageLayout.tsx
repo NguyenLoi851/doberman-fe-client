@@ -8,7 +8,7 @@ interface Props {
 
 const PageLayout: FC<Props> = ({ children }) => {
     return (
-        <div>
+        <div className="bg-amber-100">
             <Header />
             <div>{children}</div>
             <Footer />

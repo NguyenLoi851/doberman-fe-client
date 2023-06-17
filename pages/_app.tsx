@@ -9,6 +9,7 @@ import DefaultLayout from '@/components/layouts/DefaultLayout';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import '../globals.css'
+import '../components/css/style.css'
 
 type ComponentWithLayout = AppProps & {
   Component: AppProps['Component'] & {

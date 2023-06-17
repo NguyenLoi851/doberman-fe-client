@@ -19,7 +19,7 @@ import Footer from '@/components/footer';
 import PageLayout from '@/components/layouts/PageLayout';
 import axios from 'axios';
 import { ApolloClient, gql, InMemoryCache } from '@apollo/client';
-import { List } from 'antd';
+import { Col, List, Row } from 'antd';
 
 interface Props {
   children: ReactNode;
@@ -140,31 +140,39 @@ export default function EarnPage() {
     <div>
       <div style={{ height: 'calc(100vh - 64px - 30px)' }}>
 
-        {!uidStatus && (
-          <div>
-            <div>Set up your UID to start</div>
-            <div>Unique Identity (UID) is a non-transferrable NFT representing KYC-verification on-chain. A UID is required to participate in the Doberman lending protocol. No personal information is stored on-chain.</div>
-            <button onClick={() => router.push('/account')}>Go to my account</button>
-          </div>
-        )}
+        <Row>
+          <Col span={5}>
+          </Col>
+          <Col span={14}>
+            {!uidStatus && (
+              <div>
+                <div>Set up your UID to start</div>
+                <div>Unique Identity (UID) is a non-transferrable NFT representing KYC-verification on-chain. A UID is required to participate in the Doberman lending protocol. No personal information is stored on-chain.</div>
+                <button onClick={() => router.push('/account')}>Go to my account</button>
+              </div>
+            )}
 
-        <div>Open deals</div>
-        <List
-          itemLayout="horizontal"
-          dataSource={openLoans}
-          renderItem={(item, index) => (
-            <List.Item
-              actions={[<button onClick={() => handleDetailLoanInfo(item)}>View Detail</button>]}
-              style={{ cursor: 'pointer', margin: '24px' }}>
-              <List.Item.Meta
-                avatar={index + 1 + '.'}
-                title={(item as any).companyName}
-                description={(item as any).projectName}
-              />
-            </List.Item>
-          )}
-        />
-        <div>Close deals</div>
+            <div>Open deals</div>
+            <List
+              itemLayout="horizontal"
+              dataSource={openLoans}
+              renderItem={(item, index) => (
+                <List.Item
+                  actions={[<button onClick={() => handleDetailLoanInfo(item)}>View Detail</button>]}
+                  style={{ cursor: 'pointer', margin: '24px' }}>
+                  <List.Item.Meta
+                    avatar={index + 1 + '.'}
+                    title={(item as any).companyName}
+                    description={(item as any).projectName}
+                  />
+                </List.Item>
+              )}
+            />
+            <div>Close deals</div>
+          </Col>
+          <Col span={5}>
+          </Col>
+        </Row>
 
       </div>
     </div>
