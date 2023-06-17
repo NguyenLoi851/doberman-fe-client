@@ -10,7 +10,7 @@ const DefaultLayout: FC<Props> = ({ children }) => {
 
     return (
         <div>
-            <button onClick={() => router.push('/earn')}>Open App</button>
+            <button className="font-bold" onClick={() => router.push('/earn')}>Open App</button>
         </div>
     )
 }

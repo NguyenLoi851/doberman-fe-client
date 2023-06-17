@@ -8,6 +8,7 @@ import Footer from '@/components/footer';
 import DefaultLayout from '@/components/layouts/DefaultLayout';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import '../globals.css'
 
 type ComponentWithLayout = AppProps & {
   Component: AppProps['Component'] & {
@@ -23,7 +24,7 @@ export default function App({ Component, ...rest }: ComponentWithLayout) {
   return (
     <Provider store={store}>
       <WagmiConfig config={config}>
-        <ToastContainer/>
+        <ToastContainer />
         <SingleLayout>
           <Component {...pageProps} />
         </SingleLayout>
