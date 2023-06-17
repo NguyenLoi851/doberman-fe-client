@@ -20,6 +20,7 @@ import PageLayout from '@/components/layouts/PageLayout';
 import axios from 'axios';
 import { ApolloClient, gql, InMemoryCache } from '@apollo/client';
 import { Col, List, Row } from 'antd';
+import Link from 'next/link';
 
 interface Props {
   children: ReactNode;
@@ -145,21 +146,26 @@ export default function EarnPage() {
           </Col>
           <Col span={14}>
             {!uidStatus && (
-              <div>
-                <div>Set up your UID to start</div>
-                <div>Unique Identity (UID) is a non-transferrable NFT representing KYC-verification on-chain. A UID is required to participate in the Doberman lending protocol. No personal information is stored on-chain.</div>
-                <button onClick={() => router.push('/account')}>Go to my account</button>
+              <div style={{ display: 'flex', flexDirection: 'row', margin: '20px' }} className='rounded-lg text-white bg-sky-700'>
+                <div style={{ margin: '10px' }}>
+                  <div style={{ marginBottom: '15px' }}>Set up your UID to start</div>
+                  <div style={{ display: 'flex', textAlign: 'justify', width: '80vh' }}>Unique Identity (UID) is a non-transferrable NFT representing KYC-verification on-chain. A UID is required to participate in the Doberman lending protocol. No personal information is stored on-chain.</div>
+                </div>
+                <Link href='/account' style={{ padding: '1px', margin: '25px' }} className="rounded-md btn-sm text-black bg-sky-50 hover:bg-gray-200 hover:text-black ml-3">
+                  Go to my account
+                </Link>
               </div>
             )}
 
-            <div>Open deals</div>
+            <div className='font-bold' style={{ fontSize: '20px' }}>Open deals</div>
             <List
               itemLayout="horizontal"
               dataSource={openLoans}
               renderItem={(item, index) => (
                 <List.Item
-                  actions={[<button onClick={() => handleDetailLoanInfo(item)}>View Detail</button>]}
-                  style={{ cursor: 'pointer', margin: '24px' }}>
+                  actions={[<div className='btn-sm bg-slate-300 text-black rounded-md hover:underline hover:underline-offset-4 hover:font-bold hover:bg-slate-400' onClick={() => handleDetailLoanInfo(item)}>View Detail</div>]}
+                  style={{ cursor: 'pointer', margin: '24px' }}
+                  className='bg-white rounded-lg '>
                   <List.Item.Meta
                     avatar={index + 1 + '.'}
                     title={(item as any).companyName}
@@ -168,7 +174,7 @@ export default function EarnPage() {
                 </List.Item>
               )}
             />
-            <div>Close deals</div>
+            <div className='font-bold' style={{ fontSize: '20px' }}> Close deals</div>
           </Col>
           <Col span={5}>
           </Col>

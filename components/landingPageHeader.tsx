@@ -36,7 +36,7 @@ export default function LandingPageHeader() {
                                 <Link href="/earn" className="btn-sm text-white bg-purple-600 hover:bg-purple-700 ml-3">
                                     Open App
                                 </Link>
-                            </li>
+                            </li>underline hover:underline-offset-3
                         </ul>
                     </nav>
 
