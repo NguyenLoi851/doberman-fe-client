@@ -149,7 +149,7 @@ export default function EarnPage() {
               <div style={{ display: 'flex', flexDirection: 'row', margin: '20px' }} className='rounded-lg text-white bg-sky-700'>
                 <div style={{ margin: '10px' }}>
                   <div style={{ marginBottom: '15px' }}>Set up your UID to start</div>
-                  <div style={{ display: 'flex', textAlign: 'justify', width: '80vh' }}>Unique Identity (UID) is a non-transferrable NFT representing KYC-verification on-chain. A UID is required to participate in the Doberman lending protocol. No personal information is stored on-chain.</div>
+                  <div style={{ display: 'flex', textAlign: 'justify' }}>Unique Identity (UID) is a non-transferrable NFT representing KYC-verification on-chain. A UID is required to participate in the Doberman lending protocol. No personal information is stored on-chain.</div>
                 </div>
                 <Link href='/account' style={{ padding: '1px', margin: '25px' }} className="rounded-md btn-sm text-black bg-sky-50 hover:bg-gray-200 hover:text-black ml-3">
                   Go to my account
@@ -163,7 +163,7 @@ export default function EarnPage() {
               dataSource={openLoans}
               renderItem={(item, index) => (
                 <List.Item
-                  actions={[<div className='btn-sm bg-slate-300 text-black rounded-md hover:underline hover:underline-offset-4 hover:font-bold hover:bg-slate-400' onClick={() => handleDetailLoanInfo(item)}>View Detail</div>]}
+                  actions={[<div className='btn-sm bg-slate-300 text-black rounded-md hover:underline hover:underline-offset-4 hover:font-bold' onClick={() => handleDetailLoanInfo(item)}>View Detail</div>]}
                   style={{ cursor: 'pointer', margin: '24px' }}
                   className='bg-white rounded-lg '>
                   <List.Item.Meta

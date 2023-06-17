@@ -11,8 +11,9 @@ import Header from "@/components/header";
 import Footer from "@/components/footer";
 import { toast } from "react-toastify";
 import PageLayout from "@/components/layouts/PageLayout";
-import { signMessage } from '@wagmi/core'
+import { readContract, signMessage } from '@wagmi/core'
 import jwtDecode from "jwt-decode";
+import { Anchor, Col, Row } from "antd";
 
 interface Props {
     children: ReactNode;
@@ -29,8 +30,7 @@ export default function AccountPage() {
     const [kycVerifiedStatus, setKycVerifiedStatus] = useState(false)
     const [mintSignature, setMintSignature] = useState('0x')
     const [chainId, setChainId] = useState(0)
-
-
+    const [userUIDBalance, setUserUIDBalance] = useState(0)
 
     // const { signMessage, signMessageAsync } = useSignMessage({
     //     message: process.env.NEXT_PUBLIC_APP_ID + '#' + timestamp + '#' + chain?.id,
@@ -56,17 +56,34 @@ export default function AccountPage() {
         hash: data?.hash
     })
 
-    const { data: data2 } = useContractRead({
-        address: contractAddr.mumbai.uniqueIdentity as any,
-        abi: UniqueIdentity,
-        functionName: 'balanceOf',
-        args: [address, constants.UID_ID]
-    })
+    const getUserUIDBalance = async () => {
+        const data2: any = await readContract({
+            address: contractAddr.mumbai.uniqueIdentity as any,
+            abi: UniqueIdentity,
+            functionName: 'balanceOf',
+            args: [address, constants.UID_ID]
+        })
+        setUserUIDBalance(data2)
+    }
+
+
+    // const { data: data2 } = useContractRead({
+    //     address: contractAddr.mumbai.uniqueIdentity as any,
+    //     abi: UniqueIdentity,
+    //     functionName: 'balanceOf',
+    //     args: [address, constants.UID_ID]
+    // })
 
     const handleSetUpUID = async () => {
         let token = localStorage.getItem(constants.ACCESS_TOKEN);
         try {
-            const { exp, address: jwtAddress } = jwtDecode(token as any) as any
+            let exp;
+            let jwtAddress;
+            if (token) {
+                const decode = jwtDecode(token as any) as any
+                exp = decode.exp
+                jwtAddress = decode.address
+            }
             if (!token || exp < Date.now() / 1000 || (address as any).toLowerCase() != jwtAddress.toLowerCase()) {
                 // sign again
                 const timestamp = Math.round(Date.now() / 1000)
@@ -117,49 +134,115 @@ export default function AccountPage() {
 
     }
 
+    const getKYCInfo = async () => {
+        let token = localStorage.getItem(constants.ACCESS_TOKEN);
+        try {
+            let exp;
+            let jwtAddress;
+            if (token) {
+                const decode = jwtDecode(token as any) as any
+                exp = decode.exp
+                jwtAddress = decode.address
+            }
+            if (!token || exp < Date.now() / 1000 || (address as any).toLowerCase() != jwtAddress.toLowerCase()) {
+                // sign again
+                const timestamp = Math.round(Date.now() / 1000)
+                const signature = await signMessage({
+                    message: process.env.NEXT_PUBLIC_APP_ID + '#' + timestamp + '#' + chainId,
+                })
+                console.log('signature', signature);
+
+                const res = await axios.post(process.env.NEXT_PUBLIC_API_BASE_URL + '/auth/signin', {
+                    address: (address as string).toLowerCase(),
+                    sign: signature,
+                    timestamp,
+                    chainId: chainId
+                })
+
+                localStorage.setItem(constants.ACCESS_TOKEN, res.data.accessToken)
+                // dispatch(setAccessTokenState(res.data.accessToken))
+                token = localStorage.getItem(constants.ACCESS_TOKEN);
+            }
+        } catch (error) {
+            console.log(error)
+        }
+        const res = await axios.get(process.env.NEXT_PUBLIC_API_BASE_URL + '/kyc/info', {
+            headers: { Authorization: `Bearer ${token}` }
+        })
+        if (res.data.id != '') {
+            setKycStatus(true)
+            setKycVerifiedStatus(false)
+        }
+    }
+
     useEffect(() => {
         setChainId(chain?.id || 0)
-        if(isSuccess == true){
+        if (address) {
+            getUserUIDBalance()
+        }
+        if (isSuccess == true) {
             router.reload()
         }
-    }, [chain, isSuccess])
+        getKYCInfo()
+    }, [chain, isSuccess, address])
 
     return (
-        <div>
-            {chainId != constants.MUMBAI_ID ? (
-                <div style={{ height: 'calc(100vh - 64px - 30px)' }}>Wrong network or not connect wallet</div>
-            ) : (
-                <div style={{ height: 'calc(100vh - 64px - 30px)' }}>
-                    <div>Account</div>
-                    <div>UID and Wallet</div>
-                    {data2 != 0 ? (
-                        <div>You already own UID token</div>
-                    ) :
-                        isSuccess ? (
-                            <div>
-                                Successfully minted your UID token
-                                <div>
-                                    <a href={`https://sepolia.etherscan.io/tx/${data?.hash}`}>Etherscan</a>
-                                </div>
-                            </div>
+        <div style={{ height: 'calc(100vh - 64px - 30px)' }}>
+            <div>
+                <Row>
+                    <Col span={5}></Col>
+                    <Col span={14}>
+                        <div>
+                            <div style={{ height: '15vh', display: 'flex', alignItems: 'end', fontSize: '50px', fontWeight: 'bold' }}>Account</div>
+                            <Anchor
+                                direction="horizontal"
+                                items={[
+                                    {
+                                        key: 'uid-and-wallet',
+                                        href: '#uid-and-wallet',
+                                        title: 'UID and Wallet'
+                                    }
+                                ]} />
+                        </div>
+                        <div style={{ margin: '10px' }}>
+
+                        </div>
+                        {chainId != constants.MUMBAI_ID ? (
+                            <div className="text-red-500">Wrong network or not connect wallet</div>
                         ) : (
-                            kycStatus ? (
-                                kycVerifiedStatus ?
-                                    (<div>
-                                        <button onClick={write as any}>Mint UID token</button>
-                                    </div>) : (
-                                        <div>
-                                            Wait to be validated KYC info by admin
+                            <div>
+                                {userUIDBalance != 0 ? (
+                                    <div id="uid-and-wallet" className="text-lime-500">You already own UID token</div>
+                                ) :
+                                    isSuccess ? (
+                                        <div id="uid-and-wallet">
+                                            Successfully minted your UID token
+                                            <div>
+                                                <a href={`https://sepolia.etherscan.io/tx/${data?.hash}`}>Etherscan</a>
+                                            </div>
                                         </div>
+                                    ) : (
+                                        kycStatus ? (
+                                            kycVerifiedStatus ?
+                                                (<div id='uid-and-wallet'>
+                                                    <button onClick={write as any}>Mint UID token</button>
+                                                </div>) : (
+                                                    <div id="uid-and-wallet" className="text-lime-500">
+                                                        Wait to be validated KYC info by admin
+                                                    </div>
+                                                )
+                                        ) : (
+                                            <div className="btn-sm bg-white hover:font-bold" style={{ cursor: 'pointer' }} onClick={handleSetUpUID}>Begin UID setup</div>
+                                        )
                                     )
-                            ) : (
-                                <button onClick={handleSetUpUID}>Begin UID setup</button>
-                            )
-                        )
-                    }
-                </div>
-            )}
-        </div>
+                                }
+                            </div>
+                        )}
+                    </Col>
+                    <Col span={5}></Col>
+                </Row>
+            </div>
+        </div >
     )
 }
 
