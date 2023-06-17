@@ -79,7 +79,13 @@ export default function LoanDetailPage() {
     const handleSubmit = async () => {
         try {
             let token = localStorage.getItem(constants.ACCESS_TOKEN)
-            const { exp, address: jwtAddress } = jwtDecode(token as any) as any
+            let exp;
+            let jwtAddress;
+            if (token) {
+                const decode = jwtDecode(token as any) as any
+                exp = decode.exp
+                jwtAddress = decode.address
+            }
             if (!token || exp < (Date.now() / 1000) || jwtAddress.toLowerCase() != (address as any)?.toLowerCase()) {
                 // sign again
                 const timestamp = Math.round(Date.now() / 1000)

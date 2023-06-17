@@ -37,7 +37,7 @@ export default function AppliedLoanDetailPage() {
     })
 
     const getBorrowerProxy = async () => {
-        if(!props.ownerAddress){
+        if (!props.ownerAddress) {
             return;
         }
         const res = await client.query({
@@ -83,8 +83,13 @@ export default function AppliedLoanDetailPage() {
 
             if (status == 'success') {
                 let token = localStorage.getItem(constants.ACCESS_TOKEN_ADMIN);
-                const {exp} = jwtDecode(token as any) as any
-
+                let exp;
+                let jwtAddress;
+                if (token) {
+                    const decode = jwtDecode(token as any) as any
+                    exp = decode.exp
+                    jwtAddress = decode.address
+                }
                 if (!token || exp < (Date.now() / 1000)) {
                     // sign again
                     const timestamp = Math.round(Date.now() / 1000)

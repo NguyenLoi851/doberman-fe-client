@@ -23,7 +23,13 @@ export default function AdminUserRegisterPage() {
     const getRegisterUsers = async () => {
         try {
             let token = localStorage.getItem(constants.ACCESS_TOKEN_ADMIN);
-            const { exp, address: jwtAddress } = jwtDecode(token as any) as any
+            let exp;
+            let jwtAddress;
+            if (token) {
+                const decode = jwtDecode(token as any) as any
+                exp = decode.exp
+                jwtAddress = decode.address
+            }
 
             console.log("address", address, jwtAddress)
             if (!token || exp < (Date.now() / 1000) || (address as any).toLowerCase() != jwtAddress.toLowerCase()) {

@@ -23,8 +23,13 @@ export default function AdminUserAcceptedPage() {
     const getAcceptedUsers = async () => {
         try {
             let token = localStorage.getItem(constants.ACCESS_TOKEN_ADMIN);
-            const { exp, address: jwtAddress } = jwtDecode(token as any) as any
-
+            let exp;
+            let jwtAddress;
+            if (token) {
+                const decode = jwtDecode(token as any) as any
+                exp = decode.exp
+                jwtAddress = decode.address
+            }
             if (!token || exp < (Date.now() / 1000) || (address as any).toLowerCase() != jwtAddress.toLowerCase()) {
                 // sign again
                 const timestamp = Math.round(Date.now() / 1000)
