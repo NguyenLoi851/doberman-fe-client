@@ -9,7 +9,7 @@ import { ReactNode, useEffect, useState } from "react";
 import { useAccount, useNetwork, useWalletClient } from "wagmi";
 import { readContract, writeContract } from "@wagmi/core"
 import USDC from "../../abi/USDC.json"
-import TranchedPool from "../../abi/TranchedPool.json"
+import SeniorPool from "../../abi/SeniorPool.json"
 import { constants } from "@/commons/constants";
 import { Anchor, Button, Col, InputNumber, Row, Slider } from "antd";
 import { toast } from "react-toastify";
@@ -18,85 +18,51 @@ interface Props {
     children: ReactNode;
 }
 
-export default function LoanDetailPage() {
+export default function SeniorLoanDetailPage() {
     const router = useRouter()
-    const props = router.query
     const { address } = useAccount()
     const { chain } = useNetwork()
     const [chainId, setChainId] = useState(0);
-    const [loanDetailInfo, setLoanDetailInfo] = useState({})
+    const [seniorLoanDetailInfo, setSeniorLoanDetailInfo] = useState({})
 
-    const [fundingLimit, setFundingLimit] = useState(0)
-    const [juniorDeposited, setJuniorDeposited] = useState(0)
     const [wantInvestAmount, setWantInvestAmount] = useState(0)
-
+    const [assets, setAssets] = useState(0)
     const { data: walletClient } = useWalletClient()
-    const tokenDetailLoanQuery = `
-    query LoanDetail($poolId: String!) {
-        tranchedPool(id: $poolId) {
-            id
-            actualSeniorPoolInvestment
-            address
-            balance
-            createdAt
-            creditLineAddress
-            drawdownsPaused
-            estimatedLeverageRatio
-            estimatedSeniorPoolContribution
-            estimatedTotalAssets
-            fundableAt
-            fundingLimit
-            initialInterestOwed
-            interestAccruedAsOf
-            interestAmountRepaid
-            interestRate
-            interestRateBigInt
-            isPaused
-            juniorDeposited
-            juniorFeePercent
-            lateFeeRate
-            nextDueTime
-            numBackers
-            numRepayments
-            principalAmount
-            principalAmountRepaid
-            rawGfiApy
-            remainingCapacity
-            reserveFeePercent
-            termEndTime
-            termInSeconds
-            termStartTime
-            totalDeposited
-            txHash
-            usdcApy
+    const tokenDetailSeniorLoanQuery = `
+    query SeniorLoanDetail {
+        seniorPool(id: "1") {
+          address
+          assets
+          defaultRate
+          estimatedApy
+          estimatedApyFromGfiRaw
+          estimatedTotalInterest
+          id
+          sharePrice
+          totalInvested
+          totalLoansOutstanding
+          totalShares
+          totalWrittenDown
         }
-    }`
+      }`
 
     const client = new ApolloClient({
         uri: process.env.NEXT_PUBLIC_SUB_GRAPH_API_URL as string,
         cache: new InMemoryCache(),
     })
 
-    const getLoanDetailInfo = async () => {
-        if (!props.address) {
-            return;
-        }
-
+    const getSeniorLoanDetailInfo = async () => {
         const res = await client.query({
-            query: gql(tokenDetailLoanQuery),
-            variables: {
-                poolId: (props.address as any).toLowerCase() ?? ""
-            }
+            query: gql(tokenDetailSeniorLoanQuery)
         })
-        setLoanDetailInfo(res.data.tranchedPool)
-        setFundingLimit(Number((res.data.tranchedPool as any).fundingLimit) / constants.ONE_MILLION)
-        setJuniorDeposited(Number((res.data.tranchedPool as any).juniorDeposited) / constants.ONE_MILLION)
+        setSeniorLoanDetailInfo(res.data.seniorPool)
+        setAssets(Number(res.data.seniorPool.assets) / constants.ONE_MILLION)
     }
 
     useEffect(() => {
-        getLoanDetailInfo()
+        getSeniorLoanDetailInfo()
         setChainId(chain?.id || 80001)
-    }, [chain, props])
+    }, [chain])
 
     const domain: Domain = {
         version: '2',
@@ -119,21 +85,22 @@ export default function LoanDetailPage() {
             const splitedSignature = await buildPermitSignature(
                 walletClient as any,
                 { ...domain },
-                props.address as any,
+                contractAddr.mumbai.seniorPool as any,
                 BigNumber(wantInvestAmount).multipliedBy(BigNumber(constants.ONE_MILLION)),
                 signatureDeadline,
                 nonces as any
             )
 
             await writeContract({
-                address: props.address as any,
-                abi: TranchedPool,
+                address: contractAddr.mumbai.seniorPool as any,
+                abi: SeniorPool,
                 functionName: 'depositWithPermit',
-                args: [2, BigNumber(wantInvestAmount).multipliedBy(BigNumber(constants.ONE_MILLION)), signatureDeadline, splitedSignature.v, splitedSignature.r, splitedSignature.s],
+                args: [BigNumber(wantInvestAmount).multipliedBy(BigNumber(constants.ONE_MILLION)), signatureDeadline, splitedSignature.v, splitedSignature.r, splitedSignature.s],
             })
 
             toast.success("Invest successfully")
         } catch (error) {
+            console.log(error)
             try {
                 toast.error((JSON.parse(JSON.stringify(error)) as any).shortMessage.split(':')[1])
             } catch (error2) {
@@ -166,9 +133,9 @@ export default function LoanDetailPage() {
                             title: 'Overview'
                         },
                         {
-                            key: 'borrower',
-                            href: '#borrower',
-                            title: 'Borrower',
+                            key: 'portfolio-details',
+                            href: '#portfolio-details',
+                            title: 'Portfolio details',
                         },
                         {
                             key: 'repayment',
@@ -186,38 +153,27 @@ export default function LoanDetailPage() {
             <Col span={2}>
             </Col>
             <Col span={12}>
-                <div id="invest" style={{ height: 'auto', background: 'rgb(246, 254, 0)', marginBottom: '50px', borderRadius: '5%', padding: '10px' }} >
+                <div id="invest" style={{ height: 'auto', marginBottom: '50px', borderRadius: '5%', padding: '10px' }} className='bg-amber-300' >
                     <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
-                        <div style={{ margin: '10px', fontSize: '16px' }}>{props.companyName}</div>
-                        <a style={{ margin: '10px' }} href={`https://mumbai.polygonscan.com/address/${props.address}#code`} target="_blank" className="text-sky-500 hover:underline hover:underline-offset-3 ">MumbaiScan</a>
+                        <div style={{ margin: '10px', fontSize: '16px' }}>Doberman Protocol</div>
+                        <a style={{ margin: '10px' }} href={`https://mumbai.polygonscan.com/address/${contractAddr.mumbai.seniorPool}#code`} target="_blank" className="text-sky-500 hover:underline hover:underline-offset-3 ">MumbaiScan</a>
                     </div>
-                    <div style={{ margin: '10px', fontSize: '24px', fontWeight: 'bold' }}>{props.projectName}</div>
-                    <div style={{ margin: '10px', fontSize: '14px', textAlign: 'justify', lineHeight: 1.5 }}>{props.projectIntro}</div>
-                    <div style={{ margin: '10px', fontSize: '16px' }}>Fixed USDC APY {(loanDetailInfo as any).usdcApy} %</div>
-                    <div style={{ margin: '10px', fontSize: '16px' }}>Fundable At: {dayjs(Number((loanDetailInfo as any).fundableAt) * 1000).format('DD/MM/YYYY hh:mm:ss')}</div>
-                    <div style={{ margin: '10px', fontSize: '16px' }}>Junior deposited amount: {juniorDeposited} USDC</div>
-                    <div style={{ margin: '10px', fontSize: '16px' }}>FundingLimit: {fundingLimit} USDC</div>
-                    <div style={{ margin: '10px' }} >
-                        <Slider
-                            value={juniorDeposited + wantInvestAmount}
-                            max={fundingLimit}
-                            step={0.01}
-                            disabled={true}
-                        />
-                    </div>
+                    <div style={{ margin: '10px', fontSize: '24px', fontWeight: 'bold' }}>Doberman Senior Pool</div>
+                    <div style={{ margin: '10px', fontSize: '14px', textAlign: 'justify', lineHeight: 1.5 }}>The Senior Pool is a pool of capital that is diversified across all Borrower Pools on the Doberman protocol. Liquidity Providers (LPs) who provide capital into the Senior Pool are capital providers in search of passive, diversified exposure across all Borrower Pools. This capital is protected by junior (first-loss) capital in each Borrower Pool.</div>
+                    <div style={{ margin: '10px', fontSize: '16px' }}>Fixed USDC APY {(seniorLoanDetailInfo as any).estimatedApy} %</div>
+                    <div style={{ margin: '10px', fontSize: '16px' }}>Assets: {assets} USDC</div>
                     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                         <InputNumber
                             placeholder="Input value"
                             value={wantInvestAmount}
                             onChange={handleWantInvestAmount}
-                            max={fundingLimit - juniorDeposited}
-                            style={{ width: 150, marginTop: '10px' }}
+                            style={{ width: 300, marginTop: '10px' }}
+                            addonAfter='USDC ($)'
                         />
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                        {Number((loanDetailInfo as any).fundableAt) < dayjs().unix() && (
-                            <Button onClick={handleDeposit} style={{ margin: '20px', marginTop: '25px' }}>Deposit</Button>
-                        )}
+                        <Button onClick={handleDeposit} style={{ margin: '20px', marginTop: '25px' }}>Deposit</Button>
+
                     </div>
 
 
@@ -231,19 +187,6 @@ export default function LoanDetailPage() {
                     <div>Repayment status</div>
                 </div>
 
-                <div id="borrower" style={{ height: 'auto', background: 'rgb(241, 233, 210)', marginBottom: '50px', borderRadius: '5%', padding: '10px' }} >
-                    <div style={{ margin: '10px', fontSize: '16px', fontWeight: 'bold' }}>Borrower details</div>
-                    <div style={{ margin: '10px', fontSize: '14px', textAlign: 'justify', lineHeight: 1.5 }}>{props.companyName}</div>
-                    <div style={{ margin: '10px', fontSize: '14px', textAlign: 'justify', lineHeight: 1.5 }}>{props.companyIntro}</div>
-                    <div style={{ margin: '10px', display: 'flex', flexDirection: 'row' }}>
-                        <div style={{ margin: '10px', backgroundColor: 'rgb(255,255,255)', borderRadius: '30%', padding: '5px' }}>
-                            <a href={`${props.companyPage}`}>Website</a>
-                        </div>
-                        <div style={{ margin: '10px', backgroundColor: 'rgb(255,255,255)', borderRadius: '30%', padding: '5px' }}>
-                            <a href={`${props.companyContact}`}>Contact</a>
-                        </div>
-                    </div>
-                </div>
 
                 <div id="repayment" style={{ height: 'auto', background: 'rgba(0,0,255,0.02)', marginBottom: '50px', borderRadius: '5%', padding: '10px' }}>
                     <div style={{ margin: '10px', fontSize: '16px', fontWeight: 'bold' }}>Repayment terms</div>
@@ -267,4 +210,4 @@ export default function LoanDetailPage() {
     )
 }
 
-LoanDetailPage.Layout = (props: Props) => PageLayout({ children: props.children });
+SeniorLoanDetailPage.Layout = (props: Props) => PageLayout({ children: props.children });

@@ -2,7 +2,7 @@ import { constants, Frequency } from "@/commons/constants";
 import PageLayout from "@/components/layouts/PageLayout";
 import { ApolloClient, gql, InMemoryCache } from "@apollo/client";
 import { signMessage } from "@wagmi/core";
-import { Button, DatePicker, Form, Input, InputNumber, Select, Typography } from "antd";
+import { Button, Col, DatePicker, Form, Input, InputNumber, Row, Select, Typography } from "antd";
 import axios from "axios";
 import dayjs from "dayjs";
 import jwtDecode from "jwt-decode";
@@ -15,6 +15,8 @@ import { useAccount, useNetwork } from "wagmi";
 interface Props {
     children: ReactNode;
 }
+
+const { TextArea } = Input
 
 export default function LoanDetailPage() {
     const router = useRouter()
@@ -135,263 +137,285 @@ export default function LoanDetailPage() {
     };
 
     return (
-        <div style={{ height: 'calc(100vh - 64px - 30px)', display: 'block', overflowY: 'scroll' }}>
-            <Title>Loan's information</Title>
-            {props != undefined && (
-                <Form
-                    onFinish={handleSubmit}
-                    layout="vertical"
-                    form={form}
-                >
-                    <Form.Item
-                        label="Company's name"
-                        name="companyName"
-                        rules={[
-                            {
-                                required: true,
-                                message: "Please input company's name"
-                            }
-                        ]}
-                    >
-                        <Input
-                            placeholder="Company's name"
-                            value={props.companyName}
-                            onChange={(e) => handleChange(e, "companyName")}
-                            disabled={disableEdit}
-                        ></Input>
-                    </Form.Item>
+        <div style={{ height: 'calc(100% - 64px - 30px)' }}>
+            <Row>
+                <Col span={5}></Col>
+                <Col span={14}>
+                    <Title>Loan's information</Title>
+                    {props != undefined && (
+                        <Form
+                            onFinish={handleSubmit}
+                            layout="vertical"
+                            form={form}
+                        >
+                            <Form.Item
+                                label="Company's name"
+                                name="companyName"
+                                rules={[
+                                    {
+                                        required: true,
+                                        message: "Please input company's name"
+                                    }
+                                ]}
+                            >
+                                <Input
+                                    placeholder="Company's name"
+                                    value={props.companyName}
+                                    onChange={(e) => handleChange(e, "companyName")}
+                                    disabled={disableEdit}
+                                ></Input>
+                            </Form.Item>
 
-                    <Form.Item
-                        label="Company's introduction"
-                        name="companyIntro"
-                        rules={[
-                            {
-                                required: true,
-                                message: "Please input company's introduction"
-                            }
-                        ]}
-                    >
-                        <Input
-                            placeholder="Company's introduction"
-                            value={props.companyIntro}
-                            onChange={(e) => handleChange(e, "companyIntro")}
-                            disabled={disableEdit}
-                        ></Input>
-                    </Form.Item>
+                            <Form.Item
+                                label="Company's introduction"
+                                name="companyIntro"
+                                rules={[
+                                    {
+                                        required: true,
+                                        message: "Please input company's introduction"
+                                    }
+                                ]}
+                            >
+                                {/* <Input
+                                    placeholder="Company's introduction"
+                                    value={props.companyIntro}
+                                    onChange={(e) => handleChange(e, "companyIntro")}
+                                    disabled={disableEdit}
+                                ></Input> */}
+                                <TextArea
+                                    placeholder="Company's introduction"
+                                    rows={5}
+                                    value={props.companyIntro}
+                                    onChange={(e) => handleChange(e, "companyIntro")}
+                                    disabled={disableEdit}
+                                ></TextArea>
+                            </Form.Item>
 
-                    <Form.Item
-                        label="Company's webpage"
-                        name="companyPage"
-                        rules={[
-                            {
-                                required: true,
-                                message: "Please input company's webpage"
-                            }
-                        ]}
-                    >
-                        <Input
-                            placeholder="Company's introduction"
-                            value={props.companyPage}
-                            onChange={(e) => handleChange(e, "companyPage")}
-                            disabled={disableEdit}
-                        ></Input>
-                    </Form.Item>
+                            <Form.Item
+                                label="Company's webpage"
+                                name="companyPage"
+                                rules={[
+                                    {
+                                        required: true,
+                                        message: "Please input company's webpage"
+                                    }
+                                ]}
+                            >
+                                <Input
+                                    placeholder="Company's introduction"
+                                    value={props.companyPage}
+                                    onChange={(e) => handleChange(e, "companyPage")}
+                                    disabled={disableEdit}
+                                ></Input>
+                            </Form.Item>
 
-                    <Form.Item
-                        label="Company's contact"
-                        name="companyContact"
-                        rules={[
-                            {
-                                required: true,
-                                message: "Please input company's contact"
-                            }
-                        ]}
-                    >
-                        <Input
-                            placeholder="Company's contact"
-                            value={props.companyContact}
-                            onChange={(e) => handleChange(e, "companyContact")}
-                            disabled={disableEdit}
-                        ></Input>
-                    </Form.Item>
+                            <Form.Item
+                                label="Company's contact"
+                                name="companyContact"
+                                rules={[
+                                    {
+                                        required: true,
+                                        message: "Please input company's contact"
+                                    }
+                                ]}
+                            >
+                                <Input
+                                    placeholder="Company's contact"
+                                    value={props.companyContact}
+                                    onChange={(e) => handleChange(e, "companyContact")}
+                                    disabled={disableEdit}
+                                ></Input>
+                            </Form.Item>
 
-                    <Form.Item
-                        label="Project's name"
-                        name="projectName"
-                        rules={[
-                            {
-                                required: true,
-                                message: "Please input project's name"
-                            }
-                        ]}
-                    >
-                        <Input
-                            placeholder="Project's name"
-                            value={props.projectName}
-                            onChange={(e) => handleChange(e, "projectName")}
-                            disabled={disableEdit}
-                        ></Input>
-                    </Form.Item>
+                            <Form.Item
+                                label="Project's name"
+                                name="projectName"
+                                rules={[
+                                    {
+                                        required: true,
+                                        message: "Please input project's name"
+                                    }
+                                ]}
+                            >
+                                <Input
+                                    placeholder="Project's name"
+                                    value={props.projectName}
+                                    onChange={(e) => handleChange(e, "projectName")}
+                                    disabled={disableEdit}
+                                ></Input>
+                            </Form.Item>
 
-                    <Form.Item
-                        label="Introduction about project"
-                        name="projectIntro"
-                        rules={[
-                            {
-                                required: true,
-                                message: "Please input project's introduction"
-                            }
-                        ]}
-                    >
-                        <Input
-                            placeholder="Project's introduction"
-                            value={props.projectIntro}
-                            onChange={(e) => handleChange(e, "projectIntro")}
-                            disabled={disableEdit}
-                        ></Input>
-                    </Form.Item>
+                            <Form.Item
+                                label="Introduction about project"
+                                name="projectIntro"
+                                rules={[
+                                    {
+                                        required: true,
+                                        message: "Please input project's introduction"
+                                    }
+                                ]}
+                            >
+                                {/* <Input
+                                    placeholder="Project's introduction"
+                                    value={props.projectIntro}
+                                    onChange={(e) => handleChange(e, "projectIntro")}
+                                    disabled={disableEdit}
+                                ></Input> */}
+                                <TextArea
+                                    placeholder="Project's introduction"
+                                    rows={5}
+                                    value={props.projectIntro}
+                                    onChange={(e) => handleChange(e, "projectIntro")}
+                                    disabled={disableEdit}
+                                ></TextArea>
+                            </Form.Item>
 
-                    <Form.Item
-                        label="Junior Fee Percent"
-                        name="juniorFeePercent"
-                        rules={[
-                            {
-                                required: true,
-                                message: "Please input junior fee percent"
-                            }
-                        ]}
-                    >
-                        <InputNumber
-                            placeholder="Junior Fee Percent"
-                            value={Number(props.juniorFeePercent)}
-                            onChange={(e) => handleChange(e, "juniorFeePercent")}
-                            addonAfter="%"
-                            disabled={disableEdit}
-                        ></InputNumber>
-                    </Form.Item>
+                            <Form.Item
+                                label="Junior Fee Percent"
+                                name="juniorFeePercent"
+                                rules={[
+                                    {
+                                        required: true,
+                                        message: "Please input junior fee percent"
+                                    }
+                                ]}
+                            >
+                                <InputNumber
+                                    placeholder="Junior Fee Percent"
+                                    value={Number(props.juniorFeePercent)}
+                                    onChange={(e) => handleChange(e, "juniorFeePercent")}
+                                    addonAfter="%"
+                                    disabled={disableEdit}
+                                ></InputNumber>
+                            </Form.Item>
 
-                    <Form.Item
-                        label="Target Funding"
-                        name="targetFunding"
-                        rules={[
-                            {
-                                required: true,
-                                message: "Please input target funding"
-                            }
-                        ]}
-                    >
-                        <InputNumber
-                            placeholder="Target Funding"
-                            value={Number(props.targetFunding)}
-                            onChange={(e) => handleChange(e, "targetFunding")}
-                            addonAfter="$"
-                            disabled={disableEdit}
-                        ></InputNumber>
-                    </Form.Item>
+                            <Form.Item
+                                label="Target Funding"
+                                name="targetFunding"
+                                rules={[
+                                    {
+                                        required: true,
+                                        message: "Please input target funding"
+                                    }
+                                ]}
+                            >
+                                <InputNumber
+                                    placeholder="Target Funding"
+                                    value={Number(props.targetFunding)}
+                                    onChange={(e) => handleChange(e, "targetFunding")}
+                                    addonAfter="$"
+                                    disabled={disableEdit}
+                                ></InputNumber>
+                            </Form.Item>
 
-                    <Form.Item
-                        label="Interest Rate"
-                        name="interestRate"
-                        rules={[
-                            {
-                                required: true,
-                                message: "Please input interest rate"
-                            }
-                        ]}
-                    >
-                        <InputNumber
-                            placeholder="Interest Rate"
-                            value={Number(props.interestRate)}
-                            onChange={(e) => handleChange(e, "interestRate")}
-                            addonAfter="%"
-                            disabled={disableEdit}
-                        ></InputNumber>
-                    </Form.Item>
+                            <Form.Item
+                                label="Interest Rate"
+                                name="interestRate"
+                                rules={[
+                                    {
+                                        required: true,
+                                        message: "Please input interest rate"
+                                    }
+                                ]}
+                            >
+                                <InputNumber
+                                    placeholder="Interest Rate"
+                                    value={Number(props.interestRate)}
+                                    onChange={(e) => handleChange(e, "interestRate")}
+                                    addonAfter="%"
+                                    disabled={disableEdit}
+                                ></InputNumber>
+                            </Form.Item>
 
-                    <Form.Item
-                        label="Interest Payment Frequency"
-                        name="interestPaymentFrequency"
-                        rules={[
-                            {
-                                required: true,
-                                message: "Please input interest payment frequency"
-                            }
-                        ]}
-                    >
-                        <Select
-                            disabled={disableEdit}
-                            showSearch
-                            placeholder="Interest Payment Frequency"
-                            optionFilterProp="children"
-                            onChange={(e) => handleChange(e, "interestPaymentFrequency")}
-                            filterOption={(input, option) =>
-                                (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
-                            }
-                            options={[
-                                {
-                                    value: Frequency.MONTHLY,
-                                    label: 'MONTHLY (1 minutes)'
-                                },
-                                {
-                                    value: Frequency.QUARTERLY,
-                                    label: 'QUARTERLY (3 minutes)'
-                                },
-                                {
-                                    value: Frequency.SEMI_ANNUALY,
-                                    label: 'SEMI ANNUALY (6 minutes)'
-                                },
-                                {
-                                    value: Frequency.ANNUALY,
-                                    label: 'ANNUALY (12 minutes)'
-                                },
-                            ]}
-                        />
-                    </Form.Item>
+                            <Form.Item
+                                label="Interest Payment Frequency"
+                                name="interestPaymentFrequency"
+                                rules={[
+                                    {
+                                        required: true,
+                                        message: "Please input interest payment frequency"
+                                    }
+                                ]}
+                            >
+                                <Select
+                                    style={{ width: '250px' }}
+                                    disabled={disableEdit}
+                                    showSearch
+                                    placeholder="Interest Payment Frequency"
+                                    optionFilterProp="children"
+                                    onChange={(e) => handleChange(e, "interestPaymentFrequency")}
+                                    filterOption={(input, option) =>
+                                        (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                                    }
+                                    options={[
+                                        {
+                                            value: Frequency.MONTHLY,
+                                            label: 'MONTHLY (1 minutes)'
+                                        },
+                                        {
+                                            value: Frequency.QUARTERLY,
+                                            label: 'QUARTERLY (3 minutes)'
+                                        },
+                                        {
+                                            value: Frequency.SEMI_ANNUALY,
+                                            label: 'SEMI ANNUALY (6 minutes)'
+                                        },
+                                        {
+                                            value: Frequency.ANNUALY,
+                                            label: 'ANNUALY (12 minutes)'
+                                        },
+                                    ]}
+                                />
+                            </Form.Item>
 
-                    <Form.Item
-                        label="Loan Term"
-                        name="loanTerm"
-                        rules={[
-                            {
-                                required: true,
-                                message: "Please input loan term"
-                            }
-                        ]}
-                    >
-                        <InputNumber
-                            placeholder="Loan Term"
-                            value={Number(props.loanTerm)}
-                            onChange={(e) => handleChange(e, "loanTerm")}
-                            addonAfter="months (minutes)"
-                            disabled={disableEdit}
-                        ></InputNumber>
-                    </Form.Item>
+                            <Form.Item
+                                label="Loan Term"
+                                name="loanTerm"
+                                rules={[
+                                    {
+                                        required: true,
+                                        message: "Please input loan term"
+                                    }
+                                ]}
+                            >
+                                <InputNumber
+                                    placeholder="Loan Term"
+                                    value={Number(props.loanTerm)}
+                                    onChange={(e) => handleChange(e, "loanTerm")}
+                                    addonAfter="months (minutes)"
+                                    disabled={disableEdit}
+                                ></InputNumber>
+                            </Form.Item>
 
-                    <Form.Item
-                        label="Fundable At"
-                        name="fundableAt"
-                        rules={[
-                            {
-                                required: true,
-                                message: "Please input fundable at"
-                            }
-                        ]}
-                        initialValue={dayjs("01/06/2023 00:00:00", dateFormat)}
-                    >
-                        <DatePicker
-                            disabled={disableEdit}
-                            format={dateFormat}
-                            showTime={true}
-                            onChange={(e) => handleChange(e?.unix(), "fundableAt")}
-                        />
-                    </Form.Item>
-                    {props.deployed == "false" && (
-                        <Form.Item>
-                            <Button type="primary" htmlType="submit">Saves changes</Button>
-                        </Form.Item>
+                            <Form.Item
+                                label="Fundable At"
+                                name="fundableAt"
+                                rules={[
+                                    {
+                                        required: true,
+                                        message: "Please input fundable at"
+                                    }
+                                ]}
+                                initialValue={dayjs("01/06/2023 00:00:00", dateFormat)}
+                            >
+                                <DatePicker
+                                    disabled={disableEdit}
+                                    format={dateFormat}
+                                    showTime={true}
+                                    onChange={(e) => handleChange(e?.unix(), "fundableAt")}
+                                />
+                            </Form.Item>
+                            {props.deployed == "false" && (
+                                <Form.Item className="flex justify-center">
+                                    <Button className="btn-sm bg-sky-400 flex justify-center rounded-lg" type="primary" htmlType="submit">Saves changes</Button>
+                                </Form.Item>
+                            )}
+                        </Form>
                     )}
-                </Form>
-            )}
+                </Col>
+                <Col span={5}></Col>
+            </Row>
+
 
         </div>
     )

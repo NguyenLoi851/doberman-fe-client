@@ -49,7 +49,7 @@ export default function Header() {
           <div style={{ display: 'flex', flexDirection: 'row' }} className="flex grow justify-end flex-wrap items-center">
             <Image src={Logo} alt="Logo" className='rounded-full w-8 h-8' onClick={() => router.push('/earn')} />
             <div>
-              <button className="font-medium text-purple-600 hover:text-gray-200 px-4 py-3 flex items-center transition duration-150 ease-in-out" onClick={() => router.push('/earn')}>Deals</button>
+              <button className="font-medium text-purple-600 px-4 py-3 flex items-center transition duration-150 ease-in-out" onClick={() => router.push('/earn')}>Deals</button>
             </div>
             <Dropdown menu={{ items }}>
               <a onClick={(e) => e.preventDefault()}>

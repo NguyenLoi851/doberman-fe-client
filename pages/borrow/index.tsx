@@ -6,11 +6,12 @@ import { useAccount, useContractWrite, useNetwork } from "wagmi";
 import { contractAddr } from "@/commons/contractAddress";
 import DobermanFactory from "../../abi/DobermanFactory.json";
 import { useState, ReactNode, useEffect } from "react";
-import { Button, List, Modal } from 'antd';
+import { Anchor, Button, Col, List, Modal, Row } from 'antd';
 import { toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 import PageLayout from "@/components/layouts/PageLayout";
 import axios from "axios";
+import { writeContract } from "@wagmi/core";
 
 interface Props {
     children: ReactNode;
@@ -28,9 +29,15 @@ export default function BorrowPage() {
         setIsModalOpen(true);
     };
 
-    const handleOk = () => {
+    const handleOk = async () => {
         setIsModalOpen(false);
-        write();
+        try {
+            await handleCreateBorrower();
+            toast.success("Link proxy successfully")
+        } catch (error) {
+            console.log(error)
+            toast.error("Link proxy fail")
+        }
     };
 
     const handleCancel = () => {
@@ -48,19 +55,29 @@ export default function BorrowPage() {
         cache: new InMemoryCache(),
     })
 
-    const { write, data } = useContractWrite({
-        address: contractAddr.mumbai.dobermanFactory as any,
-        abi: DobermanFactory,
-        functionName: 'createBorrower',
-        args: [address],
-        chainId: chain?.id,
-        onSuccess() {
-            toast.success("Link proxy successfully")
-        },
-        onError() {
-            toast.error("Link proxy fail")
-        }
-    })
+    const handleCreateBorrower = async () => {
+        await writeContract({
+            address: contractAddr.mumbai.dobermanFactory as any,
+            abi: DobermanFactory,
+            functionName: 'createBorrower',
+            args: [address],
+            chainId: chain?.id
+        })
+    }
+
+    // const { write, data } = useContractWrite({
+    //     address: contractAddr.mumbai.dobermanFactory as any,
+    //     abi: DobermanFactory,
+    //     functionName: 'createBorrower',
+    //     args: [address],
+    //     chainId: chain?.id,
+    //     onSuccess() {
+    //         toast.success("Link proxy successfully")
+    //     },
+    //     onError() {
+    //         toast.error("Link proxy fail")
+    //     }
+    // })
 
     const getLoansByOwnerAddress = async () => {
         const res = await axios.get(process.env.NEXT_PUBLIC_API_BASE_URL + `/loans/getLoanByFilter`, {
@@ -110,41 +127,70 @@ export default function BorrowPage() {
     }
 
     return (
-        <div>
-            <div style={{ height: 'calc(100vh - 64px - 30px)' }}>
-                <div>
-                    Borrow
-                </div>
+        <div style={{ height: 'calc(100vh - 64px - 30px)' }}>
+            <div>
+                <Row>
+                    <Col span={5}></Col>
+                    <Col span={14}>
+                        <div>
+                            <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
+                                <div style={{ height: '15vh', display: 'flex', alignItems: 'end', fontSize: '50px', fontWeight: 'bold' }}>Borrow</div>
+                                <div className="btn-sm bg-lime-400 hover:font-bold m-16" style={{ cursor: 'pointer' }} onClick={handleApplyLoan}>Apply a new loan</div>
 
-                <div style={{ display: 'flex', flexDirection: 'row' }}>
-                    <div>My loans</div>
-                    <button onClick={handleApplyLoan}>Apply a new loan</button>
-                </div>
-                <Modal title="Link Proxy Wallet" open={isModalOpen && !borrowerCreated} onOk={handleOk} onCancel={handleCancel} okText="Link Proxy">
-                    <div>Link your wallet address to a HELIX proxy wallet smart contract in order to create a loan.
-                        <ul>
-                            <li>Proxy wallet will help you interact indirectly with smart contracts across all your loans and save gas fee.</li>
-                            <li>Proxy Wallet linking is a one-time transaction only.</li>
-                        </ul>
-                    </div>
-                </Modal>
-                <List
-                    itemLayout="horizontal"
-                    dataSource={userLoans}
-                    renderItem={(item, index) => (
-                        <List.Item
-                            style={{ cursor: 'pointer', margin: '24px' }}
-                            actions={[<button onClick={() => handleDetailLoanInfo(item, index+1)}>View Detail</button>]}
-                        >
-                            <List.Item.Meta
-                                avatar={index + 1 + '.'}
-                                title={(item as any).projectName}
-                                description={(item as any).projectIntro}
+                            </div>
+                            <Anchor
+                                direction="horizontal"
+                                items={[
+                                    {
+                                        key: 'my-loans',
+                                        href: '#my-loans',
+                                        title: 'My Loans'
+                                    }
+                                ]} />
+                        </div>
+                        <div style={{ margin: '10px' }}>
+                        </div>
+                        <div id="my-loans">
+                            <List
+                                itemLayout="horizontal"
+                                dataSource={userLoans}
+                                renderItem={(item, index) => (
+                                    <List.Item
+                                        style={{ cursor: 'pointer', marginTop: '12px', marginBottom: '12px' }}
+                                        actions={[<div className='btn-sm bg-slate-300 text-black rounded-md hover:underline hover:underline-offset-4 hover:font-bold' onClick={() => handleDetailLoanInfo(item, index + 1)}>View Detail</div>]}
+                                        className='bg-white rounded-lg border-amber-300'>
+                                        <List.Item.Meta
+                                            avatar={index + 1 + '.'}
+                                            title={(item as any).projectName}
+                                            description={(item as any).projectIntro}
+                                            style={{ alignItems: 'justify' }}
+                                        />
+                                        {(item as any).deployed ?
+                                            <div className="text-lime-600" style={{ border: 'solid' }}>
+                                                Deployed
+                                            </div>
+                                            : <div className="text-amber-300" style={{ border: 'solid' }}>
+                                                Undeployed
+                                            </div>}
+                                    </List.Item>
+                                )}
                             />
-                            <div>{(item as any).deployed ? 'Deployed' : 'Undeployed'}</div>
-                        </List.Item>
-                    )}
-                />
+                        </div>
+                        <Modal title="Link Proxy Wallet" open={isModalOpen && !borrowerCreated} onOk={handleOk} onCancel={handleCancel} okText="Link Proxy">
+                            <div>Link your wallet address to a HELIX proxy wallet smart contract in order to create a loan.
+                                <ul>
+                                    <li>Proxy wallet will help you interact indirectly with smart contracts across all your loans and save gas fee.</li>
+                                    <li>Proxy Wallet linking is a one-time transaction only.</li>
+                                </ul>
+                            </div>
+                        </Modal>
+
+                    </Col>
+                    <Col span={5}></Col>
+                </Row>
+
+
+
             </div>
         </div>
     )

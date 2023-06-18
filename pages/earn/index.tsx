@@ -19,7 +19,7 @@ import Footer from '@/components/footer';
 import PageLayout from '@/components/layouts/PageLayout';
 import axios from 'axios';
 import { ApolloClient, gql, InMemoryCache } from '@apollo/client';
-import { Col, List, Row } from 'antd';
+import { Card, Col, List, Row } from 'antd';
 import Link from 'next/link';
 
 interface Props {
@@ -137,51 +137,116 @@ export default function EarnPage() {
     })
   }
 
-  return (
-    <div>
-      <div style={{ height: 'calc(100vh - 64px - 30px)' }}>
+  const handleDetailSeniorLoanInfo = async () => {
+    Router.push({
+      pathname: '/earn/senior'
+    })
+  }
 
-        <Row>
-          <Col span={5}>
-          </Col>
-          <Col span={14}>
-            {!uidStatus && (
-              <div style={{ display: 'flex', flexDirection: 'row', margin: '20px' }} className='rounded-lg text-white bg-sky-700'>
-                <div style={{ margin: '10px' }}>
-                  <div style={{ marginBottom: '15px' }}>Set up your UID to start</div>
-                  <div style={{ display: 'flex', textAlign: 'justify' }}>Unique Identity (UID) is a non-transferrable NFT representing KYC-verification on-chain. A UID is required to participate in the Doberman lending protocol. No personal information is stored on-chain.</div>
-                </div>
-                <Link href='/account' style={{ padding: '1px', margin: '25px' }} className="rounded-md btn-sm text-black bg-sky-50 hover:bg-gray-200 hover:text-black ml-3">
-                  Go to my account
+  return (
+    <div style={{ height: 'calc(100% - 64px - 30px)' }}>
+
+      <Row >
+        <Col span={5}>
+        </Col>
+        <Col span={14}>
+          {!uidStatus && (
+            <div style={{ display: 'flex', flexDirection: 'row', margin: '20px' }} className='rounded-lg text-white bg-sky-700'>
+              <div style={{ margin: '10px', width: '75%' }}>
+                <div style={{ marginBottom: '15px', fontSize: '20px' }}>Set up your UID to start</div>
+                <div style={{ display: 'flex', textAlign: 'justify' }}>Unique Identity (UID) is a non-transferrable NFT representing KYC-verification on-chain. A UID is required to participate in the Doberman lending protocol. No personal information is stored on-chain.</div>
+              </div>
+              <div style={{ marginTop: '60px' }}>
+                <Link href='/account' >
+                  <div style={{}} className="rounded-md btn-sm text-black bg-sky-50 hover:bg-gray-200 hover:text-black ml-3">
+                    Go to my account
+                  </div>
                 </Link>
               </div>
+            </div>
+          )}
+
+          <div className='font-bold' style={{ fontSize: '20px' }}>Open deals</div>
+
+          <Card
+            title={
+              <div style={{ marginTop: '20px' }}>
+                <div style={{ fontSize: '24px' }}>Senior Pool</div>
+                <div style={{ fontWeight: 'normal', fontSize: '12px' }}>Automated diversified portfolio</div>
+              </div>
+            }
+            style={{ cursor: 'pointer', width: '35vh' }}
+            className='bg-amber-200 hover:bg-amber-300'
+            onClick={() => handleDetailSeniorLoanInfo()}
+          >
+            <div>
+              Invested Amount:
+            </div>
+            <div>
+              Loan term:
+            </div>
+            <div>
+              Interest:
+            </div>
+          </Card>
+
+          <List
+            itemLayout="horizontal"
+            grid={{ gutter: 16, column: 3 }}
+            dataSource={openLoans}
+            renderItem={(item, index) => (
+              <List.Item
+                style={{ cursor: 'pointer', marginTop: '12px', marginBottom: '12px' }}
+                className='bg-amber-200 rounded-lg'>
+                <Card
+                  title={
+                    <div style={{ marginTop: '20px' }}>
+                      <div style={{ fontSize: '24px' }}>{(item as any).companyName}</div>
+                      <div style={{ fontWeight: 'normal', fontSize: '12px' }}>{(item as any).projectName}</div>
+                    </div>
+                  }
+                  style={{ borderRadius: '5%' }}
+                  className='bg-amber-200 hover:bg-amber-300'
+                  onClick={() => handleDetailLoanInfo(item)}
+                >
+                  <div>
+                    Invested Amount:
+                  </div>
+                  <div>
+                    Loan term:
+                  </div>
+                  <div>
+                    Interest:
+                  </div>
+                </Card>
+              </List.Item>
             )}
+          />
 
-            <div className='font-bold' style={{ fontSize: '20px' }}>Open deals</div>
-            <List
-              itemLayout="horizontal"
-              dataSource={openLoans}
-              renderItem={(item, index) => (
-                <List.Item
-                  actions={[<div className='btn-sm bg-slate-300 text-black rounded-md hover:underline hover:underline-offset-4 hover:font-bold' onClick={() => handleDetailLoanInfo(item)}>View Detail</div>]}
-                  style={{ cursor: 'pointer', margin: '24px' }}
-                  className='bg-white rounded-lg '>
-                  <List.Item.Meta
-                    avatar={index + 1 + '.'}
-                    title={(item as any).companyName}
-                    description={(item as any).projectName}
-                  />
-                </List.Item>
-              )}
-            />
-            <div className='font-bold' style={{ fontSize: '20px' }}> Close deals</div>
-          </Col>
-          <Col span={5}>
-          </Col>
-        </Row>
+          <div className='font-bold' style={{ fontSize: '20px' }}>Open deals</div>
+          <List
+            itemLayout="horizontal"
+            dataSource={openLoans}
+            renderItem={(item, index) => (
+              <List.Item
+                actions={[<div className='btn-sm bg-slate-300 text-black rounded-md hover:underline hover:underline-offset-4 hover:font-bold' onClick={() => handleDetailLoanInfo(item)}>View Detail</div>]}
+                style={{ cursor: 'pointer', marginTop: '12px', marginBottom: '12px' }}
+                className='bg-white rounded-lg'>
+                <List.Item.Meta
+                  avatar={index + 1 + '.'}
+                  title={(item as any).companyName}
+                  description={(item as any).projectName}
+                />
+              </List.Item>
+            )}
+          />
+          <div className='font-bold' style={{ fontSize: '20px' }}> Close deals</div>
+        </Col>
+        <Col span={5}>
+        </Col>
+      </Row>
 
-      </div>
-    </div>
+    </div >
   )
 }
 

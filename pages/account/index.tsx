@@ -105,6 +105,7 @@ export default function AccountPage() {
             }
         } catch (error) {
             console.log(error)
+            return;
         }
 
 
@@ -165,14 +166,20 @@ export default function AccountPage() {
             }
         } catch (error) {
             console.log(error)
+            return;
         }
-        const res = await axios.get(process.env.NEXT_PUBLIC_API_BASE_URL + '/kyc/info', {
-            headers: { Authorization: `Bearer ${token}` }
-        })
-        if (res.data.id != '') {
-            setKycStatus(true)
-            setKycVerifiedStatus(false)
+        try {
+            const res = await axios.get(process.env.NEXT_PUBLIC_API_BASE_URL + '/kyc/info', {
+                headers: { Authorization: `Bearer ${token}` }
+            })
+            if (res.data.id != '') {
+                setKycStatus(true)
+                setKycVerifiedStatus(false)
+            }
+        } catch (error) {
+            console.log(error)
         }
+
     }
 
     useEffect(() => {
