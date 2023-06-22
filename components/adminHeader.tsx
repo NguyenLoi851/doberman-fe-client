@@ -20,12 +20,12 @@ export default function AdminHeader() {
       <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
         <Image src={Logo} alt="Logo" width='30' height='30' onClick={() => router.push('/earn')} />
         <div style={{ display: 'flex', flexDirection: 'row' }}>
-          <div>
+          {/* <div>
             <button onClick={() => router.push('/admin/users')}>Users</button>
           </div>
           <div>
             <button onClick={() => router.push('/admin/pools')}>Pools</button>
-          </div>
+          </div> */}
         </div>
         <div style={{ float: 'right' }}>
           <ConnectWallet />

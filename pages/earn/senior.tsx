@@ -7,12 +7,13 @@ import dayjs from "dayjs";
 import { useRouter } from "next/router";
 import { ReactNode, useEffect, useState } from "react";
 import { useAccount, useNetwork, useWalletClient } from "wagmi";
-import { readContract, writeContract } from "@wagmi/core"
+import { readContract, writeContract, waitForTransaction } from "@wagmi/core"
 import USDC from "../../abi/USDC.json"
 import SeniorPool from "../../abi/SeniorPool.json"
 import { constants } from "@/commons/constants";
 import { Anchor, Button, Col, InputNumber, Row, Slider } from "antd";
 import { toast } from "react-toastify";
+import { MonitorOutlined } from '@ant-design/icons';
 
 interface Props {
     children: ReactNode;
@@ -24,7 +25,6 @@ export default function SeniorLoanDetailPage() {
     const { chain } = useNetwork()
     const [chainId, setChainId] = useState(0);
     const [seniorLoanDetailInfo, setSeniorLoanDetailInfo] = useState({})
-
     const [wantInvestAmount, setWantInvestAmount] = useState(0)
     const [assets, setAssets] = useState(0)
     const { data: walletClient } = useWalletClient()
@@ -91,14 +91,28 @@ export default function SeniorLoanDetailPage() {
                 nonces as any
             )
 
-            await writeContract({
+            const { hash } = await writeContract({
                 address: contractAddr.mumbai.seniorPool as any,
                 abi: SeniorPool,
                 functionName: 'depositWithPermit',
                 args: [BigNumber(wantInvestAmount).multipliedBy(BigNumber(constants.ONE_MILLION)), signatureDeadline, splitedSignature.v, splitedSignature.r, splitedSignature.s],
             })
 
-            toast.success("Invest successfully")
+            setWantInvestAmount(0)
+
+            const { status } = await waitForTransaction({
+                hash: hash,
+                confirmations: 3,
+                chainId
+            })
+
+            if (status == 'success') {
+                toast.success("Invest successfully")
+            }
+            if (status == 'reverted') {
+                toast.error('Transaction reverted')
+            }
+
         } catch (error) {
             console.log(error)
             try {
@@ -156,7 +170,7 @@ export default function SeniorLoanDetailPage() {
                 <div id="invest" style={{ height: 'auto', marginBottom: '50px', borderRadius: '5%', padding: '10px' }} className='bg-amber-300' >
                     <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
                         <div style={{ margin: '10px', fontSize: '16px' }}>Doberman Protocol</div>
-                        <a style={{ margin: '10px' }} href={`https://mumbai.polygonscan.com/address/${contractAddr.mumbai.seniorPool}#code`} target="_blank" className="text-sky-500 hover:underline hover:underline-offset-3 ">MumbaiScan</a>
+                        <a style={{ margin: '10px' }} href={`https://mumbai.polygonscan.com/address/${contractAddr.mumbai.seniorPool}#code`} target="_blank" className="text-sky-500 hover:underline hover:underline-offset-3 "><MonitorOutlined style={{ marginRight: '5px', fontSize: '20px' }} />MumbaiScan </a>
                     </div>
                     <div style={{ margin: '10px', fontSize: '24px', fontWeight: 'bold' }}>Doberman Senior Pool</div>
                     <div style={{ margin: '10px', fontSize: '14px', textAlign: 'justify', lineHeight: 1.5 }}>The Senior Pool is a pool of capital that is diversified across all Borrower Pools on the Doberman protocol. Liquidity Providers (LPs) who provide capital into the Senior Pool are capital providers in search of passive, diversified exposure across all Borrower Pools. This capital is protected by junior (first-loss) capital in each Borrower Pool.</div>

@@ -172,9 +172,14 @@ export default function AccountPage() {
             const res = await axios.get(process.env.NEXT_PUBLIC_API_BASE_URL + '/kyc/info', {
                 headers: { Authorization: `Bearer ${token}` }
             })
-            if (res.data.id != '') {
+            if (res.data.id != '' && res.data.id != null) {
                 setKycStatus(true)
                 setKycVerifiedStatus(false)
+            }
+            if (res.data.mintSignature != '' && res.data.mintSignature != null) {
+                setKycVerifiedStatus(true)
+                setMintSignature(res.data.mintSignature)
+
             }
         } catch (error) {
             console.log(error)
@@ -232,7 +237,7 @@ export default function AccountPage() {
                                         kycStatus ? (
                                             kycVerifiedStatus ?
                                                 (<div id='uid-and-wallet'>
-                                                    <button onClick={write as any}>Mint UID token</button>
+                                                    <div className="btn-sm bg-sky-400" style={{ cursor: 'pointer' }} onClick={write as any}>Mint UID token</div>
                                                 </div>) : (
                                                     <div id="uid-and-wallet" className="text-lime-500">
                                                         Wait to be validated KYC info by admin

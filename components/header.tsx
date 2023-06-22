@@ -23,7 +23,7 @@ export default function Header() {
     {
       key: '1',
       label: (
-        <a target="_blank" rel="noopener noreferrer" href="/borrow" >
+        <a rel="noopener noreferrer" href="/borrow" >
           <div className="font-medium text-purple-600 hover:text-gray-200 px-4 py-3 flex items-center transition duration-150 ease-in-out">
             Borrow
           </div>
@@ -33,7 +33,7 @@ export default function Header() {
     {
       key: '2',
       label: (
-        <a target="_blank" rel="noopener noreferrer" href="/dashboard" >
+        <a rel="noopener noreferrer" href="/dashboard" >
           <div className="font-medium text-purple-600 hover:text-gray-200 px-4 py-3 flex items-center transition duration-150 ease-in-out">
             Dashboard
           </div>

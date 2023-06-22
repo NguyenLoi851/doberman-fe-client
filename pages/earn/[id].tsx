@@ -7,12 +7,13 @@ import dayjs from "dayjs";
 import { useRouter } from "next/router";
 import { ReactNode, useEffect, useState } from "react";
 import { useAccount, useNetwork, useWalletClient } from "wagmi";
-import { readContract, writeContract } from "@wagmi/core"
+import { readContract, writeContract, waitForTransaction } from "@wagmi/core"
 import USDC from "../../abi/USDC.json"
 import TranchedPool from "../../abi/TranchedPool.json"
 import { constants } from "@/commons/constants";
 import { Anchor, Button, Col, InputNumber, Row, Slider } from "antd";
 import { toast } from "react-toastify";
+import { MonitorOutlined } from '@ant-design/icons';
 
 interface Props {
     children: ReactNode;
@@ -125,14 +126,28 @@ export default function LoanDetailPage() {
                 nonces as any
             )
 
-            await writeContract({
+            const { hash } = await writeContract({
                 address: props.address as any,
                 abi: TranchedPool,
                 functionName: 'depositWithPermit',
                 args: [2, BigNumber(wantInvestAmount).multipliedBy(BigNumber(constants.ONE_MILLION)), signatureDeadline, splitedSignature.v, splitedSignature.r, splitedSignature.s],
             })
 
-            toast.success("Invest successfully")
+            setWantInvestAmount(0)
+
+            const { status } = await waitForTransaction({
+                hash: hash,
+                confirmations: 3,
+                chainId
+            })
+
+            if (status == 'success') {
+                toast.success("Invest successfully")
+            }
+            if (status == 'reverted') {
+                toast.error('Transaction reverted')
+            }
+
         } catch (error) {
             try {
                 toast.error((JSON.parse(JSON.stringify(error)) as any).shortMessage.split(':')[1])
@@ -189,7 +204,7 @@ export default function LoanDetailPage() {
                 <div id="invest" style={{ height: 'auto', background: 'rgb(246, 254, 0)', marginBottom: '50px', borderRadius: '5%', padding: '10px' }} >
                     <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
                         <div style={{ margin: '10px', fontSize: '16px' }}>{props.companyName}</div>
-                        <a style={{ margin: '10px' }} href={`https://mumbai.polygonscan.com/address/${props.address}#code`} target="_blank" className="text-sky-500 hover:underline hover:underline-offset-3 ">MumbaiScan</a>
+                        <a style={{ margin: '10px' }} href={`https://mumbai.polygonscan.com/address/${props.address}#code`} target="_blank" className="text-sky-500 hover:underline hover:underline-offset-3 "><MonitorOutlined style={{ marginRight: '5px', fontSize: '20px' }} />MumbaiScan </a>
                     </div>
                     <div style={{ margin: '10px', fontSize: '24px', fontWeight: 'bold' }}>{props.projectName}</div>
                     <div style={{ margin: '10px', fontSize: '14px', textAlign: 'justify', lineHeight: 1.5 }}>{props.projectIntro}</div>
@@ -197,6 +212,7 @@ export default function LoanDetailPage() {
                     <div style={{ margin: '10px', fontSize: '16px' }}>Fundable At: {dayjs(Number((loanDetailInfo as any).fundableAt) * 1000).format('DD/MM/YYYY hh:mm:ss')}</div>
                     <div style={{ margin: '10px', fontSize: '16px' }}>Junior deposited amount: {juniorDeposited} USDC</div>
                     <div style={{ margin: '10px', fontSize: '16px' }}>FundingLimit: {fundingLimit} USDC</div>
+                    <div style={{ margin: '10px', fontSize: '16px' }}>Invested ratio: </div>
                     <div style={{ margin: '10px' }} >
                         <Slider
                             value={juniorDeposited + wantInvestAmount}

@@ -83,10 +83,12 @@ export default function EarnPage() {
         return {
           ...item,
           ...res2.data
-        }
+        };
       })
 
       Promise.all(addMetadata).then((result) => {
+        console.log("result", result)
+        result = result.filter(item => item.companyName)
         setOpenLoans(result as any)
       })
     }

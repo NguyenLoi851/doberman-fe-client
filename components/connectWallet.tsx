@@ -13,6 +13,7 @@ import { useRouter } from 'next/router';
 import { shortenAddress } from './shortenAddress';
 import { constants } from '@/commons/constants';
 import { useEffect, useState } from 'react';
+import { switchNetwork as switchNetworkCore } from '@wagmi/core'
 
 export default function ConnectWallet() {
   const { address, connector, isConnected } = useAccount()
@@ -22,8 +23,19 @@ export default function ConnectWallet() {
   const { switchNetwork } = useSwitchNetwork()
   const [chainId, setChainId] = useState(0)
 
+  const handleSwitchNetworkCore = async () => {
+    await switchNetworkCore({ chainId: constants.MUMBAI_ID })
+  }
+
   useEffect(() => {
-    setChainId(chain?.id || 0)
+    try {
+      setChainId(chain?.id || 0)
+      if (chain?.id != constants.MUMBAI_ID && connector && isConnected) {
+        handleSwitchNetworkCore()
+      }
+    } catch (error) {
+      console.log(error)
+    }
 
   }, [chain])
 
