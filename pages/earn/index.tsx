@@ -87,7 +87,6 @@ export default function EarnPage() {
       })
 
       Promise.all(addMetadata).then((result) => {
-        console.log("result", result)
         result = result.filter(item => item.companyName)
         setOpenLoans(result as any)
       })
@@ -108,6 +107,7 @@ export default function EarnPage() {
       })
 
       Promise.all(addMetadata).then((result2) => {
+        result2 = result2.filter(item => item.companyName)
         setCloseLoans(result2 as any)
       })
     }

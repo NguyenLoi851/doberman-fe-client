@@ -11,12 +11,18 @@ import { readContract, writeContract, waitForTransaction } from "@wagmi/core"
 import USDC from "../../abi/USDC.json"
 import TranchedPool from "../../abi/TranchedPool.json"
 import { constants } from "@/commons/constants";
-import { Anchor, Button, Col, InputNumber, Row, Slider } from "antd";
+import { Anchor, Button, Col, InputNumber, Row, Slider, Statistic } from "antd";
 import { toast } from "react-toastify";
 import { MonitorOutlined } from '@ant-design/icons';
 
 interface Props {
     children: ReactNode;
+}
+
+enum TrancheInvestStatus {
+    OPEN,
+    JUNIOR_LOCK,
+    SENIOR_LOCK
 }
 
 export default function LoanDetailPage() {
@@ -29,7 +35,9 @@ export default function LoanDetailPage() {
 
     const [fundingLimit, setFundingLimit] = useState(0)
     const [juniorDeposited, setJuniorDeposited] = useState(0)
+    const [seniorDeposited, setSeniorDeposited] = useState(0)
     const [wantInvestAmount, setWantInvestAmount] = useState(0)
+    const [trancheInvestStatus, setTrancheInvestStatus] = useState(TrancheInvestStatus.OPEN)
 
     const { data: walletClient } = useWalletClient()
     const tokenDetailLoanQuery = `
@@ -54,6 +62,7 @@ export default function LoanDetailPage() {
             interestRateBigInt
             isPaused
             juniorDeposited
+            seniorDeposited
             juniorFeePercent
             lateFeeRate
             nextDueTime
@@ -70,6 +79,8 @@ export default function LoanDetailPage() {
             totalDeposited
             txHash
             usdcApy
+            juniorLocked
+            seniorLocked
         }
     }`
 
@@ -79,19 +90,33 @@ export default function LoanDetailPage() {
     })
 
     const getLoanDetailInfo = async () => {
-        if (!props.address) {
-            return;
+        try {
+            if (!props.address) {
+                return;
+            }
+
+            const res = await client.query({
+                query: gql(tokenDetailLoanQuery),
+                variables: {
+                    poolId: (props.address as any).toLowerCase() ?? ""
+                }
+            })
+            setLoanDetailInfo(res.data.tranchedPool)
+            setFundingLimit(Number((res.data.tranchedPool as any).fundingLimit) / constants.ONE_MILLION)
+            setJuniorDeposited(Number((res.data.tranchedPool as any).juniorDeposited) / constants.ONE_MILLION)
+            setSeniorDeposited(Number((res.data.tranchedPool as any).seniorDeposited) / constants.ONE_MILLION)
+            if (res && res.data && res.data.tranchedPool) {
+                if ((res.data.tranchedPool as any).seniorLocked == true) {
+                    setTrancheInvestStatus(TrancheInvestStatus.SENIOR_LOCK)
+                } else if ((res.data.tranchedPool as any).juniorLocked == true) {
+                    setTrancheInvestStatus(TrancheInvestStatus.JUNIOR_LOCK)
+                }
+            }
+
+        } catch (error) {
+            console.log(error)
         }
 
-        const res = await client.query({
-            query: gql(tokenDetailLoanQuery),
-            variables: {
-                poolId: (props.address as any).toLowerCase() ?? ""
-            }
-        })
-        setLoanDetailInfo(res.data.tranchedPool)
-        setFundingLimit(Number((res.data.tranchedPool as any).fundingLimit) / constants.ONE_MILLION)
-        setJuniorDeposited(Number((res.data.tranchedPool as any).juniorDeposited) / constants.ONE_MILLION)
     }
 
     useEffect(() => {
@@ -137,8 +162,7 @@ export default function LoanDetailPage() {
 
             const { status } = await waitForTransaction({
                 hash: hash,
-                confirmations: 3,
-                chainId
+                confirmations: 6,
             })
 
             if (status == 'success') {
@@ -210,29 +234,41 @@ export default function LoanDetailPage() {
                     <div style={{ margin: '10px', fontSize: '14px', textAlign: 'justify', lineHeight: 1.5 }}>{props.projectIntro}</div>
                     <div style={{ margin: '10px', fontSize: '16px' }}>Fixed USDC APY {(loanDetailInfo as any).usdcApy} %</div>
                     <div style={{ margin: '10px', fontSize: '16px' }}>Fundable At: {dayjs(Number((loanDetailInfo as any).fundableAt) * 1000).format('DD/MM/YYYY hh:mm:ss')}</div>
-                    <div style={{ margin: '10px', fontSize: '16px' }}>Junior deposited amount: {juniorDeposited} USDC</div>
-                    <div style={{ margin: '10px', fontSize: '16px' }}>FundingLimit: {fundingLimit} USDC</div>
-                    <div style={{ margin: '10px', fontSize: '16px' }}>Invested ratio: </div>
+                    <div className="flex justify-between" style={{ margin: '10px', fontSize: '16px', marginTop: '50px' }}>
+                        <Statistic title="Junior Deposited Amount (USDC)" value={juniorDeposited} precision={2} />
+                        <Statistic title="Senior Deposited Amount (USDC)" value={seniorDeposited} precision={2} />
+                        <Statistic title="Funding Limit (USDC)" value={fundingLimit} precision={2} />
+                    </div>
+                    <div style={{ margin: '10px', fontSize: '16px', textAlign: 'center' }}>Invested ratio </div>
                     <div style={{ margin: '10px' }} >
                         <Slider
-                            value={juniorDeposited + wantInvestAmount}
+                            value={juniorDeposited + seniorDeposited + wantInvestAmount}
                             max={fundingLimit}
                             step={0.01}
                             disabled={true}
                         />
                     </div>
+
                     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                        <InputNumber
-                            placeholder="Input value"
-                            value={wantInvestAmount}
-                            onChange={handleWantInvestAmount}
-                            max={fundingLimit - juniorDeposited}
-                            style={{ width: 150, marginTop: '10px' }}
-                        />
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                        {Number((loanDetailInfo as any).fundableAt) < dayjs().unix() && (
-                            <Button onClick={handleDeposit} style={{ margin: '20px', marginTop: '25px' }}>Deposit</Button>
+                        {Number((loanDetailInfo as any).fundableAt) > dayjs().unix() && (
+                            <div style={{ margin: '20px', marginTop: '25px' }}>Wait until {dayjs(Number((loanDetailInfo as any).fundableAt) * 1000).format('DD/MM/YYYY hh:mm:ss')}</div>
+                        )}
+                        {trancheInvestStatus == 0 && Number((loanDetailInfo as any).fundableAt) <= dayjs().unix() && (
+                            <div>
+                                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                                    <InputNumber
+                                        placeholder="Input value"
+                                        value={wantInvestAmount}
+                                        onChange={handleWantInvestAmount}
+                                        max={fundingLimit - juniorDeposited}
+                                        style={{ width: 150, marginTop: '10px' }}
+                                    />
+                                </div>
+                                <div onClick={handleDeposit} style={{ margin: '20px', marginTop: '25px', cursor: 'pointer' }} className="btn-sm bg-sky-200 hover:bg-sky-500">Deposit</div>
+                            </div>
+                        )}
+                        {trancheInvestStatus != 0 && Number((loanDetailInfo as any).fundableAt) <= dayjs().unix() && (
+                            <div style={{ margin: '20px', marginTop: '25px' }} className="btn-sm bg-sky-200">Locked</div>
                         )}
                     </div>
 

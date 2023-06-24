@@ -11,7 +11,7 @@ import { readContract, writeContract, waitForTransaction } from "@wagmi/core"
 import USDC from "../../abi/USDC.json"
 import SeniorPool from "../../abi/SeniorPool.json"
 import { constants } from "@/commons/constants";
-import { Anchor, Button, Col, InputNumber, Row, Slider } from "antd";
+import { Anchor, Button, Col, InputNumber, Row, Slider, Statistic } from "antd";
 import { toast } from "react-toastify";
 import { MonitorOutlined } from '@ant-design/icons';
 
@@ -28,6 +28,8 @@ export default function SeniorLoanDetailPage() {
     const [wantInvestAmount, setWantInvestAmount] = useState(0)
     const [assets, setAssets] = useState(0)
     const { data: walletClient } = useWalletClient()
+    const [totalShares, setTotalShares] = useState(0)
+
     const tokenDetailSeniorLoanQuery = `
     query SeniorLoanDetail {
         seniorPool(id: "1") {
@@ -52,11 +54,16 @@ export default function SeniorLoanDetailPage() {
     })
 
     const getSeniorLoanDetailInfo = async () => {
-        const res = await client.query({
-            query: gql(tokenDetailSeniorLoanQuery)
-        })
-        setSeniorLoanDetailInfo(res.data.seniorPool)
-        setAssets(Number(res.data.seniorPool.assets) / constants.ONE_MILLION)
+        try {
+            const res = await client.query({
+                query: gql(tokenDetailSeniorLoanQuery)
+            })
+            setSeniorLoanDetailInfo(res.data.seniorPool)
+            setAssets(Number(res.data.seniorPool.assets) / constants.ONE_MILLION)
+            setTotalShares(Number(BigNumber(res.data.seniorPool.totalShares).div(constants.ONE_BILLION)))
+        } catch (error) {
+            console.log(error)
+        }
     }
 
     useEffect(() => {
@@ -102,8 +109,7 @@ export default function SeniorLoanDetailPage() {
 
             const { status } = await waitForTransaction({
                 hash: hash,
-                confirmations: 3,
-                chainId
+                confirmations: 6,
             })
 
             if (status == 'success') {
@@ -123,6 +129,16 @@ export default function SeniorLoanDetailPage() {
         }
 
     }
+
+    // const getUserShares = async() => {
+    //     try {
+    //         await readContract({
+    //             address: contractAddr.mumbai.
+    //         })
+    //     } catch (error) {
+
+    //     }
+    // }
 
     const handleWantInvestAmount = (value: any) => {
         setWantInvestAmount(value)
@@ -175,7 +191,11 @@ export default function SeniorLoanDetailPage() {
                     <div style={{ margin: '10px', fontSize: '24px', fontWeight: 'bold' }}>Doberman Senior Pool</div>
                     <div style={{ margin: '10px', fontSize: '14px', textAlign: 'justify', lineHeight: 1.5 }}>The Senior Pool is a pool of capital that is diversified across all Borrower Pools on the Doberman protocol. Liquidity Providers (LPs) who provide capital into the Senior Pool are capital providers in search of passive, diversified exposure across all Borrower Pools. This capital is protected by junior (first-loss) capital in each Borrower Pool.</div>
                     <div style={{ margin: '10px', fontSize: '16px' }}>Fixed USDC APY {(seniorLoanDetailInfo as any).estimatedApy} %</div>
-                    <div style={{ margin: '10px', fontSize: '16px' }}>Assets: {assets} USDC</div>
+                    <div className="flex justify-between" style={{ margin: '10px', fontSize: '16px', marginTop: '50px' }}>
+                        <Statistic title="Assets (USDC)" value={assets} precision={2} />
+                        <Statistic title="Your Shares (GFI)" value={totalShares} precision={2} />
+                        <Statistic title="Shares (GFI)" value={totalShares} precision={2} />
+                    </div>
                     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                         <InputNumber
                             placeholder="Input value"
