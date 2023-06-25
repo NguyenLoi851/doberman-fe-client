@@ -225,7 +225,7 @@ export default function LoanDetailPage() {
             <Col span={2}>
             </Col>
             <Col span={12}>
-                <div id="invest" style={{ height: 'auto', background: 'rgb(246, 254, 0)', marginBottom: '50px', borderRadius: '5%', padding: '10px' }} >
+                <div id="invest" style={{ height: 'auto', marginBottom: '50px', borderRadius: '5%', padding: '10px' }} className="bg-lime-300" >
                     <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
                         <div style={{ margin: '10px', fontSize: '16px' }}>{props.companyName}</div>
                         <a style={{ margin: '10px' }} href={`https://mumbai.polygonscan.com/address/${props.address}#code`} target="_blank" className="text-sky-500 hover:underline hover:underline-offset-3 "><MonitorOutlined style={{ marginRight: '5px', fontSize: '20px' }} />MumbaiScan </a>
@@ -239,8 +239,9 @@ export default function LoanDetailPage() {
                         <Statistic title="Senior Deposited Amount (USDC)" value={seniorDeposited} precision={2} />
                         <Statistic title="Funding Limit (USDC)" value={fundingLimit} precision={2} />
                     </div>
-                    <div style={{ margin: '10px', fontSize: '16px', textAlign: 'center' }}>Invested ratio </div>
-                    <div style={{ margin: '10px' }} >
+                    <div style={{ margin: '10px', textAlign: 'center', marginTop: '50px', fontSize: '24px' }}>Invested ratio </div>
+                    <div style={{ marginRight: '10px', display: 'flex', justifyContent: 'end', fontSize: '24px' }} className="text-sky-600">{juniorDeposited + seniorDeposited + wantInvestAmount} / {fundingLimit} USDC ({((juniorDeposited + seniorDeposited + wantInvestAmount) / fundingLimit * 100).toFixed(2)}%)</div>
+                    <div style={{ margin: '10px', marginTop: '0px' }} >
                         <Slider
                             value={juniorDeposited + seniorDeposited + wantInvestAmount}
                             max={fundingLimit}
@@ -264,7 +265,7 @@ export default function LoanDetailPage() {
                                         style={{ width: 150, marginTop: '10px' }}
                                     />
                                 </div>
-                                <div onClick={handleDeposit} style={{ margin: '20px', marginTop: '25px', cursor: 'pointer' }} className="btn-sm bg-sky-200 hover:bg-sky-500">Deposit</div>
+                                <div onClick={handleDeposit} style={{ margin: '20px', marginTop: '25px', cursor: 'pointer' }} className="btn-sm bg-sky-300 hover:bg-sky-500 rounded-lg">Deposit</div>
                             </div>
                         )}
                         {trancheInvestStatus != 0 && Number((loanDetailInfo as any).fundableAt) <= dayjs().unix() && (

@@ -1,3 +1,5 @@
+"use client";
+
 import { contractAddr } from "@/commons/contractAddress";
 import { buildPermitSignature, Domain } from "@/commons/functions";
 import PageLayout from "@/components/layouts/PageLayout";
@@ -14,7 +16,7 @@ import { constants } from "@/commons/constants";
 import { Anchor, Button, Col, InputNumber, Row, Slider, Statistic } from "antd";
 import { toast } from "react-toastify";
 import { MonitorOutlined } from '@ant-design/icons';
-
+import Fidu from "../../abi/Fidu.json";
 interface Props {
     children: ReactNode;
 }
@@ -29,6 +31,7 @@ export default function SeniorLoanDetailPage() {
     const [assets, setAssets] = useState(0)
     const { data: walletClient } = useWalletClient()
     const [totalShares, setTotalShares] = useState(0)
+    const [myShares, setMyShares] = useState(0)
 
     const tokenDetailSeniorLoanQuery = `
     query SeniorLoanDetail {
@@ -69,7 +72,8 @@ export default function SeniorLoanDetailPage() {
     useEffect(() => {
         getSeniorLoanDetailInfo()
         setChainId(chain?.id || 80001)
-    }, [chain])
+        getUserShares()
+    }, [chain, address, myShares])
 
     const domain: Domain = {
         version: '2',
@@ -80,6 +84,10 @@ export default function SeniorLoanDetailPage() {
     const signatureDeadline = Math.floor(Date.now() / 1000 + 90000);
 
     const handleDeposit = async () => {
+        if (wantInvestAmount == 0) {
+            toast.error("Deposit amount must greater than 0")
+            return;
+        }
         try {
             const nonces = await readContract({
                 address: contractAddr.mumbai.usdc as any,
@@ -114,15 +122,19 @@ export default function SeniorLoanDetailPage() {
 
             if (status == 'success') {
                 toast.success("Invest successfully")
+                await getUserShares()
             }
             if (status == 'reverted') {
                 toast.error('Transaction reverted')
             }
-
         } catch (error) {
             console.log(error)
             try {
-                toast.error((JSON.parse(JSON.stringify(error)) as any).shortMessage.split(':')[1])
+                if ((JSON.parse(JSON.stringify(error)) as any).shortMessage.split(':')[1].trim() == 'ERC20') {
+                    toast.error((JSON.parse(JSON.stringify(error)) as any).shortMessage.split(':')[2])
+                } else {
+                    toast.error((JSON.parse(JSON.stringify(error)) as any).shortMessage.split(':')[1])
+                }
             } catch (error2) {
                 console.log(JSON.stringify(error2))
             }
@@ -130,15 +142,19 @@ export default function SeniorLoanDetailPage() {
 
     }
 
-    // const getUserShares = async() => {
-    //     try {
-    //         await readContract({
-    //             address: contractAddr.mumbai.
-    //         })
-    //     } catch (error) {
-
-    //     }
-    // }
+    const getUserShares = async () => {
+        try {
+            const shareAmountWD = await readContract({
+                address: contractAddr.mumbai.fidu as any,
+                abi: Fidu,
+                functionName: 'balanceOf',
+                args: [address as any]
+            })
+            setMyShares(Number(BigNumber(shareAmountWD as any).div(BigNumber(constants.ONE_BILLION))))
+        } catch (error) {
+            console.log(error)
+        }
+    }
 
     const handleWantInvestAmount = (value: any) => {
         setWantInvestAmount(value)
@@ -192,10 +208,24 @@ export default function SeniorLoanDetailPage() {
                     <div style={{ margin: '10px', fontSize: '14px', textAlign: 'justify', lineHeight: 1.5 }}>The Senior Pool is a pool of capital that is diversified across all Borrower Pools on the Doberman protocol. Liquidity Providers (LPs) who provide capital into the Senior Pool are capital providers in search of passive, diversified exposure across all Borrower Pools. This capital is protected by junior (first-loss) capital in each Borrower Pool.</div>
                     <div style={{ margin: '10px', fontSize: '16px' }}>Fixed USDC APY {(seniorLoanDetailInfo as any).estimatedApy} %</div>
                     <div className="flex justify-between" style={{ margin: '10px', fontSize: '16px', marginTop: '50px' }}>
-                        <Statistic title="Assets (USDC)" value={assets} precision={2} />
-                        <Statistic title="Your Shares (GFI)" value={totalShares} precision={2} />
-                        <Statistic title="Shares (GFI)" value={totalShares} precision={2} />
+                        <div>
+                            <div style={{ marginTop: '20px' }}>
+                                <Statistic title="Total Assets (USDC)" value={assets} precision={2} />
+                            </div>
+                            <div style={{ marginTop: '50px' }}>
+                                <Statistic title="Total Shares Amount (GFI)" value={totalShares} precision={2} />
+                            </div>
+                        </div>
+                        <div>
+                            <div style={{ marginTop: '20px' }}>
+                                <Statistic title="Your Shares Amount (GFI)" value={myShares} precision={2} />
+                            </div>
+                            <div style={{ marginTop: '50px' }}>
+                                <Statistic title="Your Shares Percentage (%)" value={myShares / totalShares * 100} precision={2} />
+                            </div>
+                        </div>
                     </div>
+
                     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                         <InputNumber
                             placeholder="Input value"
@@ -206,7 +236,9 @@ export default function SeniorLoanDetailPage() {
                         />
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                        <Button onClick={handleDeposit} style={{ margin: '20px', marginTop: '25px' }}>Deposit</Button>
+                        <div onClick={handleDeposit} style={{ margin: '20px', marginTop: '25px', cursor: 'pointer' }}
+                            className="btn-sm bg-sky-600 text-white hover:text-black hover:bg-sky-400 border border-2 border-slate-600 rounded-md"
+                        >Deposit</div>
 
                     </div>
 

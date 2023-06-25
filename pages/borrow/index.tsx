@@ -157,7 +157,7 @@ export default function BorrowPage() {
                                 renderItem={(item, index) => (
                                     <List.Item
                                         style={{ cursor: 'pointer', marginTop: '12px', marginBottom: '12px' }}
-                                        actions={[<div className='btn-sm bg-slate-300 text-black rounded-md hover:underline hover:underline-offset-4 hover:font-bold' onClick={() => handleDetailLoanInfo(item, index + 1)}>View Detail</div>]}
+                                        actions={[<div className='btn-sm bg-slate-300 text-black rounded-md hover:font-bold bg-sky-300' onClick={() => handleDetailLoanInfo(item, index + 1)}>View Detail</div>]}
                                         className='bg-white rounded-lg border-amber-300'>
                                         <List.Item.Meta
                                             avatar={index + 1 + '.'}

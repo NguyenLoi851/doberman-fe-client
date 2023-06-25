@@ -8,7 +8,7 @@ export default function Footer() {
     const router = useRouter()
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center', padding: '10px' }} className="">
+        <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', padding: '10px', marginLeft: '280px', marginRight: '280px' }} className="">
             <div style={{ display: 'flex', flexDirection: 'row', marginRight: '50px' }}>
                 <button className="font-medium text-purple-600 hover:text-gray-200 px-4 py-3 flex items-center transition duration-150 ease-in-out">About</button>
                 <button className="font-medium text-purple-600 hover:text-gray-200 px-4 py-3 flex items-center transition duration-150 ease-in-out">Terms</button>

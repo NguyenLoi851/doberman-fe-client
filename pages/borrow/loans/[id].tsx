@@ -18,6 +18,7 @@ import Borrower from "../../../abi/Borrower.json"
 import SeniorPool from "../../../abi/SeniorPool.json"
 import { contractAddr } from "@/commons/contractAddress";
 import { MonitorOutlined } from '@ant-design/icons';
+import BigNumber from "bignumber.js";
 
 interface Props {
     children: ReactNode;
@@ -309,8 +310,8 @@ export default function LoanDetailPage() {
 
     const handleDrawdown = async () => {
         try {
-            const drawdownAmount = (tranchedPool as any).juniorDeposited + (tranchedPool as any).seniorDeposited > (tranchedPool as any).fundingLimit ?
-                (tranchedPool as any).fundingLimit : (tranchedPool as any).juniorDeposited + (tranchedPool as any).seniorDeposited
+            const drawdownAmount = BigNumber((tranchedPool as any).juniorDeposited).plus(BigNumber((tranchedPool as any).seniorDeposited)).isGreaterThan(BigNumber((tranchedPool as any).fundingLimit)) ?
+                BigNumber((tranchedPool as any).fundingLimit) : BigNumber((tranchedPool as any).juniorDeposited).plus(BigNumber((tranchedPool as any).seniorDeposited))
 
             const { hash } = await writeContract({
                 address: borrowerProxy as any,
@@ -330,6 +331,7 @@ export default function LoanDetailPage() {
                 toast.error('Transaction reverted')
             }
         } catch (error) {
+            console.log("drawdown error", error)
             try {
                 toast.error((error as any).cause.reason)
             } catch (error2) {
@@ -636,8 +638,9 @@ export default function LoanDetailPage() {
                                     <Statistic title="Senior Deposited Amount (USDC)" value={((tranchedPool as any).seniorDeposited) / constants.ONE_MILLION} precision={2} />
                                     <Statistic title="Funding Limit (USDC)" value={((tranchedPool as any).fundingLimit) / constants.ONE_MILLION} precision={2} />
                                 </div>
-                                <div style={{ margin: '10px', fontSize: '16px', textAlign: 'center', marginTop: '50px' }}>Invested ratio </div>
-                                <div style={{ margin: '10px', marginTop: '20px' }} >
+                                <div style={{ margin: '10px', textAlign: 'center', marginTop: '50px', fontSize: '24px' }}>Invested ratio </div>
+                                <div style={{ marginRight: '10px', display: 'flex', justifyContent: 'end', fontSize: '24px' }} className="text-sky-600">{((tranchedPool as any).juniorDeposited) / constants.ONE_MILLION + ((tranchedPool as any).seniorDeposited) / constants.ONE_MILLION} / {((tranchedPool as any).fundingLimit) / constants.ONE_MILLION} USDC ({((((tranchedPool as any).juniorDeposited) / constants.ONE_MILLION + ((tranchedPool as any).seniorDeposited) / constants.ONE_MILLION) / ((tranchedPool as any).fundingLimit) * constants.ONE_MILLION * 100).toFixed(2)}%)</div>
+                                <div style={{ margin: '10px', marginTop: '0px' }} >
                                     <Slider
                                         value={((tranchedPool as any).juniorDeposited) / constants.ONE_MILLION + ((tranchedPool as any).seniorDeposited) / constants.ONE_MILLION}
                                         max={((tranchedPool as any).fundingLimit) / constants.ONE_MILLION}
@@ -653,22 +656,22 @@ export default function LoanDetailPage() {
                                             {
                                                 title: <div>Junior Investment Process</div>,
                                                 description: currAction == 0 ?
-                                                    <div className="btn-sm bg-sky-200 hover:bg-sky-300" style={{ cursor: "pointer" }} onClick={handleLockJuniorInvestment}>Lock Junior Investment</div> :
-                                                    <div className="btn-sm bg-sky-200" >Lock Junior Investment</div>,
+                                                    <div className="btn-sm bg-sky-300 hover:bg-sky-400" style={{ cursor: "pointer" }} onClick={handleLockJuniorInvestment}>Lock Junior Investment</div> :
+                                                    <div className="btn-sm bg-sky-100" >Lock Junior Investment</div>,
                                                 disabled: currAction == 0,
                                             },
                                             {
                                                 title: <div>Senior Investment Process</div>,
                                                 description: currAction == 1 ?
-                                                    <div className="btn-sm bg-sky-200 hover:bg-sky-300" style={{ cursor: "pointer" }} onClick={handleSeniorInvestment}>Call Senior Investment</div> :
-                                                    <div className="btn-sm bg-sky-200" >Call Senior Investment</div>,
+                                                    <div className="btn-sm bg-sky-300 hover:bg-sky-400" style={{ cursor: "pointer" }} onClick={handleSeniorInvestment}>Call Senior Investment (optional)</div> :
+                                                    <div className="btn-sm bg-sky-100" >Call Senior Investment</div>,
                                                 disabled: currAction == 1,
                                             },
                                             {
                                                 title: <div>End Investment</div>,
-                                                description: currAction == 2 ?
-                                                    <div className="btn-sm bg-sky-200 hover:bg-sky-300" style={{ cursor: "pointer" }} onClick={showModal}>Drawdown</div> :
-                                                    <div className="btn-sm bg-sky-200" >Drawdown</div>,
+                                                description: currAction == 2 || currAction == 1 ?
+                                                    <div className="btn-sm bg-sky-300 hover:bg-sky-400" style={{ cursor: "pointer" }} onClick={showModal}>Drawdown</div> :
+                                                    <div className="btn-sm bg-sky-100" >Drawdown</div>,
                                                 disabled: currAction == 2,
                                             },
                                         ]}
