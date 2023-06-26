@@ -11,7 +11,7 @@ import Header from "@/components/header";
 import Footer from "@/components/footer";
 import { toast } from "react-toastify";
 import PageLayout from "@/components/layouts/PageLayout";
-import { readContract, signMessage } from '@wagmi/core'
+import { readContract, signMessage, writeContract, waitForTransaction } from '@wagmi/core'
 import jwtDecode from "jwt-decode";
 import { Anchor, Col, Row } from "antd";
 
@@ -36,25 +36,50 @@ export default function AccountPage() {
     //     message: process.env.NEXT_PUBLIC_APP_ID + '#' + timestamp + '#' + chain?.id,
     // })
 
-    const { write, data } = useContractWrite({
-        address: contractAddr.mumbai.uniqueIdentity as any,
-        abi: UniqueIdentity,
-        functionName: 'mint',
-        args: [constants.UID_ID, constants.EXPIRES_AT, mintSignature],
-        value: constants.MINT_COST as any,
-        chainId: chainId,
-        onSuccess() {
-            toast.success("Mint UID token successfully")
-        },
-        onError() {
-            toast.error("Mint UID token fail")
-        }
-    })
+    // const { write, data } = useContractWrite({
+    //     address: contractAddr.mumbai.uniqueIdentity as any,
+    //     abi: UniqueIdentity,
+    //     functionName: 'mint',
+    //     args: [constants.UID_ID, constants.EXPIRES_AT, mintSignature],
+    //     value: constants.MINT_COST as any,
+    //     chainId: chainId,
+    //     onSuccess() {
+    //     },
+    //     onError() {
+    //     }
+    // })
 
-    const { isSuccess } = useWaitForTransaction({
-        confirmations: 6,
-        hash: data?.hash
-    })
+    // const { isSuccess } = useWaitForTransaction({
+    //     confirmations: 6,
+    //     hash: data?.hash
+    // })
+
+    const handleMintUIDToken = async () => {
+        try {
+            const { hash } = await writeContract({
+                address: contractAddr.mumbai.uniqueIdentity as any,
+                abi: UniqueIdentity,
+                functionName: 'mint',
+                args: [constants.UID_ID, constants.EXPIRES_AT, mintSignature],
+                value: constants.MINT_COST as any,
+                chainId: chainId,
+            })
+
+            const { status } = await waitForTransaction({
+                confirmations: 6,
+                hash
+            })
+            if (status == 'success') {
+                toast.success("Mint UID token successfully")
+            }
+            if (status == 'reverted') {
+                toast.error("Mint UID token fail")
+            }
+            await getKYCInfo()
+        } catch (error) {
+            console.log(error)
+        }
+    }
 
     const getUserUIDBalance = async () => {
         const data2: any = await readContract({
@@ -192,11 +217,11 @@ export default function AccountPage() {
         if (address) {
             getUserUIDBalance()
         }
-        if (isSuccess == true) {
-            router.reload()
-        }
+        // if (isSuccess == true) {
+        //     router.reload()
+        // }
         getKYCInfo()
-    }, [chain, isSuccess, address])
+    }, [chain, address])
 
     return (
         <div style={{ height: 'calc(100vh - 64px - 30px)' }}>
@@ -226,18 +251,18 @@ export default function AccountPage() {
                                 {userUIDBalance != 0 ? (
                                     <div id="uid-and-wallet" className="text-lime-500">You already own UID token</div>
                                 ) :
-                                    isSuccess ? (
+                                    userUIDBalance != 0 ? (
                                         <div id="uid-and-wallet">
                                             Successfully minted your UID token
-                                            <div>
+                                            {/* <div>
                                                 <a href={`https://sepolia.etherscan.io/tx/${data?.hash}`}>Etherscan</a>
-                                            </div>
+                                            </div> */}
                                         </div>
                                     ) : (
                                         kycStatus ? (
                                             kycVerifiedStatus ?
                                                 (<div id='uid-and-wallet'>
-                                                    <div className="btn-sm bg-sky-400" style={{ cursor: 'pointer' }} onClick={write as any}>Mint UID token</div>
+                                                    <div className="btn-sm bg-sky-400" style={{ cursor: 'pointer' }} onClick={handleMintUIDToken}>Mint UID token</div>
                                                 </div>) : (
                                                     <div id="uid-and-wallet" className="text-lime-500">
                                                         Wait to be validated KYC info by admin

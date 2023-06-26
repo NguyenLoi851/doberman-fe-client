@@ -44,6 +44,11 @@ export default function LoanDetailPage() {
     const [currAction, setCurrAction] = useState(0)
     const [sendToAddress, setSendToAddress] = useState()
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [wantRepayAmount, setWantRepayAmount] = useState(0)
+    const [lockJuniorInvestmentLoading, setLockJuniorInvestmentLoading] = useState(false)
+    const [callSeniorInvestmentLoading, setCallSeniorInvestmentLoading] = useState(false)
+    const [drawdownLoading, setDrawdownLoading] = useState(false)
+    const [repayLoading, setRepayLoading] = useState(false)
 
     const tokensQuery = `query BorrowerPage($userId: String!, $txHash: String!){
         borrowerContracts: borrowerContracts(where: {user: $userId}) {
@@ -249,6 +254,7 @@ export default function LoanDetailPage() {
     }
 
     const handleLockJuniorInvestment = async () => {
+        setLockJuniorInvestmentLoading(true)
         try {
             const { hash } = await writeContract({
                 address: borrowerProxy as any,
@@ -262,7 +268,7 @@ export default function LoanDetailPage() {
             })
 
             if (status == 'success') {
-                toast.success("Invest successfully")
+                toast.success("Lock junior tranche successfully")
             }
             if (status == 'reverted') {
                 toast.error('Transaction reverted')
@@ -274,9 +280,11 @@ export default function LoanDetailPage() {
                 console.log(error2)
             }
         }
+        setLockJuniorInvestmentLoading(false)
     }
 
     const handleSeniorInvestment = async () => {
+        setCallSeniorInvestmentLoading(true)
         try {
             const { hash } = await writeContract({
                 address: contractAddr.mumbai.seniorPool as any,
@@ -290,7 +298,7 @@ export default function LoanDetailPage() {
             })
 
             if (status == 'success') {
-                toast.success("Invest successfully")
+                toast.success("Call senior investment successfully")
             }
             if (status == 'reverted') {
                 toast.error('Transaction reverted')
@@ -302,6 +310,7 @@ export default function LoanDetailPage() {
                 console.log(error2)
             }
         }
+        setCallSeniorInvestmentLoading(false)
     }
 
     const handleSetSendToAddress = async (e: any) => {
@@ -309,6 +318,7 @@ export default function LoanDetailPage() {
     }
 
     const handleDrawdown = async () => {
+        setDrawdownLoading(true)
         try {
             const drawdownAmount = BigNumber((tranchedPool as any).juniorDeposited).plus(BigNumber((tranchedPool as any).seniorDeposited)).isGreaterThan(BigNumber((tranchedPool as any).fundingLimit)) ?
                 BigNumber((tranchedPool as any).fundingLimit) : BigNumber((tranchedPool as any).juniorDeposited).plus(BigNumber((tranchedPool as any).seniorDeposited))
@@ -338,9 +348,18 @@ export default function LoanDetailPage() {
                 console.log(error2)
             }
         }
+        setDrawdownLoading(false)
     }
 
+    const handleRepay = async () => {
+        setRepayLoading(true)
+        try {
 
+        } catch (error) {
+
+        }
+        setRepayLoading(false)
+    }
 
     return (
         <div style={{ height: 'calc(100% - 64px - 30px)' }}>
@@ -630,6 +649,7 @@ export default function LoanDetailPage() {
                         )
                         : (
                             <div>
+                                <div style={{ fontWeight: 'bold', fontSize: '30px', textAlign: 'center', marginTop: '30px', marginBottom: '30px' }} className="underline underline-offset-4">Overview</div>
                                 <div style={{ textAlign: 'center', marginTop: '50px' }}>
                                     <a style={{ margin: '10px', fontSize: '18px' }} href={`https://mumbai.polygonscan.com/address/${((tranchedPool as any).address)}#code`} target="_blank" className="text-sky-500 hover:underline hover:underline-offset-3 "><MonitorOutlined style={{ marginRight: '5px', fontSize: '20px' }} />Pool Address: {((tranchedPool as any).address)}  </a>
                                 </div>
@@ -638,8 +658,11 @@ export default function LoanDetailPage() {
                                     <Statistic title="Senior Deposited Amount (USDC)" value={((tranchedPool as any).seniorDeposited) / constants.ONE_MILLION} precision={2} />
                                     <Statistic title="Funding Limit (USDC)" value={((tranchedPool as any).fundingLimit) / constants.ONE_MILLION} precision={2} />
                                 </div>
-                                <div style={{ margin: '10px', textAlign: 'center', marginTop: '50px', fontSize: '24px' }}>Invested ratio </div>
-                                <div style={{ marginRight: '10px', display: 'flex', justifyContent: 'end', fontSize: '24px' }} className="text-sky-600">{((tranchedPool as any).juniorDeposited) / constants.ONE_MILLION + ((tranchedPool as any).seniorDeposited) / constants.ONE_MILLION} / {((tranchedPool as any).fundingLimit) / constants.ONE_MILLION} USDC ({((((tranchedPool as any).juniorDeposited) / constants.ONE_MILLION + ((tranchedPool as any).seniorDeposited) / constants.ONE_MILLION) / ((tranchedPool as any).fundingLimit) * constants.ONE_MILLION * 100).toFixed(2)}%)</div>
+                                <div style={{ fontSize: '24px', margin: '10px', display: 'flex', flexDirection: 'row', justifyContent: 'space-between', marginTop: '80px' }}>
+                                    <div style={{ textAlign: 'center' }}>Invested ratio </div>
+                                    {/* <div style={{ marginRight: '10px', display: 'flex', justifyContent: 'end', fontSize: '24px' }} className="text-sky-600">{(((tranchedPool as any).juniorDeposited) / constants.ONE_MILLION + ((tranchedPool as any).seniorDeposited) / constants.ONE_MILLION).toLocaleString()} / {(((tranchedPool as any).fundingLimit) / constants.ONE_MILLION).toLocaleString()} USDC ({((((tranchedPool as any).juniorDeposited) / constants.ONE_MILLION + ((tranchedPool as any).seniorDeposited) / constants.ONE_MILLION) / ((tranchedPool as any).fundingLimit) * constants.ONE_MILLION * 100).toFixed(2)}%)</div> */}
+                                    <div className="text-sky-600">{(((tranchedPool as any).juniorDeposited) / constants.ONE_MILLION + ((tranchedPool as any).seniorDeposited) / constants.ONE_MILLION).toLocaleString()} / {(((tranchedPool as any).fundingLimit) / constants.ONE_MILLION).toLocaleString()} USDC ({((((tranchedPool as any).juniorDeposited) / constants.ONE_MILLION + ((tranchedPool as any).seniorDeposited) / constants.ONE_MILLION) / ((tranchedPool as any).fundingLimit) * constants.ONE_MILLION * 100).toFixed(2)}%)</div>
+                                </div>
                                 <div style={{ margin: '10px', marginTop: '0px' }} >
                                     <Slider
                                         value={((tranchedPool as any).juniorDeposited) / constants.ONE_MILLION + ((tranchedPool as any).seniorDeposited) / constants.ONE_MILLION}
@@ -648,6 +671,8 @@ export default function LoanDetailPage() {
                                         disabled={true}
                                     />
                                 </div>
+
+                                <div style={{ fontWeight: 'bold', fontSize: '30px', textAlign: 'center', marginTop: '30px', marginBottom: '30px' }} className="underline underline-offset-4">Drawdown</div>
                                 <div style={{ marginTop: '50px' }}>
                                     <Steps
                                         direction="vertical"
@@ -656,62 +681,83 @@ export default function LoanDetailPage() {
                                             {
                                                 title: <div>Junior Investment Process</div>,
                                                 description: currAction == 0 ?
-                                                    <div className="btn-sm bg-sky-300 hover:bg-sky-400" style={{ cursor: "pointer" }} onClick={handleLockJuniorInvestment}>Lock Junior Investment</div> :
+                                                    <Button className="btn-sm bg-sky-300 hover:bg-sky-400" style={{ cursor: "pointer" }} onClick={handleLockJuniorInvestment} loading={lockJuniorInvestmentLoading}>Lock Junior Investment</Button> :
                                                     <div className="btn-sm bg-sky-100" >Lock Junior Investment</div>,
                                                 disabled: currAction == 0,
                                             },
                                             {
                                                 title: <div>Senior Investment Process</div>,
                                                 description: currAction == 1 ?
-                                                    <div className="btn-sm bg-sky-300 hover:bg-sky-400" style={{ cursor: "pointer" }} onClick={handleSeniorInvestment}>Call Senior Investment (optional)</div> :
+                                                    <Button className="btn-sm bg-sky-300 hover:bg-lime-400 " style={{ cursor: "pointer" }} onClick={handleSeniorInvestment} loading={callSeniorInvestmentLoading}>Call Senior Investment (optional)</Button> :
                                                     <div className="btn-sm bg-sky-100" >Call Senior Investment</div>,
                                                 disabled: currAction == 1,
                                             },
                                             {
                                                 title: <div>End Investment</div>,
                                                 description: currAction == 2 || currAction == 1 ?
-                                                    <div className="btn-sm bg-sky-300 hover:bg-sky-400" style={{ cursor: "pointer" }} onClick={showModal}>Drawdown</div> :
+                                                    <Button className="btn-sm bg-sky-300 hover:bg-lime-400 " style={{ cursor: "pointer" }} onClick={showModal} loading={drawdownLoading}>Drawdown</Button> :
                                                     <div className="btn-sm bg-sky-100" >Drawdown</div>,
                                                 disabled: currAction == 2,
                                             },
                                         ]}
                                     />
                                 </div>
+
+                                <div style={{ fontWeight: 'bold', fontSize: '30px', textAlign: 'center', marginTop: '30px', marginBottom: '30px' }} className="underline underline-offset-4">Repayment</div>
+                                {currAction == 3 && (
+                                    <div>
+                                        <div className="flex justify-between" style={{ margin: '10px', fontSize: '16px', marginTop: '50px' }}>
+                                            <Statistic title="Term start date" value={dayjs(Number((tranchedPool as any).termStartTime) * 1000).format('DD/MM/YYYY hh:mm:ss')} />
+                                            <Statistic title="Term end date" value={dayjs(Number((tranchedPool as any).termEndTime) * 1000).format('DD/MM/YYYY hh:mm:ss')} />
+                                            <Statistic title="Next due time" value={dayjs(Number((tranchedPool as any).nextDueTime) * 1000).format('DD/MM/YYYY hh:mm:ss')} />
+                                        </div>
+
+                                        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                                            <InputNumber
+                                                placeholder="Input value"
+                                                value={wantRepayAmount}
+                                                onChange={(value: any) => setWantRepayAmount(value)}
+                                                style={{ width: 300, marginTop: '10px' }}
+                                                addonAfter='USDC ($)'
+                                                precision={2}
+                                                min={0}
+                                            />
+                                        </div>
+                                        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                                            <Button loading={repayLoading} className="btn-sm border-2 border-black hover:bg-sky-200 rounded-lg"
+                                                onClick={handleRepay}
+                                            >
+                                                Make Interest Payment
+                                            </Button>
+                                        </div>
+                                    </div>)
+                                }
                             </div>
                         )
                     }
                     <Modal title="Drawdown all fund" open={isModalOpen}
-                        // onOk={handleOk} 
+                        onOk={handleOk}
                         onCancel={handleCancel}
-                        // okText="Drawdown"
-
-                        footer={[
-                            <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'end' }}>
-                                <div style={{ margin: '5px', cursor: 'pointer' }} className="btn-sm rounded-md border-solid border-2 border-slate-200"
-                                    onClick={handleCancel}
-                                >Cancel</div>
-                                <div style={{ margin: '5px', cursor: 'pointer' }} className="btn-sm hover:bg-sky-500 hover:text-white rounded-md border-solid border-2 border-slate-200 hover:border-sky-500"
-                                    onClick={handleOk}
-                                >Drawdown</div>
-                            </div>
-                        ]}>
+                        okText=<div className="text-black">Drawdown</div>
+                    >
                         <div style={{ margin: '5px' }}>Address to receipt fund token</div>
-                        <div style={{ margin: '5px' }}>
+                        <div style={{ marginTop: '5px', marginBottom: '0px' }}>
                             <Input value={sendToAddress} onChange={handleSetSendToAddress}
                                 placeholder="0x..." className="rounded-md"
                             ></Input>
-                            <div style={{ fontSize: '12px', cursor: 'pointer', display: 'flex', justifyContent: 'end', paddingLeft: '0px' }} className="btn-sm" onClick={() => setSendToAddress(address as any)}>
-                                Select current account
+                            <div style={{ marginTop: '0px', fontSize: '12px', cursor: 'pointer', display: 'flex', justifyContent: 'end', padding: '0px' }} className="btn-sm" >
+                                <div className="border-2 border-black rounded-lg" style={{ padding: '5px' }} onClick={() => setSendToAddress(address as any)}>
+                                    Select current account
+                                </div>
                             </div>
                         </div>
-
                     </Modal>
                 </Col>
                 <Col span={5}></Col>
             </Row>
 
 
-        </div>
+        </div >
     )
 }
 

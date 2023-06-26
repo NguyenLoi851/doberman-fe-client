@@ -38,6 +38,7 @@ export default function ApplyNewLoan() {
     const { address } = useAccount()
     const dispatch = useDispatch();
     const router = useRouter();
+    const [submitLoading, setSubmitLoading] = useState(false)
 
     useEffect(() => {
         setChainId(chain?.id || 0)
@@ -71,32 +72,37 @@ export default function ApplyNewLoan() {
     };
 
     const handleSubmit = async () => {
-        const timestamp = Math.round(Date.now() / 1000)
-        const signature = await signMessage({
-            message: process.env.NEXT_PUBLIC_APP_ID + '#' + timestamp + '#' + chainId,
-        })
-
-        const res = await axios.post(process.env.NEXT_PUBLIC_API_BASE_URL + '/auth/signin', {
-            address: (address as string).toLowerCase(),
-            sign: signature,
-            timestamp,
-            chainId
-        })
-
-        localStorage.setItem(constants.ACCESS_TOKEN, res.data.accessToken)
-        dispatch(setAccessTokenState(res.data.accessToken))
-
+        setSubmitLoading(true)
         try {
-            const res2 = await axios.post(process.env.NEXT_PUBLIC_API_BASE_URL + '/loans/apply', loanInfo, {
-                headers: { Authorization: `Bearer ${res.data.accessToken}` }
+            const timestamp = Math.round(Date.now() / 1000)
+            const signature = await signMessage({
+                message: process.env.NEXT_PUBLIC_APP_ID + '#' + timestamp + '#' + chainId,
             })
-            toast.success("Apply new loan successfully.")
-            router.push('/borrow')
-        } catch (error) {
-            console.log(error);
-            toast.error("Fail to apply new loan.")
-        }
 
+            const res = await axios.post(process.env.NEXT_PUBLIC_API_BASE_URL + '/auth/signin', {
+                address: (address as string).toLowerCase(),
+                sign: signature,
+                timestamp,
+                chainId
+            })
+
+            localStorage.setItem(constants.ACCESS_TOKEN, res.data.accessToken)
+            dispatch(setAccessTokenState(res.data.accessToken))
+
+            try {
+                const res2 = await axios.post(process.env.NEXT_PUBLIC_API_BASE_URL + '/loans/apply', loanInfo, {
+                    headers: { Authorization: `Bearer ${res.data.accessToken}` }
+                })
+                toast.success("Apply new loan successfully.")
+                router.push('/borrow')
+            } catch (error) {
+                console.log(error);
+                toast.error("Fail to apply new loan.")
+            }
+        } catch (error) {
+            console.log(error)
+        }
+        setSubmitLoading(false)
     }
 
     return (
@@ -345,7 +351,7 @@ export default function ApplyNewLoan() {
                                         message: "Please input fundable at"
                                     }
                                 ]}
-                                initialValue={dayjs("01/06/2023 00:00:00", dateFormat)}
+                                initialValue={dayjs(dayjs(), dateFormat)}
                             >
                                 <DatePicker
                                     format={dateFormat}
@@ -355,7 +361,7 @@ export default function ApplyNewLoan() {
                             </Form.Item>
 
                             <Form.Item className="flex justify-center">
-                                <Button className="btn-sm bg-sky-400 flex justify-center rounded-lg" type="primary" htmlType="submit">Submit</Button>
+                                <Button loading={submitLoading} className="btn-sm bg-sky-400 flex justify-center rounded-lg" type="primary" htmlType="submit">Submit</Button>
                             </Form.Item>
                         </Form>
                     </div>

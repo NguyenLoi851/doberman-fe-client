@@ -16,19 +16,28 @@ import styles from './header.module.css'
 export default function AdminHeader() {
   const router = useRouter()
   return (
-    <div>
-      <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
-        <Image src={Logo} alt="Logo" width='30' height='30' onClick={() => router.push('/earn')} />
-        <div style={{ display: 'flex', flexDirection: 'row' }}>
-          {/* <div>
-            <button onClick={() => router.push('/admin/users')}>Users</button>
+    <div style={{ padding: '10px' }}>
+      <div style={{ margin: '10px' }}>
+
+        <div className="shrink-0 mr-4">
+
+          <div style={{ display: 'flex', flexDirection: 'row' }} className="flex grow justify-between flex-wrap items-center">
+            <div></div>
+            <Image src={Logo} alt="Logo" className='rounded-full w-8 h-8' onClick={() => router.push('/earn')} />
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+
+            <div style={{ float: 'right' }} className="btn-sm text-white bg-purple-600 hover:bg-purple-900 ml-3">
+              <ConnectWallet />
+            </div>
+            <div></div>
+
           </div>
-          <div>
-            <button onClick={() => router.push('/admin/pools')}>Pools</button>
-          </div> */}
-        </div>
-        <div style={{ float: 'right' }}>
-          <ConnectWallet />
         </div>
       </div>
       <hr />

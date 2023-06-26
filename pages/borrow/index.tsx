@@ -11,7 +11,7 @@ import { toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 import PageLayout from "@/components/layouts/PageLayout";
 import axios from "axios";
-import { writeContract } from "@wagmi/core";
+import { writeContract, waitForTransaction } from "@wagmi/core";
 
 interface Props {
     children: ReactNode;
@@ -33,10 +33,8 @@ export default function BorrowPage() {
         setIsModalOpen(false);
         try {
             await handleCreateBorrower();
-            toast.success("Link proxy successfully")
         } catch (error) {
             console.log(error)
-            toast.error("Link proxy fail")
         }
     };
 
@@ -56,28 +54,28 @@ export default function BorrowPage() {
     })
 
     const handleCreateBorrower = async () => {
-        await writeContract({
-            address: contractAddr.mumbai.dobermanFactory as any,
-            abi: DobermanFactory,
-            functionName: 'createBorrower',
-            args: [address],
-            chainId: chain?.id
-        })
+        try {
+            const { hash } = await writeContract({
+                address: contractAddr.mumbai.dobermanFactory as any,
+                abi: DobermanFactory,
+                functionName: 'createBorrower',
+                args: [address],
+                chainId: chain?.id
+            })
+            const { status } = await waitForTransaction({
+                confirmations: 6,
+                hash
+            })
+            if (status == 'success') {
+                toast.success("Link proxy successfully")
+            }
+            if (status == 'reverted') {
+                toast.error("Link proxy fail")
+            }
+        } catch (error) {
+            console.log(error)
+        }
     }
-
-    // const { write, data } = useContractWrite({
-    //     address: contractAddr.mumbai.dobermanFactory as any,
-    //     abi: DobermanFactory,
-    //     functionName: 'createBorrower',
-    //     args: [address],
-    //     chainId: chain?.id,
-    //     onSuccess() {
-    //         toast.success("Link proxy successfully")
-    //     },
-    //     onError() {
-    //         toast.error("Link proxy fail")
-    //     }
-    // })
 
     const getLoansByOwnerAddress = async () => {
         const res = await axios.get(process.env.NEXT_PUBLIC_API_BASE_URL + `/loans/getLoanByFilter`, {
@@ -135,7 +133,7 @@ export default function BorrowPage() {
                         <div>
                             <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
                                 <div style={{ height: '15vh', display: 'flex', alignItems: 'end', fontSize: '50px', fontWeight: 'bold' }}>Borrow</div>
-                                <div className="btn-sm bg-lime-400 hover:font-bold m-16" style={{ cursor: 'pointer' }} onClick={handleApplyLoan}>Apply a new loan</div>
+                                <div className="btn-sm bg-lime-400 hover:bg-lime-500 m-16 rounded-lg border-2" style={{ cursor: 'pointer' }} onClick={handleApplyLoan}>Apply a new loan</div>
 
                             </div>
                             <Anchor
@@ -157,7 +155,7 @@ export default function BorrowPage() {
                                 renderItem={(item, index) => (
                                     <List.Item
                                         style={{ cursor: 'pointer', marginTop: '12px', marginBottom: '12px' }}
-                                        actions={[<div className='btn-sm bg-slate-300 text-black rounded-md hover:font-bold bg-sky-300' onClick={() => handleDetailLoanInfo(item, index + 1)}>View Detail</div>]}
+                                        actions={[<div className='btn-sm border-2 border-black text-black rounded-md hover:bg-slate-200' onClick={() => handleDetailLoanInfo(item, index + 1)}>View Detail</div>]}
                                         className='bg-white rounded-lg border-amber-300'>
                                         <List.Item.Meta
                                             avatar={index + 1 + '.'}
@@ -166,17 +164,17 @@ export default function BorrowPage() {
                                             style={{ alignItems: 'justify' }}
                                         />
                                         {(item as any).deployed ?
-                                            <div className="text-lime-600" style={{ border: 'solid' }}>
+                                            <div className="text-lime-600 rounded-lg" style={{ border: 'solid', padding: '5px' }}>
                                                 Deployed
                                             </div>
-                                            : <div className="text-amber-300" style={{ border: 'solid' }}>
+                                            : <div className="text-amber-300 rounded-lg" style={{ border: 'solid', padding: '5px' }}>
                                                 Undeployed
                                             </div>}
                                     </List.Item>
                                 )}
                             />
                         </div>
-                        <Modal title="Link Proxy Wallet" open={isModalOpen && !borrowerCreated} onOk={handleOk} onCancel={handleCancel} okText="Link Proxy">
+                        <Modal title="Link Proxy Wallet" open={isModalOpen && !borrowerCreated} onOk={handleOk} onCancel={handleCancel} okText=<div className="text-black">Link proxy</div>>
                             <div>Link your wallet address to a HELIX proxy wallet smart contract in order to create a loan.
                                 <ul>
                                     <li>Proxy wallet will help you interact indirectly with smart contracts across all your loans and save gas fee.</li>

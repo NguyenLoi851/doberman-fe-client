@@ -12,10 +12,14 @@ import { toast } from "react-toastify";
 import { constants } from "@/commons/constants";
 import { useAccount, useNetwork } from "wagmi";
 import jwtDecode from "jwt-decode";
+import { Descriptions } from "antd";
+import dayjs from "dayjs";
 
 interface Props {
     children: ReactNode;
 }
+
+const InterestPaymentFrequency = [1, 3, 6, 12]
 
 export default function DeployedLoanDetailPage() {
     const router = useRouter()
@@ -24,6 +28,7 @@ export default function DeployedLoanDetailPage() {
     const { address } = useAccount()
     const { chain } = useNetwork()
     const [chainId, setChainId] = useState(0);
+    const dateFormat = "DD/MM/YYYY HH:mm:ss";
 
     const tokensQuery = `query BorrowerPage($userId: String!){
         borrowerContracts(where: {user: $userId}) {
@@ -37,7 +42,7 @@ export default function DeployedLoanDetailPage() {
     })
 
     const getBorrowerProxy = async () => {
-        if(!props.ownerAddress){
+        if (!props.ownerAddress) {
             return;
         }
         const res = await client.query({
@@ -57,22 +62,23 @@ export default function DeployedLoanDetailPage() {
     }, [chain, props])
 
     return (
-        <div>
-            Loan Detail Page
-            <div>projectName {props.projectName}</div>
-            <div>projectIntro {props.projectIntro}</div>
-            <div>companyName {props.companyName}</div>
-            <div>companyIntro {props.companyIntro}</div>
-            <div>companyPage {props.companyPage}</div>
-            <div>companyContact {props.companyContact}</div>
-            <div>ownerAddress {props.ownerAddress}</div>
-            <div>juniorFeePercent {props.juniorFeePercent}</div>
-            <div>interestPaymentFrequency {props.interestPaymentFrequency}</div>
-            <div>interestRate {props.interestRate}</div>
-            <div>loanTerm {props.loanTerm}</div>
-            <div>targetFunding {props.targetFunding}</div>
-            <div>fundableAt {props.fundableAt}</div>
-            <div>Borrower Proxy {borrowerProxy != zeroAddress ? borrowerProxy : 'Not existed'}</div>
+        <div style={{ padding: '20px' }}>
+            <Descriptions title="Loan Detail Page" layout="vertical" bordered>
+                <Descriptions.Item style={{ fontSize: '18px' }} label="Project Name">{props.projectName}</Descriptions.Item>
+                <Descriptions.Item style={{ fontSize: '18px' }} label="Company Name" span={2}>{props.companyName}</Descriptions.Item>
+                <Descriptions.Item style={{ fontSize: '18px' }} label="Project Intro" span={3}>{props.projectIntro}</Descriptions.Item>
+                <Descriptions.Item style={{ fontSize: '18px' }} label="Company Intro" span={3}>{props.companyIntro}</Descriptions.Item>
+                <Descriptions.Item style={{ fontSize: '18px' }} label="Company Webpage">{props.companyPage}</Descriptions.Item>
+                <Descriptions.Item style={{ fontSize: '18px' }} label="Company Contact" span={2}>{props.companyContact}</Descriptions.Item>
+                <Descriptions.Item style={{ fontSize: '18px' }} label="Junior Fee Percent">{props.juniorFeePercent} %</Descriptions.Item>
+                <Descriptions.Item style={{ fontSize: '18px' }} label="Interest Payment Frequency">{InterestPaymentFrequency[props.interestPaymentFrequency as any]} months</Descriptions.Item>
+                <Descriptions.Item style={{ fontSize: '18px' }} label="Interest Rate">{props.interestRate} %</Descriptions.Item>
+                <Descriptions.Item style={{ fontSize: '18px' }} label="Loan Term">{props.loanTerm} months</Descriptions.Item>
+                <Descriptions.Item style={{ fontSize: '18px' }} label="Target Funding">$ {props.targetFunding?.toLocaleString()}</Descriptions.Item>
+                <Descriptions.Item style={{ fontSize: '18px' }} label="Fundable At">{dayjs(dayjs.unix(Number(props.fundableAt)), dateFormat).toString()}</Descriptions.Item>
+                <Descriptions.Item style={{ fontSize: '18px' }} label="Borrower Proxy">{borrowerProxy != zeroAddress ? borrowerProxy : 'Not existed'}</Descriptions.Item>
+                <Descriptions.Item style={{ fontSize: '18px' }} label="Owner Address">{props.ownerAddress}</Descriptions.Item>
+            </Descriptions>
         </div>
     )
 }

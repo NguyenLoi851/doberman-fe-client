@@ -12,10 +12,14 @@ import { toast } from "react-toastify";
 import { constants } from "@/commons/constants";
 import { useAccount, useNetwork } from "wagmi";
 import jwtDecode from "jwt-decode";
+import { Button, Descriptions } from "antd";
+import dayjs from "dayjs";
 
 interface Props {
     children: ReactNode;
 }
+
+const InterestPaymentFrequency = [1, 3, 6, 12]
 
 export default function AppliedLoanDetailPage() {
     const router = useRouter()
@@ -24,6 +28,8 @@ export default function AppliedLoanDetailPage() {
     const { address } = useAccount()
     const { chain } = useNetwork()
     const [chainId, setChainId] = useState(0);
+    const dateFormat = "DD/MM/YYYY HH:mm:ss";
+    const [deployLoading, setDeployLoading] = useState(false)
 
     const tokensQuery = `query BorrowerPage($userId: String!){
         borrowerContracts(where: {user: $userId}) {
@@ -37,18 +43,23 @@ export default function AppliedLoanDetailPage() {
     })
 
     const getBorrowerProxy = async () => {
-        if (!props.ownerAddress) {
-            return;
+        try {
+            if (!props.ownerAddress) {
+                return;
+            }
+            const res = await client.query({
+                query: gql(tokensQuery),
+                variables: {
+                    userId: (props.ownerAddress as any).toLowerCase() ?? "",
+                },
+            })
+            if (res.data.borrowerContracts.length > 0) {
+                setBorrowerProxy(res.data.borrowerContracts[0].id)
+            }
+        } catch (error) {
+            console.log(error)
         }
-        const res = await client.query({
-            query: gql(tokensQuery),
-            variables: {
-                userId: (props.ownerAddress as any).toLowerCase() ?? "",
-            },
-        })
-        if (res.data.borrowerContracts.length > 0) {
-            setBorrowerProxy(res.data.borrowerContracts[0].id)
-        }
+
     }
 
     useEffect(() => {
@@ -57,6 +68,8 @@ export default function AppliedLoanDetailPage() {
     }, [chain, props])
 
     const handleDeploy = async () => {
+        setDeployLoading(true);
+
         try {
             const { hash } = await writeContract({
                 abi: DobermanFactory,
@@ -67,7 +80,7 @@ export default function AppliedLoanDetailPage() {
                     BigNumber(props.juniorFeePercent as any),
                     BigNumber(props.targetFunding as any).multipliedBy(BigNumber(10).pow(6)),
                     BigNumber(props.interestRate as any).multipliedBy(BigNumber(10).pow(18)).dividedBy(100),
-                    BigNumber(props.interestPaymentFrequency as any),
+                    BigNumber(InterestPaymentFrequency[props.interestPaymentFrequency as any]),
                     BigNumber(props.loanTerm as any),
                     BigNumber(0),
                     BigNumber(0),
@@ -127,31 +140,36 @@ export default function AppliedLoanDetailPage() {
             console.log(error)
             // console.log(JSON.stringify(error,2,2))
             console.log((error as any).shortMessage)
-            alert((error as any).shortMessage)
+            // alert((error as any).shortMessage)
+            // toast.error(error as any)
         }
 
-
+        setDeployLoading(false);
 
     }
 
     return (
-        <div>
-            Loan Detail Page
-            <div>projectName {props.projectName}</div>
-            <div>projectIntro {props.projectIntro}</div>
-            <div>companyName {props.companyName}</div>
-            <div>companyIntro {props.companyIntro}</div>
-            <div>companyPage {props.companyPage}</div>
-            <div>companyContact {props.companyContact}</div>
-            <div>ownerAddress {props.ownerAddress}</div>
-            <div>juniorFeePercent {props.juniorFeePercent}</div>
-            <div>interestPaymentFrequency {props.interestPaymentFrequency}</div>
-            <div>interestRate {props.interestRate}</div>
-            <div>loanTerm {props.loanTerm}</div>
-            <div>targetFunding {props.targetFunding}</div>
-            <div>fundableAt {props.fundableAt}</div>
-            <div>Borrower Proxy {borrowerProxy != zeroAddress ? borrowerProxy : 'Not existed'}</div>
-            <button onClick={handleDeploy}>Deploy Loan</button>
+        <div style={{ padding: '20px' }}>
+            <Descriptions title="Loan Detail Page" layout="vertical" bordered>
+                <Descriptions.Item style={{ fontSize: '18px' }} label="Project Name">{props.projectName}</Descriptions.Item>
+                <Descriptions.Item style={{ fontSize: '18px' }} label="Company Name" span={2}>{props.companyName}</Descriptions.Item>
+                <Descriptions.Item style={{ fontSize: '18px' }} label="Project Intro" span={3}>{props.projectIntro}</Descriptions.Item>
+                <Descriptions.Item style={{ fontSize: '18px' }} label="Company Intro" span={3}>{props.companyIntro}</Descriptions.Item>
+                <Descriptions.Item style={{ fontSize: '18px' }} label="Company Webpage">{props.companyPage}</Descriptions.Item>
+                <Descriptions.Item style={{ fontSize: '18px' }} label="Company Contact" span={2}>{props.companyContact}</Descriptions.Item>
+                <Descriptions.Item style={{ fontSize: '18px' }} label="Junior Fee Percent">{props.juniorFeePercent} %</Descriptions.Item>
+                <Descriptions.Item style={{ fontSize: '18px' }} label="Interest Payment Frequency">{InterestPaymentFrequency[props.interestPaymentFrequency as any]} months</Descriptions.Item>
+                <Descriptions.Item style={{ fontSize: '18px' }} label="Interest Rate">{props.interestRate} %</Descriptions.Item>
+                <Descriptions.Item style={{ fontSize: '18px' }} label="Loan Term">{props.loanTerm} months</Descriptions.Item>
+                <Descriptions.Item style={{ fontSize: '18px' }} label="Target Funding">$ {props.targetFunding?.toLocaleString()}</Descriptions.Item>
+                <Descriptions.Item style={{ fontSize: '18px' }} label="Fundable At">{dayjs(dayjs.unix(Number(props.fundableAt)), dateFormat).toString()}</Descriptions.Item>
+                <Descriptions.Item style={{ fontSize: '18px' }} label="Borrower Proxy">{borrowerProxy != zeroAddress ? borrowerProxy : 'Not existed'}</Descriptions.Item>
+                <Descriptions.Item style={{ fontSize: '18px' }} label="Owner Address">{props.ownerAddress}</Descriptions.Item>
+                <Descriptions.Item style={{ fontSize: '18px' }} label="Deploy Loan">
+                    <Button loading={deployLoading} className="btn-sm border-2 border-black bg-lime-500 rounded-lg" style={{ fontSize: '18px', padding: '20px' }} onClick={handleDeploy}>Deploy Loan</Button>
+                </Descriptions.Item>
+
+            </Descriptions>
         </div>
     )
 }

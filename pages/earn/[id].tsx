@@ -38,6 +38,7 @@ export default function LoanDetailPage() {
     const [seniorDeposited, setSeniorDeposited] = useState(0)
     const [wantInvestAmount, setWantInvestAmount] = useState(0)
     const [trancheInvestStatus, setTrancheInvestStatus] = useState(TrancheInvestStatus.OPEN)
+    const [loadingDeposit, setLoadingDeposit] = useState(false)
 
     const { data: walletClient } = useWalletClient()
     const tokenDetailLoanQuery = `
@@ -133,6 +134,7 @@ export default function LoanDetailPage() {
     const signatureDeadline = Math.floor(Date.now() / 1000 + 90000);
 
     const handleDeposit = async () => {
+        setLoadingDeposit(true);
         try {
             const nonces = await readContract({
                 address: contractAddr.mumbai.usdc as any,
@@ -172,6 +174,7 @@ export default function LoanDetailPage() {
                 toast.error('Transaction reverted')
             }
 
+
         } catch (error) {
             try {
                 toast.error((JSON.parse(JSON.stringify(error)) as any).shortMessage.split(':')[1])
@@ -179,7 +182,7 @@ export default function LoanDetailPage() {
                 console.log(JSON.stringify(error2))
             }
         }
-
+        setLoadingDeposit(false);
     }
 
     const handleWantInvestAmount = (value: any) => {
@@ -239,8 +242,10 @@ export default function LoanDetailPage() {
                         <Statistic title="Senior Deposited Amount (USDC)" value={seniorDeposited} precision={2} />
                         <Statistic title="Funding Limit (USDC)" value={fundingLimit} precision={2} />
                     </div>
-                    <div style={{ margin: '10px', textAlign: 'center', marginTop: '50px', fontSize: '24px' }}>Invested ratio </div>
-                    <div style={{ marginRight: '10px', display: 'flex', justifyContent: 'end', fontSize: '24px' }} className="text-sky-600">{juniorDeposited + seniorDeposited + wantInvestAmount} / {fundingLimit} USDC ({((juniorDeposited + seniorDeposited + wantInvestAmount) / fundingLimit * 100).toFixed(2)}%)</div>
+                    <div style={{ fontSize: '24px', margin: '10px', display: 'flex', flexDirection: 'row', justifyContent: 'space-between', marginTop: '80px' }}>
+                        <div style={{ textAlign: 'center' }}>Invested ratio </div>
+                        <div className="text-sky-600">{(juniorDeposited + seniorDeposited + wantInvestAmount).toLocaleString()} / {fundingLimit.toLocaleString()} USDC ({((juniorDeposited + seniorDeposited + wantInvestAmount) / fundingLimit * 100).toFixed(2)}%)</div>
+                    </div>
                     <div style={{ margin: '10px', marginTop: '0px' }} >
                         <Slider
                             value={juniorDeposited + seniorDeposited + wantInvestAmount}
@@ -263,9 +268,11 @@ export default function LoanDetailPage() {
                                         onChange={handleWantInvestAmount}
                                         max={fundingLimit - juniorDeposited}
                                         style={{ width: 150, marginTop: '10px' }}
+                                        precision={2}
+                                        min={0}
                                     />
                                 </div>
-                                <div onClick={handleDeposit} style={{ margin: '20px', marginTop: '25px', cursor: 'pointer' }} className="btn-sm bg-sky-300 hover:bg-sky-500 rounded-lg">Deposit</div>
+                                <Button loading={loadingDeposit} onClick={handleDeposit} style={{ margin: '20px', marginTop: '25px', cursor: 'pointer' }} className="btn-sm border-2 border-black hover:bg-sky-200 rounded-lg">Deposit</Button>
                             </div>
                         )}
                         {trancheInvestStatus != 0 && Number((loanDetailInfo as any).fundableAt) <= dayjs().unix() && (

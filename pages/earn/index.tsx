@@ -325,7 +325,7 @@ export default function EarnPage() {
                 />
                 <div style={{ marginRight: '80px' }}>
                   <div>Loan term</div>
-                  <div style={{ fontWeight: 'bold' }}>{(Number((item as any).termEndTime) - Number((item as any).termStartTime)) / 60 / 60 / 24} months</div>
+                  <div style={{ fontWeight: 'bold' }}>{(Number((item as any).termEndTime) - Number((item as any).termStartTime)) / 60} months</div>
                 </div>
                 <div>
                   <div>Invested amount</div>

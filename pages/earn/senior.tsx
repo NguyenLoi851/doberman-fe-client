@@ -32,6 +32,7 @@ export default function SeniorLoanDetailPage() {
     const { data: walletClient } = useWalletClient()
     const [totalShares, setTotalShares] = useState(0)
     const [myShares, setMyShares] = useState(0)
+    const [loadingDeposit, setLoadingDeposit] = useState(false)
 
     const tokenDetailSeniorLoanQuery = `
     query SeniorLoanDetail {
@@ -88,6 +89,7 @@ export default function SeniorLoanDetailPage() {
             toast.error("Deposit amount must greater than 0")
             return;
         }
+        setLoadingDeposit(true)
         try {
             const nonces = await readContract({
                 address: contractAddr.mumbai.usdc as any,
@@ -139,7 +141,7 @@ export default function SeniorLoanDetailPage() {
                 console.log(JSON.stringify(error2))
             }
         }
-
+        setLoadingDeposit(false)
     }
 
     const getUserShares = async () => {
@@ -233,12 +235,15 @@ export default function SeniorLoanDetailPage() {
                             onChange={handleWantInvestAmount}
                             style={{ width: 300, marginTop: '10px' }}
                             addonAfter='USDC ($)'
+                            precision={2}
+                            min={0}
                         />
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                        <div onClick={handleDeposit} style={{ margin: '20px', marginTop: '25px', cursor: 'pointer' }}
-                            className="btn-sm bg-sky-600 text-white hover:text-black hover:bg-sky-400 border border-2 border-slate-600 rounded-md"
-                        >Deposit</div>
+                        <Button loading={loadingDeposit} onClick={handleDeposit} style={{ margin: '20px', marginTop: '25px', cursor: 'pointer' }}
+                            // className="btn-sm bg-sky-600 text-white hover:text-black hover:bg-sky-400 border border-2 border-slate-600 rounded-md"
+                            className="btn-sm border-2 border-black hover:bg-sky-200 rounded-lg"
+                        >Deposit</Button>
 
                     </div>
 
@@ -271,8 +276,6 @@ export default function SeniorLoanDetailPage() {
             <Col span={5}>
             </Col>
         </Row>
-        // </div>
-        // </div>
     )
 }
 
