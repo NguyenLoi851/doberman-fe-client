@@ -12,13 +12,16 @@ import { useRouter } from "next/router";
 import { ReactNode, useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { zeroAddress } from "viem";
-import { useAccount, useNetwork } from "wagmi";
-import { writeContract, waitForTransaction } from "@wagmi/core"
+import { useAccount, useNetwork, useWalletClient } from "wagmi";
+import { readContract, writeContract, waitForTransaction } from "@wagmi/core"
 import Borrower from "../../../abi/Borrower.json"
 import SeniorPool from "../../../abi/SeniorPool.json"
 import { contractAddr } from "@/commons/contractAddress";
 import { MonitorOutlined } from '@ant-design/icons';
 import BigNumber from "bignumber.js";
+import CreditLine from "../../../abi/CreditLine.json";
+import USDC from "../../../abi/USDC.json"
+import { buildPermitSignature, Domain } from "@/commons/functions";
 
 interface Props {
     children: ReactNode;
@@ -49,6 +52,19 @@ export default function LoanDetailPage() {
     const [callSeniorInvestmentLoading, setCallSeniorInvestmentLoading] = useState(false)
     const [drawdownLoading, setDrawdownLoading] = useState(false)
     const [repayLoading, setRepayLoading] = useState(false)
+    const [creditLineAddr, setCreditLineAddr] = useState('')
+    const [nextDueTime, setNextDueTime] = useState(0)
+    const [interestOwe, setInterestOwe] = useState(0)
+    const [principleOwe, setPrincipleOwe] = useState(0)
+    const signatureDeadline = Math.floor(Date.now() / 1000 + 90000);
+    const domain: Domain = {
+        version: '2',
+        name: `\'USD Coin\'`,
+        chainId: chainId,
+        verifyingContract: contractAddr.mumbai.usdc as any
+    }
+
+    const { data: walletClient } = useWalletClient()
 
     const tokensQuery = `query BorrowerPage($userId: String!, $txHash: String!){
         borrowerContracts: borrowerContracts(where: {user: $userId}) {
@@ -128,6 +144,9 @@ export default function LoanDetailPage() {
             if (res.data.tranchedPool.length > 0) {
                 setTranchedPool(res.data.tranchedPool[0])
             }
+
+            setCreditLineAddr(res.data.tranchedPool[0].creditLineAddress)
+
             if (res && res.data && res.data.tranchedPool[0]) {
                 if (res.data.tranchedPool[0].creditLine.termStartTime > 0) {
                     setCurrAction(3)
@@ -351,12 +370,89 @@ export default function LoanDetailPage() {
         setDrawdownLoading(false)
     }
 
+    const getNextDueTime = async () => {
+        try {
+            const res = await readContract({
+                address: creditLineAddr as any,
+                abi: CreditLine,
+                functionName: 'nextDueTime'
+            })
+            setNextDueTime(res as any)
+        } catch (error) {
+            console.log(error)
+        }
+    }
+
+    const getInterestAndPrincipalOwedAsOfCurrent = async () => {
+        try {
+            const res = await readContract({
+                address: creditLineAddr as any,
+                abi: CreditLine,
+                functionName: 'getInterestAndPrincipalOwedAsOfCurrent'
+            })
+            setInterestOwe(Number(BigNumber((res as any)[0]).div(BigNumber(constants.ONE_MILLION))))
+            setPrincipleOwe(Number(BigNumber((res as any)[1]).div(BigNumber(constants.ONE_MILLION))))
+        } catch (error) {
+            console.log(error)
+        }
+    }
+
+    useEffect(() => {
+        if (creditLineAddr != '') {
+            getNextDueTime()
+            getInterestAndPrincipalOwedAsOfCurrent()
+        }
+
+    }, [creditLineAddr])
+
+
     const handleRepay = async () => {
         setRepayLoading(true)
         try {
+            const nonces = await readContract({
+                address: contractAddr.mumbai.usdc as any,
+                abi: USDC,
+                functionName: 'nonces',
+                args: [address],
+                chainId,
+            });
+
+            const splitedSignature = await buildPermitSignature(
+                walletClient as any,
+                { ...domain },
+                borrowerProxy as any,
+                BigNumber(wantRepayAmount).multipliedBy(BigNumber(constants.ONE_MILLION)),
+                signatureDeadline,
+                nonces as any
+            )
+
+            const { hash } = await writeContract({
+                address: borrowerProxy as any,
+                abi: Borrower,
+                functionName: 'payWithPermit',
+                args: [(tranchedPool as any).address, BigNumber(wantRepayAmount).multipliedBy(BigNumber(constants.ONE_MILLION)), signatureDeadline, splitedSignature.v, splitedSignature.r, splitedSignature.s]
+            })
+
+            const { status } = await waitForTransaction({
+                confirmations: 6,
+                hash
+            })
+
+            if (status == 'success') {
+                toast.success("Repay successfully")
+            }
+
+            if (status == 'reverted') {
+                toast.error("Transaction reverted")
+            }
 
         } catch (error) {
-
+            console.log("repay error", error)
+            try {
+                toast.error((error as any).cause.reason)
+            } catch (error2) {
+                console.log(error2)
+            }
         }
         setRepayLoading(false)
     }
@@ -709,26 +805,35 @@ export default function LoanDetailPage() {
                                         <div className="flex justify-between" style={{ margin: '10px', fontSize: '16px', marginTop: '50px' }}>
                                             <Statistic title="Term start date" value={dayjs(Number((tranchedPool as any).termStartTime) * 1000).format('DD/MM/YYYY hh:mm:ss')} />
                                             <Statistic title="Term end date" value={dayjs(Number((tranchedPool as any).termEndTime) * 1000).format('DD/MM/YYYY hh:mm:ss')} />
-                                            <Statistic title="Next due time" value={dayjs(Number((tranchedPool as any).nextDueTime) * 1000).format('DD/MM/YYYY hh:mm:ss')} />
+                                            <Statistic title="Next due time" value={dayjs(Number(nextDueTime) * 1000).format('DD/MM/YYYY hh:mm:ss')} />
                                         </div>
 
-                                        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                                            <InputNumber
-                                                placeholder="Input value"
-                                                value={wantRepayAmount}
-                                                onChange={(value: any) => setWantRepayAmount(value)}
-                                                style={{ width: 300, marginTop: '10px' }}
-                                                addonAfter='USDC ($)'
-                                                precision={2}
-                                                min={0}
-                                            />
-                                        </div>
-                                        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                                            <Button loading={repayLoading} className="btn-sm border-2 border-black hover:bg-sky-200 rounded-lg"
-                                                onClick={handleRepay}
-                                            >
-                                                Make Interest Payment
-                                            </Button>
+                                        <div style={{ margin: '20px', display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
+                                            <div style={{ fontSize: '18px' }}>
+                                                <div style={{ margin: '10px' }}>Interest owe: <span style={{ fontWeight: 'bold' }}>{interestOwe.toLocaleString()}</span> USDC</div>
+                                                <div style={{ margin: '10px' }}>Principal owe: <span style={{ fontWeight: 'bold' }}>{principleOwe.toLocaleString()}</span> USDC</div>
+                                                <div style={{ margin: '10px' }}>Total owe: <span style={{ fontWeight: 'bold' }}>{(interestOwe + principleOwe).toLocaleString()}</span> USDC</div>
+                                            </div>
+                                            <div style={{ margin: '15px' }}>
+                                                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                                                    <InputNumber
+                                                        placeholder="Input value"
+                                                        value={wantRepayAmount}
+                                                        onChange={(value: any) => setWantRepayAmount(value)}
+                                                        style={{ width: 300, marginTop: '10px' }}
+                                                        addonAfter='USDC ($)'
+                                                        precision={2}
+                                                        min={0}
+                                                    />
+                                                </div>
+                                                <div style={{ margin: '15px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                                                    <Button loading={repayLoading} className="btn-sm border-2 border-black hover:bg-sky-200 rounded-lg"
+                                                        onClick={handleRepay}
+                                                    >
+                                                        Make Payment
+                                                    </Button>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>)
                                 }
@@ -755,8 +860,6 @@ export default function LoanDetailPage() {
                 </Col>
                 <Col span={5}></Col>
             </Row>
-
-
         </div >
     )
 }

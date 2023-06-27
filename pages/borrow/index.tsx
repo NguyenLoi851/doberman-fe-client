@@ -12,6 +12,8 @@ import 'react-toastify/dist/ReactToastify.css';
 import PageLayout from "@/components/layouts/PageLayout";
 import axios from "axios";
 import { writeContract, waitForTransaction } from "@wagmi/core";
+import { LoadingOutlined } from '@ant-design/icons';
+import { Spin } from 'antd';
 
 interface Props {
     children: ReactNode;
@@ -24,18 +26,20 @@ export default function BorrowPage() {
     const [borrowerCreated, setBorrowerCreated] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [userLoans, setUserLoans] = useState([])
+    const antIcon = <LoadingOutlined style={{ fontSize: 24 }} spin />;
+    const [linkProxyLoading, setLinkProxyLoading] = useState(false)
 
     const showModal = async () => {
         setIsModalOpen(true);
     };
 
     const handleOk = async () => {
-        setIsModalOpen(false);
         try {
             await handleCreateBorrower();
         } catch (error) {
             console.log(error)
         }
+        setIsModalOpen(false);
     };
 
     const handleCancel = () => {
@@ -54,6 +58,7 @@ export default function BorrowPage() {
     })
 
     const handleCreateBorrower = async () => {
+        setLinkProxyLoading(true)
         try {
             const { hash } = await writeContract({
                 address: contractAddr.mumbai.dobermanFactory as any,
@@ -67,6 +72,13 @@ export default function BorrowPage() {
                 hash
             })
             if (status == 'success') {
+                try {
+                    await axios.post(process.env.NEXT_PUBLIC_API_BASE_URL + '/proxies/link-proxy', {
+                        userAddress: (address as string).toLowerCase()
+                    })
+                } catch (error) {
+                    console.log(error)
+                }
                 toast.success("Link proxy successfully")
             }
             if (status == 'reverted') {
@@ -75,6 +87,7 @@ export default function BorrowPage() {
         } catch (error) {
             console.log(error)
         }
+        setLinkProxyLoading(false)
     }
 
     const getLoansByOwnerAddress = async () => {
@@ -92,23 +105,24 @@ export default function BorrowPage() {
 
 
     const handleApplyLoan = async () => {
-        const res = await client.query({
-            query: gql(tokensQuery),
-            variables: {
-                userId: address?.toLowerCase() ?? "",
-            },
-        })
-        console.log(res.data.borrowerContracts)
-        if (res.data.borrowerContracts.length > 0) {
-            try {
-                await axios.post(process.env.NEXT_PUBLIC_API_BASE_URL + '/proxies/link-proxy', {
-                    userAddress: (address as string).toLowerCase()
-                })
-            } catch (error) {
-                console.log(error)
+        try {
+            const res = await axios.get(process.env.NEXT_PUBLIC_API_BASE_URL + `/proxies/${address?.toLowerCase()}`)
+            if (res.data == '0x0' || res.data == '') {
+                setBorrowerCreated(false)
+                showModal()
+            } else {
+                try {
+                    await axios.post(process.env.NEXT_PUBLIC_API_BASE_URL + '/proxies/link-proxy', {
+                        userAddress: (address as string).toLowerCase()
+                    })
+                } catch (error) {
+                    console.log(error)
+                }
+                router.push('/borrow/apply')
             }
-            router.push('/borrow/apply')
-        } else {
+
+        } catch (error) {
+            console.log(error)
             setBorrowerCreated(false)
             showModal()
         }
@@ -174,7 +188,12 @@ export default function BorrowPage() {
                                 )}
                             />
                         </div>
-                        <Modal title="Link Proxy Wallet" open={isModalOpen && !borrowerCreated} onOk={handleOk} onCancel={handleCancel} okText=<div className="text-black">Link proxy</div>>
+                        <Modal title="Link Proxy Wallet" open={isModalOpen && !borrowerCreated} onOk={handleOk} onCancel={handleCancel}
+                            okText=<div className="text-black">
+                                {linkProxyLoading == true && <Spin indicator={antIcon} style={{ marginRight: '5px' }} />}
+                                Link proxy
+                            </div>
+                        >
                             <div>Link your wallet address to a HELIX proxy wallet smart contract in order to create a loan.
                                 <ul>
                                     <li>Proxy wallet will help you interact indirectly with smart contracts across all your loans and save gas fee.</li>
@@ -182,7 +201,6 @@ export default function BorrowPage() {
                                 </ul>
                             </div>
                         </Modal>
-
                     </Col>
                     <Col span={5}></Col>
                 </Row>

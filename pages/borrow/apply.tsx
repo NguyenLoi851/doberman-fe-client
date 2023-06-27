@@ -56,7 +56,7 @@ export default function ApplyNewLoan() {
         interestRate: 0,
         interestPaymentFrequency: 0,
         loanTerm: 0,
-        fundableAt: 0
+        fundableAt: dayjs().unix()
     })
 
     const handleChange = (e: any, name: any) => {
