@@ -33,7 +33,7 @@ export default function Header() {
     {
       key: '2',
       label: (
-        <a rel="noopener noreferrer" href="/dashboard" >
+        <a rel="noopener noreferrer" href="/account" >
           <div className="font-medium text-purple-600 hover:text-gray-200 px-4 py-3 flex items-center transition duration-150 ease-in-out">
             Dashboard
           </div>
@@ -61,8 +61,6 @@ export default function Header() {
             </Dropdown>
           </div>
         </div>
-
-
         <div style={{ float: 'right' }} className="btn-sm text-white bg-purple-600 hover:bg-purple-900 ml-3">
           <ConnectWallet />
         </div>

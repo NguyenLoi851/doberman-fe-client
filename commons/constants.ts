@@ -9,7 +9,7 @@ export const constants = {
     SEPOLIA_CHAIN_ID: 11155111,
     MUMBAI_ID: 80001,
     ONE_MILLION: 1000000,
-    ONE_BILLION: new BigNumber(1000000000000000000)
+    ONE_BILLION: new BigNumber(1000000000)
 }
 
 

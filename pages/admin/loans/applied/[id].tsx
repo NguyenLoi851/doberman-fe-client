@@ -90,7 +90,7 @@ export default function AppliedLoanDetailPage() {
             })
 
             const { status } = await waitForTransaction({
-                confirmations: 6,
+                // confirmations: 6,
                 hash: hash
             })
 
@@ -166,7 +166,7 @@ export default function AppliedLoanDetailPage() {
                 <Descriptions.Item style={{ fontSize: '18px' }} label="Borrower Proxy">{borrowerProxy != zeroAddress ? borrowerProxy : 'Not existed'}</Descriptions.Item>
                 <Descriptions.Item style={{ fontSize: '18px' }} label="Owner Address">{props.ownerAddress}</Descriptions.Item>
                 <Descriptions.Item style={{ fontSize: '18px' }} label="Deploy Loan">
-                    <Button loading={deployLoading} className="btn-sm border-2 border-black bg-lime-500 rounded-lg" style={{ fontSize: '18px', padding: '20px' }} onClick={handleDeploy}>Deploy Loan</Button>
+                    <Button disabled={deployLoading} loading={deployLoading} className="btn-sm border-2 border-black bg-lime-500 rounded-lg" style={{ fontSize: '18px', padding: '20px' }} onClick={handleDeploy}>Deploy Loan</Button>
                 </Descriptions.Item>
 
             </Descriptions>

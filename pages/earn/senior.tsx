@@ -33,6 +33,10 @@ export default function SeniorLoanDetailPage() {
     const [totalShares, setTotalShares] = useState(0)
     const [myShares, setMyShares] = useState(0)
     const [loadingDeposit, setLoadingDeposit] = useState(false)
+    const [seniorUSDCBalance, setSeniorUSDCBalance] = useState(0)
+    const [wantWithdrawAmount, setWantWithdrawAmount] = useState(0)
+    const [loadingWithdraw, setLoadingWithdraw] = useState(false)
+    const [sharePrice, setSharePrice] = useState(BigNumber(constants.ONE_BILLION).multipliedBy(BigNumber(constants.ONE_BILLION)))
 
     const tokenDetailSeniorLoanQuery = `
     query SeniorLoanDetail {
@@ -64,7 +68,37 @@ export default function SeniorLoanDetailPage() {
             })
             setSeniorLoanDetailInfo(res.data.seniorPool)
             setAssets(Number(res.data.seniorPool.assets) / constants.ONE_MILLION)
-            setTotalShares(Number(BigNumber(res.data.seniorPool.totalShares).div(constants.ONE_BILLION)))
+            setTotalShares(Number(BigNumber(res.data.seniorPool.totalShares).div(constants.ONE_BILLION).div(constants.ONE_BILLION)))
+        } catch (error) {
+            console.log(error)
+        }
+    }
+
+    const getSeniorBalance = async () => {
+        try {
+            const balance = await readContract({
+                address: contractAddr.mumbai.usdc as any,
+                abi: USDC,
+                functionName: 'balanceOf',
+                args: [contractAddr.mumbai.seniorPool as any],
+                chainId,
+            });
+            setSeniorUSDCBalance(Number(BigNumber(balance as any).div(BigNumber(constants.ONE_MILLION))))
+        } catch (error) {
+            console.log(error)
+        }
+    }
+
+    const getSharePrice = async () => {
+        try {
+            const res = await readContract({
+                address: contractAddr.mumbai.seniorPool as any,
+                abi: SeniorPool,
+                functionName: 'sharePrice',
+                args: [],
+                chainId
+            })
+            setSharePrice(BigNumber(res as any).div(BigNumber(constants.ONE_BILLION)).div(BigNumber(constants.ONE_BILLION)))
         } catch (error) {
             console.log(error)
         }
@@ -74,6 +108,8 @@ export default function SeniorLoanDetailPage() {
         getSeniorLoanDetailInfo()
         setChainId(chain?.id || 80001)
         getUserShares()
+        getSeniorBalance()
+        getSharePrice()
     }, [chain, address, myShares])
 
     const domain: Domain = {
@@ -119,7 +155,7 @@ export default function SeniorLoanDetailPage() {
 
             const { status } = await waitForTransaction({
                 hash: hash,
-                confirmations: 6,
+                // confirmations: 6,
             })
 
             if (status == 'success') {
@@ -144,6 +180,48 @@ export default function SeniorLoanDetailPage() {
         setLoadingDeposit(false)
     }
 
+    const handleWithdraw = async () => {
+        if (wantWithdrawAmount == 0) {
+            toast.error("Deposit amount must greater than 0")
+            return;
+        }
+        setLoadingWithdraw(true);
+        try {
+            const { hash } = await writeContract({
+                address: contractAddr.mumbai.seniorPool as any,
+                abi: SeniorPool,
+                functionName: 'withdrawInFidu',
+                args: [BigNumber(wantWithdrawAmount).multipliedBy(BigNumber(constants.ONE_BILLION)).multipliedBy(BigNumber(constants.ONE_BILLION))],
+            })
+            setWantWithdrawAmount(0)
+
+            const { status } = await waitForTransaction({
+                hash: hash,
+                // confirmations: 6,
+            })
+
+            if (status == 'success') {
+                toast.success("Invest successfully")
+                await getUserShares()
+            }
+            if (status == 'reverted') {
+                toast.error('Transaction reverted')
+            }
+        } catch (error) {
+            console.log(error)
+            try {
+                if ((JSON.parse(JSON.stringify(error)) as any).shortMessage.split(':')[1].trim() == 'ERC20') {
+                    toast.error((JSON.parse(JSON.stringify(error)) as any).shortMessage.split(':')[2])
+                } else {
+                    toast.error((JSON.parse(JSON.stringify(error)) as any).shortMessage.split(':')[1])
+                }
+            } catch (error2) {
+                console.log(JSON.stringify(error2))
+            }
+        }
+        setLoadingWithdraw(false);
+    }
+
     const getUserShares = async () => {
         try {
             const shareAmountWD = await readContract({
@@ -152,7 +230,7 @@ export default function SeniorLoanDetailPage() {
                 functionName: 'balanceOf',
                 args: [address as any]
             })
-            setMyShares(Number(BigNumber(shareAmountWD as any).div(BigNumber(constants.ONE_BILLION))))
+            setMyShares(Number(BigNumber(shareAmountWD as any).div(BigNumber(constants.ONE_BILLION)).div(BigNumber(constants.ONE_BILLION))))
         } catch (error) {
             console.log(error)
         }
@@ -160,6 +238,10 @@ export default function SeniorLoanDetailPage() {
 
     const handleWantInvestAmount = (value: any) => {
         setWantInvestAmount(value)
+    }
+
+    const handleWantWithdrawAmount = (value: any) => {
+        setWantWithdrawAmount(value)
     }
 
     return (
@@ -208,43 +290,76 @@ export default function SeniorLoanDetailPage() {
                     </div>
                     <div style={{ margin: '10px', fontSize: '24px', fontWeight: 'bold' }}>Doberman Senior Pool</div>
                     <div style={{ margin: '10px', fontSize: '14px', textAlign: 'justify', lineHeight: 1.5 }}>The Senior Pool is a pool of capital that is diversified across all Borrower Pools on the Doberman protocol. Liquidity Providers (LPs) who provide capital into the Senior Pool are capital providers in search of passive, diversified exposure across all Borrower Pools. This capital is protected by junior (first-loss) capital in each Borrower Pool.</div>
-                    <div style={{ margin: '10px', fontSize: '16px' }}>Fixed USDC APY {(seniorLoanDetailInfo as any).estimatedApy} %</div>
                     <div className="flex justify-between" style={{ margin: '10px', fontSize: '16px', marginTop: '50px' }}>
                         <div>
                             <div style={{ marginTop: '20px' }}>
                                 <Statistic title="Total Assets (USDC)" value={assets} precision={2} />
                             </div>
-                            <div style={{ marginTop: '50px' }}>
-                                <Statistic title="Total Shares Amount (GFI)" value={totalShares} precision={2} />
+                            <div style={{ marginTop: '20px' }}>
+                                <Statistic title="Remaining Assets (USDC)" value={seniorUSDCBalance} precision={2} />
+                            </div>
+                            <div style={{ marginTop: '20px' }}>
+                                <Statistic title="Total Shares Amount" value={totalShares} precision={2} />
                             </div>
                         </div>
                         <div>
                             <div style={{ marginTop: '20px' }}>
-                                <Statistic title="Your Shares Amount (GFI)" value={myShares} precision={2} />
+                                <Statistic title="Your Shares Amount" value={myShares} precision={2} />
                             </div>
-                            <div style={{ marginTop: '50px' }}>
-                                <Statistic title="Your Shares Percentage (%)" value={myShares / totalShares * 100} precision={2} />
+                            <div style={{ marginTop: '20px' }}>
+                                <Statistic title="Remaining Assets Percentage" suffix="%" value={seniorUSDCBalance / assets * 100} precision={2} />
+                            </div>
+                            <div style={{ marginTop: '20px' }}>
+                                <Statistic title="Your Shares Percentage" suffix="%" value={myShares / totalShares * 100} precision={2} />
                             </div>
                         </div>
                     </div>
 
-                    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                        <InputNumber
-                            placeholder="Input value"
-                            value={wantInvestAmount}
-                            onChange={handleWantInvestAmount}
-                            style={{ width: 300, marginTop: '10px' }}
-                            addonAfter='USDC ($)'
-                            precision={2}
-                            min={0}
-                        />
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                        <Button loading={loadingDeposit} onClick={handleDeposit} style={{ margin: '20px', marginTop: '25px', cursor: 'pointer' }}
-                            // className="btn-sm bg-sky-600 text-white hover:text-black hover:bg-sky-400 border border-2 border-slate-600 rounded-md"
-                            className="btn-sm border-2 border-black hover:bg-sky-200 rounded-lg"
-                        >Deposit</Button>
+                    <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
+                        <div>
+                            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                                <InputNumber
+                                    placeholder="Input value"
+                                    value={wantInvestAmount}
+                                    onChange={handleWantInvestAmount}
+                                    style={{ width: 300, marginTop: '10px' }}
+                                    addonAfter='USDC ($)'
+                                    precision={2}
+                                    min={0}
+                                />
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                                <Button loading={loadingDeposit} onClick={handleDeposit} style={{ margin: '20px', marginTop: '25px', cursor: 'pointer' }}
+                                    // className="btn-sm bg-sky-600 text-white hover:text-black hover:bg-sky-400 border border-2 border-slate-600 rounded-md"
+                                    className="btn-sm border-2 border-black hover:bg-sky-200 rounded-lg"
+                                >Deposit</Button>
+                            </div>
+                        </div>
 
+                        <div>
+                            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                                <InputNumber
+                                    placeholder="Input value"
+                                    value={wantWithdrawAmount}
+                                    onChange={handleWantWithdrawAmount}
+                                    style={{ width: 300, marginTop: '10px' }}
+                                    addonAfter='Shares'
+                                    precision={2}
+                                    min={0}
+                                />
+                            </div>
+                            {wantWithdrawAmount > 0 && (
+                                wantWithdrawAmount * Number(sharePrice) <= seniorUSDCBalance ?
+                                    <div className="mt-2" style={{ display: 'flex', justifyContent: 'center' }}> appropriate: {wantWithdrawAmount * Number(sharePrice)} USDC</div> :
+                                    <div className="text-red-500 mt-2">You withdraw more than available amount</div>
+                            )}
+                            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                                <Button loading={loadingWithdraw} onClick={handleWithdraw} style={{ margin: '20px', marginTop: '25px', cursor: 'pointer' }}
+                                    // className="btn-sm bg-sky-600 text-white hover:text-black hover:bg-sky-400 border border-2 border-slate-600 rounded-md"
+                                    className="btn-sm border-2 border-black hover:bg-sky-200 rounded-lg"
+                                >Withdraw</Button>
+                            </div>
+                        </div>
                     </div>
 
 

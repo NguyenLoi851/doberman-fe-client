@@ -68,7 +68,7 @@ export default function BorrowPage() {
                 chainId: chain?.id
             })
             const { status } = await waitForTransaction({
-                confirmations: 6,
+                // confirmations: 6,
                 hash
             })
             if (status == 'success') {

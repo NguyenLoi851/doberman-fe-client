@@ -23,7 +23,7 @@ import { Card, Col, List, Row, Statistic } from 'antd';
 import Link from 'next/link';
 import BigNumber from 'bignumber.js';
 import dayjs from 'dayjs';
-
+import { readContract } from "@wagmi/core"
 interface Props {
   children: ReactNode;
 }
@@ -158,21 +158,28 @@ export default function EarnPage() {
   }
 
   const { address } = useAccount()
-  const { data } = useContractRead({
-    address: contractAddr.mumbai.uniqueIdentity as any,
-    abi: UniqueIdentity,
-    functionName: 'balanceOf',
-    args: [address || '0x0000000000000000000000000000000000000001', constants.UID_ID],
-    chainId: constants.MUMBAI_ID,
-    onError(error) {
-      console.log("line38", error)
+
+  const getUIDBalanace = async () => {
+    try {
+      const balance = await readContract({
+        address: contractAddr.mumbai.uniqueIdentity as any,
+        abi: UniqueIdentity,
+        functionName: 'balanceOf',
+        args: [address as any, constants.UID_ID],
+        chainId: constants.MUMBAI_ID,
+      })
+      setUidStatus(balance == 0 ? false : true)
+    } catch (error) {
+      console.log(error)
     }
-  })
+  }
 
   useEffect(() => {
-    setUidStatus(data == 0 ? false : true)
+    if (address != undefined && address != null && address != '0x0000000000000000000000000000000000000000') {
+      getUIDBalanace()
+    }
     getLoans()
-  }, [data])
+  }, [address])
 
   const handleDetailLoanInfo = async (item: any) => {
     Router.push({

@@ -14,6 +14,8 @@ import { constants } from "@/commons/constants";
 import { Anchor, Button, Col, InputNumber, Row, Slider, Statistic } from "antd";
 import { toast } from "react-toastify";
 import { MonitorOutlined } from '@ant-design/icons';
+import UniqueIdentity from "@/abi/UniqueIdentity.json"
+import Link from "next/link";
 
 interface Props {
     children: ReactNode;
@@ -32,6 +34,7 @@ export default function LoanDetailPage() {
     const { chain } = useNetwork()
     const [chainId, setChainId] = useState(0);
     const [loanDetailInfo, setLoanDetailInfo] = useState({})
+    const [uidStatus, setUidStatus] = useState(false)
 
     const [fundingLimit, setFundingLimit] = useState(0)
     const [juniorDeposited, setJuniorDeposited] = useState(0)
@@ -120,10 +123,28 @@ export default function LoanDetailPage() {
 
     }
 
+    const getUIDBalanace = async () => {
+        try {
+            const balance = await readContract({
+                address: contractAddr.mumbai.uniqueIdentity as any,
+                abi: UniqueIdentity,
+                functionName: 'balanceOf',
+                args: [address as any, constants.UID_ID],
+                chainId: constants.MUMBAI_ID,
+            })
+            setUidStatus(balance == 0 ? false : true)
+        } catch (error) {
+            console.log(error)
+        }
+    }
+
     useEffect(() => {
         getLoanDetailInfo()
         setChainId(chain?.id || 80001)
-    }, [chain, props])
+        if (address != undefined && address != null && address != '0x0000000000000000000000000000000000000000') {
+            getUIDBalanace()
+        }
+    }, [chain, props, address])
 
     const domain: Domain = {
         version: '2',
@@ -164,7 +185,7 @@ export default function LoanDetailPage() {
 
             const { status } = await waitForTransaction({
                 hash: hash,
-                confirmations: 6,
+                // confirmations: 6,
             })
 
             if (status == 'success') {
@@ -260,7 +281,7 @@ export default function LoanDetailPage() {
                             <div style={{ margin: '20px', marginTop: '25px' }}>Wait until {dayjs(Number((loanDetailInfo as any).fundableAt) * 1000).format('DD/MM/YYYY hh:mm:ss')}</div>
                         )}
                         {trancheInvestStatus == 0 && Number((loanDetailInfo as any).fundableAt) <= dayjs().unix() && (
-                            <div>
+                            (uidStatus == true ? <div>
                                 <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                                     <InputNumber
                                         placeholder="Input value"
@@ -273,7 +294,15 @@ export default function LoanDetailPage() {
                                     />
                                 </div>
                                 <Button loading={loadingDeposit} onClick={handleDeposit} style={{ margin: '20px', marginTop: '25px', cursor: 'pointer' }} className="btn-sm border-2 border-black hover:bg-sky-200 rounded-lg">Deposit</Button>
-                            </div>
+                            </div> : <div style={{ justifyContent: 'center', alignItems: 'center' }}>
+                                <div style={{ margin: '10px' }}>You need set up your UID first to invest</div>
+                                <Link href='/account' >
+                                    <div style={{ justifyContent: 'center', alignItems: 'center', cursor: 'pointer' }} className="rounded-md btn-sm text-black bg-sky-50 hover:bg-gray-200 hover:text-black ml-3">
+                                        Go to my account
+                                    </div>
+                                </Link>
+
+                            </div>)
                         )}
                         {trancheInvestStatus != 0 && Number((loanDetailInfo as any).fundableAt) <= dayjs().unix() && (
                             <div style={{ margin: '20px', marginTop: '25px' }} className="btn-sm bg-sky-200">Locked</div>
@@ -321,7 +350,7 @@ export default function LoanDetailPage() {
             </Col>
             <Col span={5}>
             </Col>
-        </Row>
+        </Row >
         // </div>
         // </div>
     )

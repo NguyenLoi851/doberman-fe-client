@@ -13,7 +13,7 @@ import { ReactNode, useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { zeroAddress } from "viem";
 import { useAccount, useNetwork, useWalletClient } from "wagmi";
-import { readContract, writeContract, waitForTransaction } from "@wagmi/core"
+import { readContract, writeContract, waitForTransaction, getWalletClient } from "@wagmi/core"
 import Borrower from "../../../abi/Borrower.json"
 import SeniorPool from "../../../abi/SeniorPool.json"
 import { contractAddr } from "@/commons/contractAddress";
@@ -21,7 +21,7 @@ import { MonitorOutlined } from '@ant-design/icons';
 import BigNumber from "bignumber.js";
 import CreditLine from "../../../abi/CreditLine.json";
 import USDC from "../../../abi/USDC.json"
-import { buildPermitSignature, Domain } from "@/commons/functions";
+import { buildPermitSignature, buildPermitSignatureV2, Domain } from "@/commons/functions";
 
 interface Props {
     children: ReactNode;
@@ -64,7 +64,7 @@ export default function LoanDetailPage() {
         verifyingContract: contractAddr.mumbai.usdc as any
     }
 
-    const { data: walletClient } = useWalletClient()
+    // const { data: walletClient } = useWalletClient()
 
     const tokensQuery = `query BorrowerPage($userId: String!, $txHash: String!){
         borrowerContracts: borrowerContracts(where: {user: $userId}) {
@@ -282,7 +282,7 @@ export default function LoanDetailPage() {
                 args: [(tranchedPool as any).address]
             })
             const { status } = await waitForTransaction({
-                confirmations: 6,
+                // confirmations: 6,
                 hash
             })
 
@@ -312,7 +312,7 @@ export default function LoanDetailPage() {
                 args: [(tranchedPool as any).address]
             })
             const { status } = await waitForTransaction({
-                confirmations: 6,
+                // confirmations: 6,
                 hash
             })
 
@@ -349,7 +349,7 @@ export default function LoanDetailPage() {
                 args: [(tranchedPool as any).address, drawdownAmount, sendToAddress]
             })
             const { status } = await waitForTransaction({
-                confirmations: 6,
+                // confirmations: 6,
                 hash
             })
 
@@ -375,7 +375,8 @@ export default function LoanDetailPage() {
             const res = await readContract({
                 address: creditLineAddr as any,
                 abi: CreditLine,
-                functionName: 'nextDueTime'
+                functionName: 'nextDueTime',
+                chainId
             })
             setNextDueTime(res as any)
         } catch (error) {
@@ -388,7 +389,8 @@ export default function LoanDetailPage() {
             const res = await readContract({
                 address: creditLineAddr as any,
                 abi: CreditLine,
-                functionName: 'getInterestAndPrincipalOwedAsOfCurrent'
+                functionName: 'getInterestAndPrincipalOwedAsOfCurrent',
+                chainId
             })
             setInterestOwe(Number(BigNumber((res as any)[0]).div(BigNumber(constants.ONE_MILLION))))
             setPrincipleOwe(Number(BigNumber((res as any)[1]).div(BigNumber(constants.ONE_MILLION))))
@@ -417,8 +419,24 @@ export default function LoanDetailPage() {
                 chainId,
             });
 
-            const splitedSignature = await buildPermitSignature(
-                walletClient as any,
+            const walletClient = await getWalletClient()
+
+            console.log("nonces", nonces);
+            console.log("walletClient", walletClient);
+            console.log("domain", domain);
+            console.log("sig", signatureDeadline);
+
+            // const splitedSignature = await buildPermitSignature(
+            //     walletClient as any,
+            //     { ...domain },
+            //     borrowerProxy as any,
+            //     BigNumber(wantRepayAmount).multipliedBy(BigNumber(constants.ONE_MILLION)),
+            //     signatureDeadline,
+            //     nonces as any
+            // )
+
+            const splitedSignature = await buildPermitSignatureV2(
+                address as any,
                 { ...domain },
                 borrowerProxy as any,
                 BigNumber(wantRepayAmount).multipliedBy(BigNumber(constants.ONE_MILLION)),
@@ -434,7 +452,7 @@ export default function LoanDetailPage() {
             })
 
             const { status } = await waitForTransaction({
-                confirmations: 6,
+                // confirmations: 6,
                 hash
             })
 
@@ -457,6 +475,10 @@ export default function LoanDetailPage() {
         setRepayLoading(false)
     }
 
+    const handleRepayFull = async () => {
+        setWantRepayAmount(interestOwe + principleOwe)
+    }
+
     return (
         <div style={{ height: 'calc(100% - 64px - 30px)' }}>
             <Row>
@@ -465,8 +487,8 @@ export default function LoanDetailPage() {
                 <Col span={14}>
                     <Title>Loan's information</Title>
                     <div style={{ display: "flex", flexDirection: 'row' }}>
-                        <div style={{ fontSize: '20px', margin: '5px', cursor: 'pointer', marginRight: '15px' }} className="hover:font-bold text-sky-700 hover:underline hover:underline-offset-4" onClick={() => handleSetPart(0)}>Metadata</div>
-                        {disableEdit && <div style={{ fontSize: '20px', margin: '5px', cursor: 'pointer', marginRight: '15px' }} className="hover:font-bold text-sky-700 hover:underline hover:underline-offset-4" onClick={() => handleSetPart(1)}>Action</div>}
+                        <div style={{ fontSize: '20px', margin: '5px', cursor: 'pointer', marginRight: '15px' }} className=" text-sky-700 hover:underline hover:underline-offset-4" onClick={() => handleSetPart(0)}>Metadata</div>
+                        {disableEdit && <div style={{ fontSize: '20px', margin: '5px', cursor: 'pointer', marginRight: '15px' }} className=" text-sky-700 hover:underline hover:underline-offset-4" onClick={() => handleSetPart(1)}>Action</div>}
                     </div>
                     <hr />
                     <hr />
@@ -746,97 +768,116 @@ export default function LoanDetailPage() {
                         : (
                             <div>
                                 <div style={{ fontWeight: 'bold', fontSize: '30px', textAlign: 'center', marginTop: '30px', marginBottom: '30px' }} className="underline underline-offset-4">Overview</div>
-                                <div style={{ textAlign: 'center', marginTop: '50px' }}>
-                                    <a style={{ margin: '10px', fontSize: '18px' }} href={`https://mumbai.polygonscan.com/address/${((tranchedPool as any).address)}#code`} target="_blank" className="text-sky-500 hover:underline hover:underline-offset-3 "><MonitorOutlined style={{ marginRight: '5px', fontSize: '20px' }} />Pool Address: {((tranchedPool as any).address)}  </a>
-                                </div>
-                                <div className="flex justify-between" style={{ margin: '10px', fontSize: '16px', marginTop: '50px' }}>
-                                    <Statistic title="Junior Deposited Amount (USDC)" value={((tranchedPool as any).juniorDeposited) / constants.ONE_MILLION} precision={2} />
-                                    <Statistic title="Senior Deposited Amount (USDC)" value={((tranchedPool as any).seniorDeposited) / constants.ONE_MILLION} precision={2} />
-                                    <Statistic title="Funding Limit (USDC)" value={((tranchedPool as any).fundingLimit) / constants.ONE_MILLION} precision={2} />
-                                </div>
-                                <div style={{ fontSize: '24px', margin: '10px', display: 'flex', flexDirection: 'row', justifyContent: 'space-between', marginTop: '80px' }}>
-                                    <div style={{ textAlign: 'center' }}>Invested ratio </div>
-                                    {/* <div style={{ marginRight: '10px', display: 'flex', justifyContent: 'end', fontSize: '24px' }} className="text-sky-600">{(((tranchedPool as any).juniorDeposited) / constants.ONE_MILLION + ((tranchedPool as any).seniorDeposited) / constants.ONE_MILLION).toLocaleString()} / {(((tranchedPool as any).fundingLimit) / constants.ONE_MILLION).toLocaleString()} USDC ({((((tranchedPool as any).juniorDeposited) / constants.ONE_MILLION + ((tranchedPool as any).seniorDeposited) / constants.ONE_MILLION) / ((tranchedPool as any).fundingLimit) * constants.ONE_MILLION * 100).toFixed(2)}%)</div> */}
-                                    <div className="text-sky-600">{(((tranchedPool as any).juniorDeposited) / constants.ONE_MILLION + ((tranchedPool as any).seniorDeposited) / constants.ONE_MILLION).toLocaleString()} / {(((tranchedPool as any).fundingLimit) / constants.ONE_MILLION).toLocaleString()} USDC ({((((tranchedPool as any).juniorDeposited) / constants.ONE_MILLION + ((tranchedPool as any).seniorDeposited) / constants.ONE_MILLION) / ((tranchedPool as any).fundingLimit) * constants.ONE_MILLION * 100).toFixed(2)}%)</div>
-                                </div>
-                                <div style={{ margin: '10px', marginTop: '0px' }} >
-                                    <Slider
-                                        value={((tranchedPool as any).juniorDeposited) / constants.ONE_MILLION + ((tranchedPool as any).seniorDeposited) / constants.ONE_MILLION}
-                                        max={((tranchedPool as any).fundingLimit) / constants.ONE_MILLION}
-                                        step={0.01}
-                                        disabled={true}
-                                    />
+                                <div className="border-2 border-lime-400 rounded-lg" style={{ padding: '10px' }}>
+                                    <div style={{ textAlign: 'center', marginTop: '50px' }}>
+                                        <a style={{ margin: '10px', fontSize: '18px' }} href={`https://mumbai.polygonscan.com/address/${((tranchedPool as any).address)}#code`} target="_blank" className="text-sky-500 hover:underline hover:underline-offset-3 "><MonitorOutlined style={{ marginRight: '5px', fontSize: '20px' }} />Pool Address: {((tranchedPool as any).address)}  </a>
+                                    </div>
+                                    <div className="flex justify-between" style={{ margin: '10px', fontSize: '16px', marginTop: '50px' }}>
+                                        <Statistic title="Junior Deposited Amount (USDC)" value={((tranchedPool as any).juniorDeposited) / constants.ONE_MILLION} precision={2} />
+                                        <Statistic title="Senior Deposited Amount (USDC)" value={((tranchedPool as any).seniorDeposited) / constants.ONE_MILLION} precision={2} />
+                                        <Statistic title="Funding Limit (USDC)" value={((tranchedPool as any).fundingLimit) / constants.ONE_MILLION} precision={2} />
+                                    </div>
+                                    <div style={{ fontSize: '24px', margin: '10px', display: 'flex', flexDirection: 'row', justifyContent: 'space-between', marginTop: '80px' }}>
+                                        <div style={{ textAlign: 'center' }}>Invested ratio </div>
+                                        {/* <div style={{ marginRight: '10px', display: 'flex', justifyContent: 'end', fontSize: '24px' }} className="text-sky-600">{(((tranchedPool as any).juniorDeposited) / constants.ONE_MILLION + ((tranchedPool as any).seniorDeposited) / constants.ONE_MILLION).toLocaleString()} / {(((tranchedPool as any).fundingLimit) / constants.ONE_MILLION).toLocaleString()} USDC ({((((tranchedPool as any).juniorDeposited) / constants.ONE_MILLION + ((tranchedPool as any).seniorDeposited) / constants.ONE_MILLION) / ((tranchedPool as any).fundingLimit) * constants.ONE_MILLION * 100).toFixed(2)}%)</div> */}
+                                        <div className="text-sky-600">{(((tranchedPool as any).juniorDeposited) / constants.ONE_MILLION + ((tranchedPool as any).seniorDeposited) / constants.ONE_MILLION).toLocaleString()} / {(((tranchedPool as any).fundingLimit) / constants.ONE_MILLION).toLocaleString()} USDC ({((((tranchedPool as any).juniorDeposited) / constants.ONE_MILLION + ((tranchedPool as any).seniorDeposited) / constants.ONE_MILLION) / ((tranchedPool as any).fundingLimit) * constants.ONE_MILLION * 100).toFixed(2)}%)</div>
+                                    </div>
+                                    <div style={{ margin: '10px', marginTop: '0px' }} >
+                                        <Slider
+                                            value={((tranchedPool as any).juniorDeposited) / constants.ONE_MILLION + ((tranchedPool as any).seniorDeposited) / constants.ONE_MILLION}
+                                            max={((tranchedPool as any).fundingLimit) / constants.ONE_MILLION}
+                                            step={0.01}
+                                            disabled={true}
+                                        />
+                                    </div>
                                 </div>
 
                                 <div style={{ fontWeight: 'bold', fontSize: '30px', textAlign: 'center', marginTop: '30px', marginBottom: '30px' }} className="underline underline-offset-4">Drawdown</div>
-                                <div style={{ marginTop: '50px' }}>
-                                    <Steps
-                                        direction="vertical"
-                                        current={currAction}
-                                        items={[
-                                            {
-                                                title: <div>Junior Investment Process</div>,
-                                                description: currAction == 0 ?
-                                                    <Button className="btn-sm bg-sky-300 hover:bg-sky-400" style={{ cursor: "pointer" }} onClick={handleLockJuniorInvestment} loading={lockJuniorInvestmentLoading}>Lock Junior Investment</Button> :
-                                                    <div className="btn-sm bg-sky-100" >Lock Junior Investment</div>,
-                                                disabled: currAction == 0,
-                                            },
-                                            {
-                                                title: <div>Senior Investment Process</div>,
-                                                description: currAction == 1 ?
-                                                    <Button className="btn-sm bg-sky-300 hover:bg-lime-400 " style={{ cursor: "pointer" }} onClick={handleSeniorInvestment} loading={callSeniorInvestmentLoading}>Call Senior Investment (optional)</Button> :
-                                                    <div className="btn-sm bg-sky-100" >Call Senior Investment</div>,
-                                                disabled: currAction == 1,
-                                            },
-                                            {
-                                                title: <div>End Investment</div>,
-                                                description: currAction == 2 || currAction == 1 ?
-                                                    <Button className="btn-sm bg-sky-300 hover:bg-lime-400 " style={{ cursor: "pointer" }} onClick={showModal} loading={drawdownLoading}>Drawdown</Button> :
-                                                    <div className="btn-sm bg-sky-100" >Drawdown</div>,
-                                                disabled: currAction == 2,
-                                            },
-                                        ]}
-                                    />
+                                <div className="border-2 border-lime-400 rounded-lg" style={{ padding: '10px' }}>
+                                    <div style={{ marginTop: '50px' }}>
+                                        <Steps
+                                            direction="vertical"
+                                            current={currAction}
+                                            items={[
+                                                {
+                                                    title: <div>Junior Investment Process</div>,
+                                                    description: currAction == 0 ?
+                                                        <Button className="btn-sm bg-sky-300 hover:bg-sky-400" style={{ cursor: "pointer" }} onClick={handleLockJuniorInvestment} loading={lockJuniorInvestmentLoading}>Lock Junior Investment</Button> :
+                                                        <div className="btn-sm bg-sky-100" >Lock Junior Investment</div>,
+                                                    disabled: currAction == 0,
+                                                },
+                                                {
+                                                    title: <div>Senior Investment Process</div>,
+                                                    description: currAction == 1 ?
+                                                        <Button className="btn-sm bg-sky-300 hover:bg-lime-400 " style={{ cursor: "pointer" }} onClick={handleSeniorInvestment} loading={callSeniorInvestmentLoading}>Call Senior Investment (optional)</Button> :
+                                                        <div className="btn-sm bg-sky-100" >Call Senior Investment</div>,
+                                                    disabled: currAction == 1,
+                                                },
+                                                {
+                                                    title: <div>End Investment</div>,
+                                                    description: currAction == 2 || currAction == 1 ?
+                                                        <Button className="btn-sm bg-sky-300 hover:bg-lime-400 " style={{ cursor: "pointer" }} onClick={showModal} loading={drawdownLoading}>Drawdown</Button> :
+                                                        <div className="btn-sm bg-sky-100" >Drawdown</div>,
+                                                    disabled: currAction == 2,
+                                                },
+                                            ]}
+                                        />
+                                    </div>
                                 </div>
 
-                                <div style={{ fontWeight: 'bold', fontSize: '30px', textAlign: 'center', marginTop: '30px', marginBottom: '30px' }} className="underline underline-offset-4">Repayment</div>
-                                {currAction == 3 && (
-                                    <div>
-                                        <div className="flex justify-between" style={{ margin: '10px', fontSize: '16px', marginTop: '50px' }}>
-                                            <Statistic title="Term start date" value={dayjs(Number((tranchedPool as any).termStartTime) * 1000).format('DD/MM/YYYY hh:mm:ss')} />
-                                            <Statistic title="Term end date" value={dayjs(Number((tranchedPool as any).termEndTime) * 1000).format('DD/MM/YYYY hh:mm:ss')} />
-                                            <Statistic title="Next due time" value={dayjs(Number(nextDueTime) * 1000).format('DD/MM/YYYY hh:mm:ss')} />
-                                        </div>
 
-                                        <div style={{ margin: '20px', display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
-                                            <div style={{ fontSize: '18px' }}>
-                                                <div style={{ margin: '10px' }}>Interest owe: <span style={{ fontWeight: 'bold' }}>{interestOwe.toLocaleString()}</span> USDC</div>
-                                                <div style={{ margin: '10px' }}>Principal owe: <span style={{ fontWeight: 'bold' }}>{principleOwe.toLocaleString()}</span> USDC</div>
-                                                <div style={{ margin: '10px' }}>Total owe: <span style={{ fontWeight: 'bold' }}>{(interestOwe + principleOwe).toLocaleString()}</span> USDC</div>
+                                <div style={{ fontWeight: 'bold', fontSize: '30px', textAlign: 'center', marginTop: '30px', marginBottom: '30px' }} className="underline underline-offset-4">Repayment</div>
+                                <div className="border-2 border-lime-400 rounded-lg" style={{ padding: '10px' }}>
+                                    {currAction == 3 && (
+                                        <div>
+                                            <div className="flex justify-between" style={{ margin: '10px', fontSize: '16px', marginTop: '50px' }}>
+                                                <Statistic title="Term start date" value={dayjs(Number((tranchedPool as any).termStartTime) * 1000).format('DD/MM/YYYY hh:mm:ss')} />
+                                                <Statistic title="Term end date" value={dayjs(Number((tranchedPool as any).termEndTime) * 1000).format('DD/MM/YYYY hh:mm:ss')} />
+                                                {Number(nextDueTime) > 0 ?
+                                                    <Statistic title="Next due time" value={dayjs(Number(nextDueTime) * 1000).format('DD/MM/YYYY hh:mm:ss')} /> :
+                                                    <div className="bg-lime-300 rounded-lg font-bold" style={{ fontSize: '20px', display: 'flex', alignItems: 'center', padding: '5px' }}>Done Repayment</div>
+                                                }
                                             </div>
-                                            <div style={{ margin: '15px' }}>
-                                                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                                                    <InputNumber
-                                                        placeholder="Input value"
-                                                        value={wantRepayAmount}
-                                                        onChange={(value: any) => setWantRepayAmount(value)}
-                                                        style={{ width: 300, marginTop: '10px' }}
-                                                        addonAfter='USDC ($)'
-                                                        precision={2}
-                                                        min={0}
-                                                    />
+
+                                            <div style={{ margin: '20px', display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
+                                                <div style={{ fontSize: '18px' }}>
+                                                    <div style={{ margin: '10px' }}>Interest owe: <span style={{ fontWeight: 'bold' }}>{interestOwe.toLocaleString()}</span> USDC</div>
+                                                    <div style={{ margin: '10px' }}>Principal owe: <span style={{ fontWeight: 'bold' }}>{principleOwe.toLocaleString()}</span> USDC</div>
+                                                    <div style={{ margin: '10px' }}>Total owe: <span style={{ fontWeight: 'bold' }}>{(interestOwe + principleOwe).toLocaleString()}</span> USDC</div>
                                                 </div>
-                                                <div style={{ margin: '15px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                                                    <Button loading={repayLoading} className="btn-sm border-2 border-black hover:bg-sky-200 rounded-lg"
-                                                        onClick={handleRepay}
-                                                    >
-                                                        Make Payment
-                                                    </Button>
+                                                <div style={{ margin: '0px' }}>
+                                                    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                                                        <div>
+                                                            <InputNumber
+                                                                placeholder="Input value"
+                                                                value={wantRepayAmount}
+                                                                onChange={(value: any) => setWantRepayAmount(value)}
+                                                                style={{ width: 300, marginTop: '10px' }}
+                                                                addonAfter='USDC ($)'
+                                                                precision={2}
+                                                                min={0}
+                                                                disabled={Number(nextDueTime) == 0}
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                    <div onClick={handleRepayFull} style={{ display: 'flex', justifyContent: 'end' }}>
+                                                        <div className="border-2 rounded-lg" style={{ padding: '3px', marginTop: '1px', cursor: 'pointer' }}>
+                                                            Repay full
+                                                        </div>
+                                                    </div>
+                                                    <div style={{ margin: '5px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                                                        <Button loading={repayLoading} className="btn-sm border-2 border-black hover:bg-sky-200 rounded-lg"
+                                                            onClick={handleRepay}
+                                                            disabled={Number(nextDueTime) == 0}
+                                                        >
+                                                            Make Payment
+                                                        </Button>
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                    </div>)
-                                }
+                                        </div>)
+                                    }
+                                </div>
                             </div>
                         )
                     }

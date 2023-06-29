@@ -24,7 +24,11 @@ export default function ConnectWallet() {
   const [chainId, setChainId] = useState(0)
 
   const handleSwitchNetworkCore = async () => {
-    await switchNetworkCore({ chainId: constants.MUMBAI_ID })
+    try {
+      await switchNetworkCore({ chainId: constants.MUMBAI_ID })
+    } catch (error) {
+      console.log(error)
+    }
   }
 
   useEffect(() => {

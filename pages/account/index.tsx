@@ -32,28 +32,6 @@ export default function AccountPage() {
     const [chainId, setChainId] = useState(0)
     const [userUIDBalance, setUserUIDBalance] = useState(0)
 
-    // const { signMessage, signMessageAsync } = useSignMessage({
-    //     message: process.env.NEXT_PUBLIC_APP_ID + '#' + timestamp + '#' + chain?.id,
-    // })
-
-    // const { write, data } = useContractWrite({
-    //     address: contractAddr.mumbai.uniqueIdentity as any,
-    //     abi: UniqueIdentity,
-    //     functionName: 'mint',
-    //     args: [constants.UID_ID, constants.EXPIRES_AT, mintSignature],
-    //     value: constants.MINT_COST as any,
-    //     chainId: chainId,
-    //     onSuccess() {
-    //     },
-    //     onError() {
-    //     }
-    // })
-
-    // const { isSuccess } = useWaitForTransaction({
-    //     confirmations: 6,
-    //     hash: data?.hash
-    // })
-
     const handleMintUIDToken = async () => {
         try {
             const { hash } = await writeContract({
@@ -66,7 +44,7 @@ export default function AccountPage() {
             })
 
             const { status } = await waitForTransaction({
-                confirmations: 6,
+                // confirmations: 6,
                 hash
             })
             if (status == 'success') {
@@ -82,22 +60,19 @@ export default function AccountPage() {
     }
 
     const getUserUIDBalance = async () => {
-        const data2: any = await readContract({
-            address: contractAddr.mumbai.uniqueIdentity as any,
-            abi: UniqueIdentity,
-            functionName: 'balanceOf',
-            args: [address, constants.UID_ID]
-        })
-        setUserUIDBalance(data2)
+        try {
+            const data2: any = await readContract({
+                address: contractAddr.mumbai.uniqueIdentity as any,
+                abi: UniqueIdentity,
+                functionName: 'balanceOf',
+                args: [address, constants.UID_ID]
+            })
+            setUserUIDBalance(data2)
+        } catch (error) {
+            console.log(error)
+        }
+
     }
-
-
-    // const { data: data2 } = useContractRead({
-    //     address: contractAddr.mumbai.uniqueIdentity as any,
-    //     abi: UniqueIdentity,
-    //     functionName: 'balanceOf',
-    //     args: [address, constants.UID_ID]
-    // })
 
     const handleSetUpUID = async () => {
         let token = localStorage.getItem(constants.ACCESS_TOKEN);
@@ -238,11 +213,15 @@ export default function AccountPage() {
                                         key: 'uid-and-wallet',
                                         href: '#uid-and-wallet',
                                         title: 'UID and Wallet'
+                                    },
+                                    {
+                                        key: 'my-investment',
+                                        href: '#my-investment',
+                                        title: 'My investment'
                                     }
                                 ]} />
                         </div>
                         <div style={{ margin: '10px' }}>
-
                         </div>
                         {chainId != constants.MUMBAI_ID ? (
                             <div className="text-red-500">Wrong network or not connect wallet</div>
@@ -275,6 +254,9 @@ export default function AccountPage() {
                                 }
                             </div>
                         )}
+
+                        <div>My invested pool</div>
+
                     </Col>
                     <Col span={5}></Col>
                 </Row>
