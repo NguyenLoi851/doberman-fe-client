@@ -194,10 +194,13 @@ export default function BorrowPage() {
                                 Link proxy
                             </div>
                         >
-                            <div>Link your wallet address to a HELIX proxy wallet smart contract in order to create a loan.
+                            <div style={{ margin: '10px' }}>
+                                <div style={{ margin: '10px' }}>
+                                    Link your wallet address to a DOBERMAN proxy wallet smart contract in order to create a loan.
+                                </div>
                                 <ul>
-                                    <li>Proxy wallet will help you interact indirectly with smart contracts across all your loans and save gas fee.</li>
-                                    <li>Proxy Wallet linking is a one-time transaction only.</li>
+                                    <li style={{ margin: '10px' }}>Proxy wallet will help you interact indirectly with smart contracts across all your loans and save gas fee.</li>
+                                    <li style={{ margin: '10px' }}>Proxy Wallet linking is a one-time transaction only.</li>
                                 </ul>
                             </div>
                         </Modal>

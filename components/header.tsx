@@ -23,21 +23,25 @@ export default function Header() {
     {
       key: '1',
       label: (
-        <a rel="noopener noreferrer" href="/borrow" >
+        // <a rel="noopener noreferrer" href="/borrow" >
+        <div onClick={() => router.push('/borrow')}>
           <div className="font-medium text-purple-600 hover:text-gray-200 px-4 py-3 flex items-center transition duration-150 ease-in-out">
             Borrow
           </div>
-        </a>
+        </div>
+        // </a>
       ),
     },
     {
       key: '2',
       label: (
-        <a rel="noopener noreferrer" href="/account" >
+        // <a rel="noopener noreferrer" href="/account" >
+        <div onClick={() => router.push('/account')}>
           <div className="font-medium text-purple-600 hover:text-gray-200 px-4 py-3 flex items-center transition duration-150 ease-in-out">
             Dashboard
           </div>
-        </a>
+        </div>
+        // </a>
       )
     },
   ];

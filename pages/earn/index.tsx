@@ -222,7 +222,7 @@ export default function EarnPage() {
           <div className="flex justify-between border-2 border-amber-400 rounded-lg" style={{ margin: '10px', fontSize: '16px', marginTop: '50px', padding: '20px' }} >
             <Statistic title='Total Drawdown' prefix='$ ' value={(protocol as any).totalDrawdowns / constants.ONE_MILLION} precision={2}></Statistic>
             <Statistic title='Total Loans' value={(protocol as any).numLoans} precision={0}></Statistic>
-            <Statistic title='Total Loans Repaid' prefix='$' value={(protocol as any).totalInterestCollected} precision={2}></Statistic>
+            <Statistic title='Total Interest Repaid' prefix='$' value={(protocol as any).totalInterestCollected / constants.ONE_MILLION} precision={2}></Statistic>
           </div>
 
           <div className='font-bold' style={{ fontSize: '20px', marginBottom: '50px', marginTop: '30px' }}>Open deals</div>
@@ -322,7 +322,7 @@ export default function EarnPage() {
             dataSource={closeLoans}
             renderItem={(item, index) => (
               <List.Item
-                actions={[<div className='btn-sm bg-sky-300 text-black rounded-md hover:font-bold' onClick={() => handleDetailLoanInfo(item)}>View Detail</div>]}
+                actions={[<div className='btn-sm bg-sky-300 text-black rounded-md hover:bg-sky-500 hover:text-white' onClick={() => handleDetailLoanInfo(item)}>View Detail</div>]}
                 style={{ cursor: 'pointer', marginTop: '12px', marginBottom: '12px' }}
                 className='bg-white rounded-lg '>
                 <List.Item.Meta

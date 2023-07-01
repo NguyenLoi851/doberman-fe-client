@@ -201,7 +201,7 @@ export default function SeniorLoanDetailPage() {
             })
 
             if (status == 'success') {
-                toast.success("Invest successfully")
+                toast.success("Withdraw successfully")
                 await getUserShares()
             }
             if (status == 'reverted') {
@@ -258,11 +258,6 @@ export default function SeniorLoanDetailPage() {
                             title: 'Invest'
                         },
                         {
-                            key: 'overview',
-                            href: '#overview',
-                            title: 'Overview'
-                        },
-                        {
                             key: 'portfolio-details',
                             href: '#portfolio-details',
                             title: 'Portfolio details',
@@ -271,11 +266,6 @@ export default function SeniorLoanDetailPage() {
                             key: 'repayment',
                             href: '#repayment',
                             title: 'Repayment'
-                        },
-                        {
-                            key: 'history',
-                            href: '#history',
-                            title: 'Recent activity'
                         }
                     ]}
                 />
@@ -290,7 +280,7 @@ export default function SeniorLoanDetailPage() {
                     </div>
                     <div style={{ margin: '10px', fontSize: '24px', fontWeight: 'bold' }}>Doberman Senior Pool</div>
                     <div style={{ margin: '10px', fontSize: '14px', textAlign: 'justify', lineHeight: 1.5 }}>The Senior Pool is a pool of capital that is diversified across all Borrower Pools on the Doberman protocol. Liquidity Providers (LPs) who provide capital into the Senior Pool are capital providers in search of passive, diversified exposure across all Borrower Pools. This capital is protected by junior (first-loss) capital in each Borrower Pool.</div>
-                    <div className="flex justify-between" style={{ margin: '10px', fontSize: '16px', marginTop: '50px' }}>
+                    <div className="flex justify-between" style={{ margin: '30px', fontSize: '16px', marginTop: '50px' }}>
                         <div>
                             <div style={{ marginTop: '20px' }}>
                                 <Statistic title="Total Assets (USDC)" value={assets} precision={2} />
@@ -298,16 +288,17 @@ export default function SeniorLoanDetailPage() {
                             <div style={{ marginTop: '20px' }}>
                                 <Statistic title="Remaining Assets (USDC)" value={seniorUSDCBalance} precision={2} />
                             </div>
+
                             <div style={{ marginTop: '20px' }}>
-                                <Statistic title="Total Shares Amount" value={totalShares} precision={2} />
+                                <Statistic title="Remaining Assets Percentage" suffix="%" value={seniorUSDCBalance / assets * 100} precision={2} />
                             </div>
                         </div>
                         <div>
                             <div style={{ marginTop: '20px' }}>
-                                <Statistic title="Your Shares Amount" value={myShares} precision={2} />
+                                <Statistic title="Total Shares Amount" value={totalShares} precision={2} />
                             </div>
                             <div style={{ marginTop: '20px' }}>
-                                <Statistic title="Remaining Assets Percentage" suffix="%" value={seniorUSDCBalance / assets * 100} precision={2} />
+                                <Statistic title="Your Shares Amount" value={myShares} precision={2} />
                             </div>
                             <div style={{ marginTop: '20px' }}>
                                 <Statistic title="Your Shares Percentage" suffix="%" value={myShares / totalShares * 100} precision={2} />
@@ -365,23 +356,21 @@ export default function SeniorLoanDetailPage() {
 
                 </div>
 
-                <div id="overview" style={{ height: 'auto', background: 'rgb(241, 233, 210)', marginBottom: '50px', borderRadius: '5%', padding: '10px' }} >
-                    <div style={{ margin: '10px', fontSize: '16px', fontWeight: 'bold' }}>Overview</div>
-                    <div>Principal</div>
-                    <div>Interest</div>
-                    <div>Total</div>
-                    <div>Repayment status</div>
-                </div>
-
-
-                <div id="repayment" style={{ height: 'auto', background: 'rgba(0,0,255,0.02)', marginBottom: '50px', borderRadius: '5%', padding: '10px' }}>
-                    <div style={{ margin: '10px', fontSize: '16px', fontWeight: 'bold' }}>Repayment terms</div>
-                    <div>Loan terms</div>
-                    <div>Term start date</div>
-                    <div>Loan maturity date</div>
-                    <div>Repayment structure</div>
-                    <div>Payment Frequency</div>
-                    <div>Total payments</div>
+                <div id="portfolio-details" style={{ height: 'auto', background: 'rgb(241, 233, 210)', marginBottom: '50px', padding: '10px' }} className="rounded-lg">
+                    <div style={{ margin: '10px', fontSize: '16px', fontWeight: 'bold' }}>Porfolio details</div>
+                    <div style={{ margin: '10px', fontSize: '18px' }}>Goldfinch Senior Pool</div>
+                    <div style={{ margin: '10px', fontSize: '16px', textAlign: 'justify' }}>The Goldfinch Senior Pool is automatically managed by The Goldfinch protocol. Capital is automatically allocated from the Senior Pool into the senior tranches of various direct-lending deals on Goldfinch according to the Leverage Model. This capital is protected by first-loss capital in all deals.</div>
+                    <div style={{ display: 'flex', flexDirection: 'row' }}>
+                        <div style={{ margin: '10px', backgroundColor: 'rgb(255,255,255)', padding: '5px' }} className="rounded-full">
+                            <a href='https://discord.gg/7FHgxdyW' target='_blank'>Website</a>
+                        </div>
+                        <div style={{ margin: '10px', backgroundColor: 'rgb(255,255,255)', padding: '5px' }} className="rounded-full">
+                            <a href='https://www.linkedin.com/in/loing851/' target='_blank'>LinkedIn</a>
+                        </div>
+                        <div style={{ margin: '10px', backgroundColor: 'rgb(255,255,255)', padding: '5px' }} className="rounded-full">
+                            <a href='https://twitter.com/' target='_blank'>Website</a>
+                        </div>
+                    </div>
                 </div>
 
                 <div id="repayment" style={{ height: 'auto', background: 'rgba(0,0,255,0.02)', marginBottom: '50px', borderRadius: '5%', padding: '10px' }}>

@@ -16,6 +16,7 @@ import { toast } from "react-toastify";
 import { MonitorOutlined } from '@ant-design/icons';
 import UniqueIdentity from "@/abi/UniqueIdentity.json"
 import Link from "next/link";
+import CreditLine from "../../abi/CreditLine.json";
 
 interface Props {
     children: ReactNode;
@@ -27,6 +28,8 @@ enum TrancheInvestStatus {
     SENIOR_LOCK
 }
 
+const InterestPaymentFrequency = [1, 3, 6, 12]
+
 export default function LoanDetailPage() {
     const router = useRouter()
     const props = router.query
@@ -35,17 +38,26 @@ export default function LoanDetailPage() {
     const [chainId, setChainId] = useState(0);
     const [loanDetailInfo, setLoanDetailInfo] = useState({})
     const [uidStatus, setUidStatus] = useState(false)
-
+    const [tokenIds, setTokenIds] = useState([])
     const [fundingLimit, setFundingLimit] = useState(0)
     const [juniorDeposited, setJuniorDeposited] = useState(0)
     const [seniorDeposited, setSeniorDeposited] = useState(0)
+    const [interestAmountRepaid, setInterestAmountRepaid] = useState(0)
+    const [principalAmountRepaid, setPrincipalAmountRepaid] = useState(0)
     const [wantInvestAmount, setWantInvestAmount] = useState(0)
+    const [nextDueTime, setNextDueTime] = useState(0)
+    const [creditLineAddr, setCreditLineAddr] = useState('')
     const [trancheInvestStatus, setTrancheInvestStatus] = useState(TrancheInvestStatus.OPEN)
     const [loadingDeposit, setLoadingDeposit] = useState(false)
+    const [loadingWithdraw, setLoadingWithdraw] = useState(false)
+    const [availableWithdraw, setAvailableWithdraw] = useState({
+        interest: 0,
+        principal: 0
+    })
 
     const { data: walletClient } = useWalletClient()
     const tokenDetailLoanQuery = `
-    query LoanDetail($poolId: String!) {
+    query LoanDetail($poolId: String!, $userId: String!) {
         tranchedPool(id: $poolId) {
             id
             actualSeniorPoolInvestment
@@ -86,6 +98,13 @@ export default function LoanDetailPage() {
             juniorLocked
             seniorLocked
         }
+
+        user(id: $userId) {
+            poolTokens(where: {loan: $poolId}) {
+              id
+              principalAmount
+            }
+        }
     }`
 
     const client = new ApolloClient({
@@ -102,13 +121,18 @@ export default function LoanDetailPage() {
             const res = await client.query({
                 query: gql(tokenDetailLoanQuery),
                 variables: {
-                    poolId: (props.address as any).toLowerCase() ?? ""
+                    poolId: (props.address as any).toLowerCase() ?? "",
+                    userId: (address as any).toLowerCase()
                 }
             })
             setLoanDetailInfo(res.data.tranchedPool)
             setFundingLimit(Number((res.data.tranchedPool as any).fundingLimit) / constants.ONE_MILLION)
             setJuniorDeposited(Number((res.data.tranchedPool as any).juniorDeposited) / constants.ONE_MILLION)
             setSeniorDeposited(Number((res.data.tranchedPool as any).seniorDeposited) / constants.ONE_MILLION)
+            setInterestAmountRepaid(Number((res.data.tranchedPool as any).interestAmountRepaid) / constants.ONE_MILLION)
+            setPrincipalAmountRepaid(Number((res.data.tranchedPool as any).principalAmountRepaid) / constants.ONE_MILLION)
+            setCreditLineAddr((res.data.tranchedPool as any).creditLineAddress)
+
             if (res && res.data && res.data.tranchedPool) {
                 if ((res.data.tranchedPool as any).seniorLocked == true) {
                     setTrancheInvestStatus(TrancheInvestStatus.SENIOR_LOCK)
@@ -117,10 +141,46 @@ export default function LoanDetailPage() {
                 }
             }
 
+            const tokenIdsArr: string[] = []
+            res.data.user.poolTokens.map((item: any) => {
+                tokenIdsArr.push(item.id)
+            })
+            setTokenIds(tokenIdsArr as any)
+            await getAvailableWithdraw(tokenIdsArr)
         } catch (error) {
             console.log(error)
         }
+    }
 
+    const getNextDueTime = async () => {
+        try {
+            const res = await readContract({
+                address: creditLineAddr as any,
+                abi: CreditLine,
+                functionName: 'nextDueTime',
+                chainId
+            })
+            setNextDueTime(res as any)
+        } catch (error) {
+            console.log(error)
+        }
+    }
+
+    const getAvailableWithdraw = async (tokenIdsArr: any) => {
+        try {
+            const res = await readContract({
+                address: props.address as any,
+                abi: TranchedPool,
+                functionName: 'availableToWithdrawMultiple',
+                args: [tokenIdsArr]
+            })
+            setAvailableWithdraw({
+                interest: Number(BigNumber((res as any)[0]).div(BigNumber(constants.ONE_MILLION))),
+                principal: Number(BigNumber((res as any)[1]).div(BigNumber(constants.ONE_MILLION)))
+            })
+        } catch (error) {
+            console.log(error)
+        }
     }
 
     const getUIDBalanace = async () => {
@@ -143,6 +203,9 @@ export default function LoanDetailPage() {
         setChainId(chain?.id || 80001)
         if (address != undefined && address != null && address != '0x0000000000000000000000000000000000000000') {
             getUIDBalanace()
+        }
+        if (creditLineAddr != '') {
+            getNextDueTime()
         }
     }, [chain, props, address])
 
@@ -210,6 +273,36 @@ export default function LoanDetailPage() {
         setWantInvestAmount(value)
     }
 
+    const handleWithdraw = async () => {
+        setLoadingWithdraw(true)
+        try {
+            const { hash } = await writeContract({
+                address: props.address as any,
+                abi: TranchedPool,
+                functionName: 'withdrawMaxMultiple',
+                args: [tokenIds]
+            })
+
+            const { status } = await waitForTransaction({
+                hash
+            })
+
+            if (status == 'success') {
+                toast.success("Withdraw successfully")
+            }
+            if (status == 'reverted') {
+                toast.error("Transaction reverted")
+            }
+        } catch (error) {
+            try {
+                toast.error((JSON.parse(JSON.stringify(error)) as any).shortMessage.split(':')[1])
+            } catch (error2) {
+                console.log(JSON.stringify(error2))
+            }
+        }
+        setLoadingWithdraw(false)
+    }
+
     return (
         <Row style={{ backgroundColor: 'rgb(253, 245, 227)' }}>
             <Col span={1}>
@@ -256,8 +349,11 @@ export default function LoanDetailPage() {
                     </div>
                     <div style={{ margin: '10px', fontSize: '24px', fontWeight: 'bold' }}>{props.projectName}</div>
                     <div style={{ margin: '10px', fontSize: '14px', textAlign: 'justify', lineHeight: 1.5 }}>{props.projectIntro}</div>
-                    <div style={{ margin: '10px', fontSize: '16px' }}>Fixed USDC APY {(loanDetailInfo as any).usdcApy} %</div>
-                    <div style={{ margin: '10px', fontSize: '16px' }}>Fundable At: {dayjs(Number((loanDetailInfo as any).fundableAt) * 1000).format('DD/MM/YYYY hh:mm:ss')}</div>
+                    <div className="flex justify-between" style={{ margin: '10px', fontSize: '16px', marginTop: '50px' }}>
+                        <Statistic title="Fundable At" value={dayjs(Number((loanDetailInfo as any).fundableAt) * 1000).format('DD/MM/YYYY hh:mm:ss')} />
+                        <Statistic title="Term" value={Number(props.loanTerm)} suffix="months" />
+                        <Statistic title="Interest Rate (APR)" value={Number(props.interestRate)} suffix="%" />
+                    </div>
                     <div className="flex justify-between" style={{ margin: '10px', fontSize: '16px', marginTop: '50px' }}>
                         <Statistic title="Junior Deposited Amount (USDC)" value={juniorDeposited} precision={2} />
                         <Statistic title="Senior Deposited Amount (USDC)" value={seniorDeposited} precision={2} />
@@ -276,75 +372,108 @@ export default function LoanDetailPage() {
                         />
                     </div>
 
-                    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                    {/* <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}> */}
+                    <div style={{ marginTop: '30px' }}>
                         {Number((loanDetailInfo as any).fundableAt) > dayjs().unix() && (
                             <div style={{ margin: '20px', marginTop: '25px' }}>Wait until {dayjs(Number((loanDetailInfo as any).fundableAt) * 1000).format('DD/MM/YYYY hh:mm:ss')}</div>
                         )}
                         {trancheInvestStatus == 0 && Number((loanDetailInfo as any).fundableAt) <= dayjs().unix() && (
-                            (uidStatus == true ? <div>
-                                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                                    <InputNumber
-                                        placeholder="Input value"
-                                        value={wantInvestAmount}
-                                        onChange={handleWantInvestAmount}
-                                        max={fundingLimit - juniorDeposited}
-                                        style={{ width: 150, marginTop: '10px' }}
-                                        precision={2}
-                                        min={0}
-                                    />
-                                </div>
-                                <Button loading={loadingDeposit} onClick={handleDeposit} style={{ margin: '20px', marginTop: '25px', cursor: 'pointer' }} className="btn-sm border-2 border-black hover:bg-sky-200 rounded-lg">Deposit</Button>
-                            </div> : <div style={{ justifyContent: 'center', alignItems: 'center' }}>
-                                <div style={{ margin: '10px' }}>You need set up your UID first to invest</div>
-                                <Link href='/account' >
-                                    <div style={{ justifyContent: 'center', alignItems: 'center', cursor: 'pointer' }} className="rounded-md btn-sm text-black bg-sky-50 hover:bg-gray-200 hover:text-black ml-3">
-                                        Go to my account
+                            (uidStatus == true ?
+                                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                    <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
+                                        <div>
+                                            <InputNumber
+                                                placeholder="Input value"
+                                                value={wantInvestAmount}
+                                                onChange={handleWantInvestAmount}
+                                                max={fundingLimit - juniorDeposited}
+                                                style={{ width: 150, marginTop: '10px' }}
+                                                precision={2}
+                                                min={0}
+                                            />
+                                        </div>
+                                        <Button loading={loadingDeposit} onClick={handleDeposit} style={{ margin: '20px', marginTop: '25px', cursor: 'pointer' }} className="btn-sm border-2 border-black hover:bg-sky-200 rounded-lg">Deposit</Button>
                                     </div>
-                                </Link>
 
-                            </div>)
+                                    <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
+                                        <div>My interest amount: {availableWithdraw.interest.toLocaleString()} USDC</div>
+                                        <div>My principal amount: {availableWithdraw.principal.toLocaleString()} USDC</div>
+                                        <Button disabled={availableWithdraw.interest + availableWithdraw.principal == 0} loading={loadingWithdraw} onClick={handleWithdraw} style={{ margin: '20px', marginTop: '25px', cursor: 'pointer' }} className="btn-sm border-2 border-black hover:bg-sky-200 rounded-lg">Withdraw</Button>
+                                    </div>
+                                </div>
+                                :
+                                <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
+                                    <div style={{ margin: '10px' }}>You need set up your UID first to invest</div>
+                                    <Link href='/account' >
+                                        <div style={{ justifyContent: 'center', alignItems: 'center', cursor: 'pointer' }} className="rounded-md btn-sm text-black bg-sky-50 hover:bg-gray-200 hover:text-black ml-3">
+                                            Go to my account
+                                        </div>
+                                    </Link>
+
+                                </div>)
                         )}
                         {trancheInvestStatus != 0 && Number((loanDetailInfo as any).fundableAt) <= dayjs().unix() && (
-                            <div style={{ margin: '20px', marginTop: '25px' }} className="btn-sm bg-sky-200">Locked</div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                <div style={{ margin: '20px', marginTop: '25px', maxHeight: '35px', fontWeight: 'bold' }} className="btn-sm bg-sky-200 rounded-lg">Locked</div>
+                                <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
+                                    <div>My interest amount: {availableWithdraw.interest.toLocaleString()} USDC</div>
+                                    <div>My principal amount: {availableWithdraw.principal.toLocaleString()} USDC</div>
+                                    <Button disabled={availableWithdraw.interest + availableWithdraw.principal == 0} loading={loadingWithdraw} onClick={handleWithdraw} style={{ margin: '20px', marginTop: '25px', cursor: 'pointer' }} className="btn-sm border-2 border-black hover:bg-sky-200 rounded-lg">Withdraw</Button>
+                                </div>
+                            </div>
+
                         )}
                     </div>
 
 
                 </div>
 
-                <div id="overview" style={{ height: 'auto', background: 'rgb(241, 233, 210)', marginBottom: '50px', borderRadius: '5%', padding: '10px' }} >
+                <div id="overview" style={{ height: 'auto', background: 'rgb(241, 233, 210)', marginBottom: '50px', padding: '10px' }} className="rounded-lg" >
                     <div style={{ margin: '10px', fontSize: '16px', fontWeight: 'bold' }}>Overview</div>
-                    <div>Principal</div>
-                    <div>Interest</div>
-                    <div>Total</div>
-                    <div>Repayment status</div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginLeft: '50px', marginRight: '50px' }}>
+                        <div>
+                            <Statistic style={{ margin: '30px' }} title="Principal repaid (USDC)" value={principalAmountRepaid.toLocaleString()} precision={2} />
+                            <Statistic style={{ margin: '30px' }} title="Interest repaid (USDC)" value={interestAmountRepaid.toLocaleString()} precision={2} />
+                        </div>
+                        <div>
+                            <Statistic style={{ margin: '30px' }} title="Total repaid (USDC)" value={(interestAmountRepaid + principalAmountRepaid).toLocaleString()} precision={2} />
+                            <Statistic style={{ margin: '30px' }} title="Repayment status" value={nextDueTime == 0 ? "Done" : "On time"} />
+                        </div>
+                    </div>
                 </div>
 
-                <div id="borrower" style={{ height: 'auto', background: 'rgb(241, 233, 210)', marginBottom: '50px', borderRadius: '5%', padding: '10px' }} >
+                <div id="borrower" style={{ height: 'auto', background: 'rgb(241, 233, 210)', marginBottom: '50px', padding: '10px' }} className="rounded-lg" >
                     <div style={{ margin: '10px', fontSize: '16px', fontWeight: 'bold' }}>Borrower details</div>
                     <div style={{ margin: '10px', fontSize: '14px', textAlign: 'justify', lineHeight: 1.5 }}>{props.companyName}</div>
                     <div style={{ margin: '10px', fontSize: '14px', textAlign: 'justify', lineHeight: 1.5 }}>{props.companyIntro}</div>
                     <div style={{ margin: '10px', display: 'flex', flexDirection: 'row' }}>
                         <div style={{ margin: '10px', backgroundColor: 'rgb(255,255,255)', borderRadius: '30%', padding: '5px' }}>
-                            <a href={`${props.companyPage}`}>Website</a>
+                            <a href={`${props.companyPage}`} target='_blank'>Website</a>
                         </div>
                         <div style={{ margin: '10px', backgroundColor: 'rgb(255,255,255)', borderRadius: '30%', padding: '5px' }}>
-                            <a href={`${props.companyContact}`}>Contact</a>
+                            <a href={`${props.companyContact}`} target='_blank'>Contact</a>
                         </div>
                     </div>
                 </div>
 
-                <div id="repayment" style={{ height: 'auto', background: 'rgba(0,0,255,0.02)', marginBottom: '50px', borderRadius: '5%', padding: '10px' }}>
+                <div id="repayment" style={{ height: 'auto', background: 'rgba(0,0,255,0.02)', marginBottom: '50px', padding: '10px' }} className="rounded-lg" >
                     <div style={{ margin: '10px', fontSize: '16px', fontWeight: 'bold' }}>Repayment terms</div>
-                    <div>Loan terms</div>
-                    <div>Term start date</div>
-                    <div>Loan maturity date</div>
-                    <div>Repayment structure</div>
-                    <div>Payment Frequency</div>
-                    <div>Total payments</div>
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginLeft: '50px', marginRight: '50px' }}>
+                        <div>
+                            <Statistic style={{ margin: '30px' }} suffix="months" title="Loan terms" value={(props as any).loanTerm} />
+                            <Statistic style={{ margin: '30px' }} title="Term start date" value={dayjs(Number((loanDetailInfo as any).termStartTime * 1000)).format("DD/MM/YYYY HH:mm:ss").toString()} />
+                            <Statistic style={{ margin: '30px' }} title="Term start date" value={dayjs(Number((loanDetailInfo as any).termEndTime * 1000)).format("DD/MM/YYYY HH:mm:ss").toString()} />
+                        </div>
+                        <div>
+                            <Statistic style={{ margin: '30px' }} suffix="months" title="Payment Frequency" value={InterestPaymentFrequency[(props as any).interestPaymentFrequency]} />
+                            <Statistic style={{ margin: '30px' }} title="Repayment structure" value="Bullet" />
+                            <Statistic style={{ margin: '30px' }} title="Total interest payments (USDC)" value={(juniorDeposited + seniorDeposited) / 100 * Number((loanDetailInfo as any).interestRate) / 365 * Number((props as any).loanTerm) * 100} precision={2} />
+                        </div>
+                    </div>
                 </div>
 
-                <div id="repayment" style={{ height: 'auto', background: 'rgba(0,0,255,0.02)', marginBottom: '50px', borderRadius: '5%', padding: '10px' }}>
+                <div id="repayment" style={{ height: 'auto', background: 'rgba(0,0,255,0.02)', marginBottom: '50px', padding: '10px' }} className="rounded-lg" >
                     <div style={{ margin: '10px', fontSize: '16px', fontWeight: 'bold' }}>Recent activity</div>
                 </div>
             </Col>
