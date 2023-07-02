@@ -5,7 +5,7 @@ import jwtDecode from "jwt-decode";
 import { ReactNode, useEffect, useState } from "react";
 import { signMessage, waitForTransaction, writeContract } from "@wagmi/core";
 import { useAccount, useNetwork } from "wagmi";
-import { List } from "antd";
+import { Button, List } from "antd";
 import { encodePacked, keccak256, hexToBytes } from "viem";
 import { contractAddr } from "@/commons/contractAddress";
 import { toast } from "react-toastify";
@@ -133,8 +133,8 @@ export default function AdminUserRegisterPage() {
                 dataSource={registerUsers}
                 renderItem={(item, index) => (
                     <List.Item
-                        style={{ cursor: 'pointer', margin: '24px' }}
-                        actions={[<button onClick={() => handleSignForMintUIDToken(item)}>Accept</button>]}
+                        style={{ cursor: 'pointer', margin: '30px' }}
+                        actions={[<Button style={{ fontSize: '18px' }} onClick={() => handleSignForMintUIDToken(item)}>Accept</Button>]}
                     >
                         <List.Item.Meta
                             avatar={index + 1 + '.'}

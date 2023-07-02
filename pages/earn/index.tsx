@@ -261,7 +261,7 @@ export default function EarnPage() {
                 Interest:
               </div>
               <div style={{ fontWeight: 'bold' }}>
-                {(seniorPool as any).estimatedApy} %
+                {(Number((seniorPool as any).estimatedApy) * 100).toPrecision(2)} %
               </div>
             </div>
           </Card>

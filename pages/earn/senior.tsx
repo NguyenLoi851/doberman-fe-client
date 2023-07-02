@@ -13,10 +13,12 @@ import { readContract, writeContract, waitForTransaction } from "@wagmi/core"
 import USDC from "../../abi/USDC.json"
 import SeniorPool from "../../abi/SeniorPool.json"
 import { constants } from "@/commons/constants";
-import { Anchor, Button, Col, InputNumber, Row, Slider, Statistic } from "antd";
+import { Anchor, Button, Col, InputNumber, Row, Slider, Statistic, Table, Tooltip } from "antd";
 import { toast } from "react-toastify";
-import { MonitorOutlined } from '@ant-design/icons';
+import { MonitorOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import Fidu from "../../abi/Fidu.json";
+import { ColumnsType } from "antd/es/table";
+import { shortenAddress } from "@/components/shortenAddress";
 interface Props {
     children: ReactNode;
 }
@@ -37,6 +39,9 @@ export default function SeniorLoanDetailPage() {
     const [wantWithdrawAmount, setWantWithdrawAmount] = useState(0)
     const [loadingWithdraw, setLoadingWithdraw] = useState(false)
     const [sharePrice, setSharePrice] = useState(BigNumber(constants.ONE_BILLION).multipliedBy(BigNumber(constants.ONE_BILLION)))
+    const [historyTx, setHistoryTx] = useState([])
+    const [totalInvested, setTotalInvested] = useState(0)
+    const [porfolioLoans, setPorfolioLoans] = useState([])
 
     const tokenDetailSeniorLoanQuery = `
     query SeniorLoanDetail {
@@ -53,8 +58,85 @@ export default function SeniorLoanDetailPage() {
           totalLoansOutstanding
           totalShares
           totalWrittenDown
+          tranchedPools {
+            actualSeniorPoolInvestment
+            juniorDeposited
+          }
         }
-      }`
+        transactions(
+            orderBy: timestamp
+            orderDirection: desc
+            where: {category_in: [SENIOR_POOL_DEPOSIT, SENIOR_POOL_WITHDRAWAL, SENIOR_POOL_REDEMPTION]}
+        ) {
+            sentAmount
+            timestamp
+            receivedNftId
+            receivedAmount
+            sentToken
+            receivedToken
+            sentNftType
+            sentNftId
+            receivedNftType
+            transactionHash
+            category
+            fiduPrice
+            user {
+                id
+            }
+            id
+        }
+    }`
+
+    const ActionPresentation = {
+        TRANCHED_POOL_REPAYMENT: "Borrower repay",
+        SENIOR_POOL_REDEMPTION: "Senior redeem",
+        TRANCHED_POOL_DRAWDOWN: "Borrower drawdown",
+        SENIOR_POOL_WITHDRAWAL: "Investor withdraw",
+        SENIOR_POOL_DEPOSIT: "Investor deposit"
+    }
+
+    interface DataType {
+        key: React.Key;
+        user: string;
+        action: string;
+        sentAmount: string;
+        receivedAmount: string;
+        timestamp: string;
+        tx: ReactNode;
+    }
+
+    const columns: ColumnsType<DataType> = [
+        {
+            title: 'User',
+            dataIndex: 'user',
+            width: 150,
+        },
+        {
+            title: 'Action',
+            dataIndex: 'action',
+            width: 200,
+        },
+        {
+            title: 'Sent Amount',
+            dataIndex: 'sentAmount',
+            width: 250,
+        },
+        {
+            title: 'Received Amount',
+            dataIndex: 'receivedAmount',
+            width: 250,
+        },
+        {
+            title: 'Timestamp',
+            dataIndex: 'timestamp',
+            width: 200,
+        },
+        {
+            title: 'Tx',
+            dataIndex: 'tx',
+            width: 150,
+        },
+    ];
 
     const client = new ApolloClient({
         uri: process.env.NEXT_PUBLIC_SUB_GRAPH_API_URL as string,
@@ -69,6 +151,41 @@ export default function SeniorLoanDetailPage() {
             setSeniorLoanDetailInfo(res.data.seniorPool)
             setAssets(Number(res.data.seniorPool.assets) / constants.ONE_MILLION)
             setTotalShares(Number(BigNumber(res.data.seniorPool.totalShares).div(constants.ONE_BILLION).div(constants.ONE_BILLION)))
+            setTotalInvested(Number(BigNumber(res.data.seniorPool.totalInvested).div(constants.ONE_MILLION)))
+            setPorfolioLoans(res.data.seniorPool.tranchedPools)
+
+            const txData: DataType[] = []
+            res.data.transactions.map((item: any) => {
+                let sentAmount = ''
+                if (item.sentAmount == null) {
+                    sentAmount = '0'
+                } else if (item.sentToken == 'USDC') {
+                    sentAmount = Number(BigNumber(item.sentAmount).div(BigNumber(constants.ONE_MILLION))).toLocaleString()
+                } else {
+                    sentAmount = Number(BigNumber(item.sentAmount).div(BigNumber(constants.ONE_BILLION)).div(BigNumber(constants.ONE_BILLION))).toLocaleString()
+                }
+
+                let receivedAmount = ''
+                if (item.receivedAmount == null) {
+                    receivedAmount = '0'
+                } else if (item.receivedToken == 'USDC') {
+                    receivedAmount = Number(BigNumber(item.receivedAmount).div(BigNumber(constants.ONE_MILLION))).toLocaleString()
+                } else {
+                    receivedAmount = Number(BigNumber(item.receivedAmount).div(BigNumber(constants.ONE_BILLION)).div(BigNumber(constants.ONE_BILLION))).toLocaleString()
+                }
+
+                txData.push({
+                    key: item.id,
+                    user: shortenAddress(item.user.id),
+                    action: (ActionPresentation as any)[item.category as any],
+                    // action: item.category,
+                    sentAmount: sentAmount + ' ' + (item.sentToken ?? ''),
+                    receivedAmount: receivedAmount + ' ' + (item.receivedToken ?? ''),
+                    timestamp: dayjs(Number(item.timestamp) * 1000).format('DD/MM/YYYY HH:mm:ss'),
+                    tx: <div><MonitorOutlined style={{ padding: '5px' }} /><a href={`https://mumbai.polygonscan.com/tx/${item.transactionHash}`} target='_blank' className="underline underline-offset-2">Tx</a></div>,
+                })
+            })
+            setHistoryTx(txData as any)
         } catch (error) {
             console.log(error)
         }
@@ -148,7 +265,7 @@ export default function SeniorLoanDetailPage() {
                 address: contractAddr.mumbai.seniorPool as any,
                 abi: SeniorPool,
                 functionName: 'depositWithPermit',
-                args: [BigNumber(wantInvestAmount).multipliedBy(BigNumber(constants.ONE_MILLION)), signatureDeadline, splitedSignature.v, splitedSignature.r, splitedSignature.s],
+                args: [Number(BigNumber(wantInvestAmount).multipliedBy(BigNumber(constants.ONE_MILLION))), signatureDeadline, splitedSignature.v, splitedSignature.r, splitedSignature.s],
             })
 
             setWantInvestAmount(0)
@@ -182,7 +299,7 @@ export default function SeniorLoanDetailPage() {
 
     const handleWithdraw = async () => {
         if (wantWithdrawAmount == 0) {
-            toast.error("Deposit amount must greater than 0")
+            toast.error("Withdraw amount must greater than 0")
             return;
         }
         setLoadingWithdraw(true);
@@ -191,7 +308,8 @@ export default function SeniorLoanDetailPage() {
                 address: contractAddr.mumbai.seniorPool as any,
                 abi: SeniorPool,
                 functionName: 'withdrawInFidu',
-                args: [BigNumber(wantWithdrawAmount).multipliedBy(BigNumber(constants.ONE_BILLION)).multipliedBy(BigNumber(constants.ONE_BILLION))],
+                args: [Number(BigNumber(wantWithdrawAmount).times(BigNumber(constants.ONE_BILLION)).times(BigNumber(constants.ONE_BILLION)))],
+                chainId
             })
             setWantWithdrawAmount(0)
 
@@ -245,7 +363,7 @@ export default function SeniorLoanDetailPage() {
     }
 
     return (
-        <Row style={{ backgroundColor: 'rgb(253, 245, 227)' }}>
+        <Row>
             <Col span={1}>
             </Col>
             <Col span={4}>
@@ -273,7 +391,7 @@ export default function SeniorLoanDetailPage() {
             <Col span={2}>
             </Col>
             <Col span={12}>
-                <div id="invest" style={{ height: 'auto', marginBottom: '50px', borderRadius: '5%', padding: '10px' }} className='bg-amber-300' >
+                <div id="invest" style={{ height: 'auto', marginBottom: '50px', borderRadius: '5%', padding: '10px' }} className='bg-amber-250' >
                     <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
                         <div style={{ margin: '10px', fontSize: '16px' }}>Doberman Protocol</div>
                         <a style={{ margin: '10px' }} href={`https://mumbai.polygonscan.com/address/${contractAddr.mumbai.seniorPool}#code`} target="_blank" className="text-sky-500 hover:underline hover:underline-offset-3 "><MonitorOutlined style={{ marginRight: '5px', fontSize: '20px' }} />MumbaiScan </a>
@@ -341,7 +459,20 @@ export default function SeniorLoanDetailPage() {
                             </div>
                             {wantWithdrawAmount > 0 && (
                                 wantWithdrawAmount * Number(sharePrice) <= seniorUSDCBalance ?
-                                    <div className="mt-2" style={{ display: 'flex', justifyContent: 'center' }}> appropriate: {wantWithdrawAmount * Number(sharePrice)} USDC</div> :
+                                    <div>
+                                        <div className="mt-2" style={{ display: 'flex', justifyContent: 'center' }}>
+                                            appropriate: {Number(wantWithdrawAmount * Number(sharePrice) * (100 - 0.5) / 100).toLocaleString()} USDC
+                                            <Tooltip
+                                                placement="right"
+                                                title=
+                                                <div>
+                                                    <div className="mt-2" style={{ display: 'flex', justifyContent: 'center', fontSize: '10px' }}> fee: {Number(wantWithdrawAmount * Number(sharePrice) * (0.5) / 100).toLocaleString()} USDC</div>
+                                                </div>
+                                            >
+                                                <InfoCircleOutlined style={{ marginLeft: '5px' }} />
+                                            </Tooltip>
+                                        </div>
+                                    </div> :
                                     <div className="text-red-500 mt-2">You withdraw more than available amount</div>
                             )}
                             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
@@ -356,25 +487,38 @@ export default function SeniorLoanDetailPage() {
 
                 </div>
 
-                <div id="portfolio-details" style={{ height: 'auto', background: 'rgb(241, 233, 210)', marginBottom: '50px', padding: '10px' }} className="rounded-lg">
+                <div id="portfolio-details" style={{ height: 'auto', marginBottom: '50px', padding: '10px' }} className="rounded-lg bg-amber-200">
                     <div style={{ margin: '10px', fontSize: '16px', fontWeight: 'bold' }}>Porfolio details</div>
                     <div style={{ margin: '10px', fontSize: '18px' }}>Goldfinch Senior Pool</div>
                     <div style={{ margin: '10px', fontSize: '16px', textAlign: 'justify' }}>The Goldfinch Senior Pool is automatically managed by The Goldfinch protocol. Capital is automatically allocated from the Senior Pool into the senior tranches of various direct-lending deals on Goldfinch according to the Leverage Model. This capital is protected by first-loss capital in all deals.</div>
                     <div style={{ display: 'flex', flexDirection: 'row' }}>
-                        <div style={{ margin: '10px', backgroundColor: 'rgb(255,255,255)', padding: '5px' }} className="rounded-full">
-                            <a href='https://discord.gg/7FHgxdyW' target='_blank'>Website</a>
+                        <div style={{ margin: '10px', padding: '8px' }} className="rounded-full bg-white hover:bg-slate-300">
+                            <a href='https://discord.gg/7FHgxdyW' target='_blank' className="text-black hover:text-black hover:underline">Website</a>
                         </div>
-                        <div style={{ margin: '10px', backgroundColor: 'rgb(255,255,255)', padding: '5px' }} className="rounded-full">
-                            <a href='https://www.linkedin.com/in/loing851/' target='_blank'>LinkedIn</a>
+                        <div style={{ margin: '10px', padding: '8px' }} className="rounded-full bg-white hover:bg-slate-300">
+                            <a href='https://www.linkedin.com/in/loing851/' target='_blank' className="text-black hover:text-black hover:underline">LinkedIn</a>
                         </div>
-                        <div style={{ margin: '10px', backgroundColor: 'rgb(255,255,255)', padding: '5px' }} className="rounded-full">
-                            <a href='https://twitter.com/' target='_blank'>Website</a>
+                        <div style={{ margin: '10px', padding: '8px' }} className="rounded-full bg-white hover:bg-slate-300">
+                            <a href='https://twitter.com/' target='_blank' className="text-black hover:text-black hover:underline">Twitter</a>
                         </div>
+                    </div>
+
+                    <div style={{ marginTop: '50px', display: 'flex', justifyContent: 'space-between' }}>
+                        <Statistic title="Total Shares Amount" prefix="$" value={totalInvested} precision={2} />
+                        <Statistic title="No. of porfolio loans" value={porfolioLoans.length} />
+                        <Statistic title="Total Shares Amount" prefix="$" value={assets} precision={2} />
                     </div>
                 </div>
 
-                <div id="repayment" style={{ height: 'auto', background: 'rgba(0,0,255,0.02)', marginBottom: '50px', borderRadius: '5%', padding: '10px' }}>
+                <div id="repayment" style={{ height: 'auto', marginBottom: '50px', borderRadius: '5%', padding: '10px' }} className="bg-white">
                     <div style={{ margin: '10px', fontSize: '16px', fontWeight: 'bold' }}>Recent activity</div>
+                    <Table
+                        columns={columns}
+                        dataSource={historyTx}
+                        pagination={{ pageSize: 10 }}
+                        scroll={{ y: 500 }}
+                    // showHeader={false}
+                    />
                 </div>
             </Col>
             <Col span={5}>

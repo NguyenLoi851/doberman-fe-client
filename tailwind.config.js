@@ -35,8 +35,9 @@ module.exports = {
           900: '#262668',
         },
         amber: {
-          100: '#fbf7f1',
-          200: '#fbf4e7',
+          100: '#faf7f0',
+          200: '#f1e9d2',
+          250: '#d6bc7a',
         }
       },
       spacing: {

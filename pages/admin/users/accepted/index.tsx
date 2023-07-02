@@ -73,7 +73,7 @@ export default function AdminUserAcceptedPage() {
     return (
         <div>
             <div style={{ textAlign: 'center', fontSize: '30px', backgroundColor: '#f5f5f5', paddingLeft: 0 }}>
-                Users / Register
+                Users / Accepted
             </div>
             <List
                 itemLayout="horizontal"

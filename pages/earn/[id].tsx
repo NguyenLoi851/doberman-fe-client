@@ -11,12 +11,14 @@ import { readContract, writeContract, waitForTransaction } from "@wagmi/core"
 import USDC from "../../abi/USDC.json"
 import TranchedPool from "../../abi/TranchedPool.json"
 import { constants } from "@/commons/constants";
-import { Anchor, Button, Col, InputNumber, Row, Slider, Statistic } from "antd";
+import { Anchor, Button, Col, InputNumber, Row, Slider, Statistic, Table } from "antd";
 import { toast } from "react-toastify";
 import { MonitorOutlined } from '@ant-design/icons';
 import UniqueIdentity from "@/abi/UniqueIdentity.json"
 import Link from "next/link";
 import CreditLine from "../../abi/CreditLine.json";
+import { ColumnsType } from "antd/es/table";
+import { shortenAddress } from "@/components/shortenAddress";
 
 interface Props {
     children: ReactNode;
@@ -27,8 +29,6 @@ enum TrancheInvestStatus {
     JUNIOR_LOCK,
     SENIOR_LOCK
 }
-
-const InterestPaymentFrequency = [1, 3, 6, 12]
 
 export default function LoanDetailPage() {
     const router = useRouter()
@@ -50,10 +50,59 @@ export default function LoanDetailPage() {
     const [trancheInvestStatus, setTrancheInvestStatus] = useState(TrancheInvestStatus.OPEN)
     const [loadingDeposit, setLoadingDeposit] = useState(false)
     const [loadingWithdraw, setLoadingWithdraw] = useState(false)
+    const [historyTx, setHistoryTx] = useState([])
     const [availableWithdraw, setAvailableWithdraw] = useState({
         interest: 0,
         principal: 0
     })
+
+
+
+    const InterestPaymentFrequency = [1, 3, 6, 12]
+
+    const ActionPresentation = {
+        TRANCHED_POOL_REPAYMENT: "Borrower repay",
+        SENIOR_POOL_REDEMPTION: "Senior redeem",
+        TRANCHED_POOL_DEPOSIT: "Investor deposit",
+        TRANCHED_POOL_DRAWDOWN: "Borrower drawdown",
+        TRANCHED_POOL_WITHDRAWAL: "Investor withdraw",
+    }
+    interface DataType {
+        key: React.Key;
+        user: string;
+        action: string;
+        amount: string;
+        timestamp: string;
+        tx: ReactNode;
+    }
+
+    const columns: ColumnsType<DataType> = [
+        {
+            title: 'User',
+            dataIndex: 'user',
+            width: 150,
+        },
+        {
+            title: 'Action',
+            dataIndex: 'action',
+            width: 200,
+        },
+        {
+            title: 'Amount',
+            dataIndex: 'amount',
+            width: 250,
+        },
+        {
+            title: 'Timestamp',
+            dataIndex: 'timestamp',
+            width: 200,
+        },
+        {
+            title: 'Tx',
+            dataIndex: 'tx',
+            width: 150,
+        },
+    ];
 
     const { data: walletClient } = useWalletClient()
     const tokenDetailLoanQuery = `
@@ -105,6 +154,29 @@ export default function LoanDetailPage() {
               principalAmount
             }
         }
+
+        transactions(
+            where: {loan: $poolId}
+            orderBy: timestamp
+            orderDirection: desc
+        ) {
+            sentAmount
+            timestamp
+            receivedNftId
+            receivedAmount
+            sentToken
+            receivedToken
+            sentNftType
+            sentNftId
+            receivedNftType
+            transactionHash
+            category
+            fiduPrice
+            user {
+              id
+            }
+            id
+        }
     }`
 
     const client = new ApolloClient({
@@ -147,6 +219,20 @@ export default function LoanDetailPage() {
             })
             setTokenIds(tokenIdsArr as any)
             await getAvailableWithdraw(tokenIdsArr)
+
+            const txData: DataType[] = []
+            res.data.transactions.map((item: any) => {
+                txData.push({
+                    key: item.id,
+                    user: shortenAddress(item.user.id),
+                    action: (ActionPresentation as any)[item.category as any],
+                    // action: item.category,
+                    amount: (Number(item.receivedAmount || item.sentAmount) / constants.ONE_MILLION).toLocaleString() + ' USDC',
+                    timestamp: dayjs(Number(item.timestamp) * 1000).format('DD/MM/YYYY HH:mm:ss'),
+                    tx: <div><MonitorOutlined style={{ padding: '5px' }} /><a href={`https://mumbai.polygonscan.com/tx/${item.transactionHash}`} target='_blank' className="underline underline-offset-2">Tx</a></div>,
+                })
+            })
+            setHistoryTx(txData as any)
         } catch (error) {
             console.log(error)
         }
@@ -379,7 +465,7 @@ export default function LoanDetailPage() {
                         )}
                         {trancheInvestStatus == 0 && Number((loanDetailInfo as any).fundableAt) <= dayjs().unix() && (
                             (uidStatus == true ?
-                                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', margin: '80px', marginTop: '50px', marginBottom: '30px' }}>
                                     <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
                                         <div>
                                             <InputNumber
@@ -428,7 +514,7 @@ export default function LoanDetailPage() {
 
                 </div>
 
-                <div id="overview" style={{ height: 'auto', background: 'rgb(241, 233, 210)', marginBottom: '50px', padding: '10px' }} className="rounded-lg" >
+                <div id="overview" style={{ height: 'auto', marginBottom: '50px', padding: '10px' }} className="rounded-lg bg-white" >
                     <div style={{ margin: '10px', fontSize: '16px', fontWeight: 'bold' }}>Overview</div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginLeft: '50px', marginRight: '50px' }}>
                         <div>
@@ -442,21 +528,21 @@ export default function LoanDetailPage() {
                     </div>
                 </div>
 
-                <div id="borrower" style={{ height: 'auto', background: 'rgb(241, 233, 210)', marginBottom: '50px', padding: '10px' }} className="rounded-lg" >
+                <div id="borrower" style={{ height: 'auto', marginBottom: '50px', padding: '10px' }} className="rounded-lg bg-white" >
                     <div style={{ margin: '10px', fontSize: '16px', fontWeight: 'bold' }}>Borrower details</div>
                     <div style={{ margin: '10px', fontSize: '14px', textAlign: 'justify', lineHeight: 1.5 }}>{props.companyName}</div>
                     <div style={{ margin: '10px', fontSize: '14px', textAlign: 'justify', lineHeight: 1.5 }}>{props.companyIntro}</div>
                     <div style={{ margin: '10px', display: 'flex', flexDirection: 'row' }}>
-                        <div style={{ margin: '10px', backgroundColor: 'rgb(255,255,255)', borderRadius: '30%', padding: '5px' }}>
+                        <div style={{ margin: '10px', padding: '5px' }} className="bg-amber-200 rounded-lg">
                             <a href={`${props.companyPage}`} target='_blank'>Website</a>
                         </div>
-                        <div style={{ margin: '10px', backgroundColor: 'rgb(255,255,255)', borderRadius: '30%', padding: '5px' }}>
+                        <div style={{ margin: '10px', padding: '5px' }} className="bg-amber-200 rounded-lg">
                             <a href={`${props.companyContact}`} target='_blank'>Contact</a>
                         </div>
                     </div>
                 </div>
 
-                <div id="repayment" style={{ height: 'auto', background: 'rgba(0,0,255,0.02)', marginBottom: '50px', padding: '10px' }} className="rounded-lg" >
+                <div id="repayment" style={{ height: 'auto', marginBottom: '50px', padding: '10px' }} className="rounded-lg  bg-white" >
                     <div style={{ margin: '10px', fontSize: '16px', fontWeight: 'bold' }}>Repayment terms</div>
 
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginLeft: '50px', marginRight: '50px' }}>
@@ -473,8 +559,15 @@ export default function LoanDetailPage() {
                     </div>
                 </div>
 
-                <div id="repayment" style={{ height: 'auto', background: 'rgba(0,0,255,0.02)', marginBottom: '50px', padding: '10px' }} className="rounded-lg" >
+                <div id="history" style={{ height: 'auto', marginBottom: '50px', padding: '10px' }} className="rounded-lg  bg-white" >
                     <div style={{ margin: '10px', fontSize: '16px', fontWeight: 'bold' }}>Recent activity</div>
+                    <Table
+                        columns={columns}
+                        dataSource={historyTx}
+                        pagination={{ pageSize: 10 }}
+                        scroll={{ y: 500 }}
+                        showHeader={false}
+                    />
                 </div>
             </Col>
             <Col span={5}>

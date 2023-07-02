@@ -45,7 +45,7 @@ const items: MenuItem[] = [
         // getItem('Alex', '5'),
     ]),
     getItem('Loan', 'sub2', <TeamOutlined />, [
-        getItem('Applied', '2'), 
+        getItem('Applied', '2'),
         getItem('Deployed', '3'),
     ]),
     // getItem('Option 1', '1', <PieChartOutlined />),
@@ -61,31 +61,31 @@ const AdminLayout: FC<Props> = ({ children }) => {
     const router = useRouter();
 
     const handleChooseOption = (key: string) => {
-        if(key == '1') router.push('/admin/users/register')
-        if(key == '2') router.push('/admin/loans/applied')
-        if(key == '3') router.push('/admin/loans/deployed')
-        if(key == '4') router.push('/admin/users/accepted')
+        if (key == '1') router.push('/admin/users/register')
+        if (key == '2') router.push('/admin/loans/applied')
+        if (key == '3') router.push('/admin/loans/deployed')
+        if (key == '4') router.push('/admin/users/accepted')
     }
     return (
         <div>
-        <AdminHeader />
-        <Layout style={{ minHeight: '100vh' }}>
-            <Sider collapsible collapsed={collapsed} onCollapse={(value) => setCollapsed(value)}>
-                <div className="demo-logo-vertical" />
-                <Menu theme="dark" mode="inline" items={items} onClick={(e)=>handleChooseOption(e.key)}/>
-            </Sider>
-            <Layout>
-                <Content style={{ margin: '10px 16px' }}>
-                    {/* <Breadcrumb style={{ margin: '16px 0' }}>
+            <AdminHeader />
+            <Layout style={{ minHeight: '100vh', fontSize: '18px' }}>
+                <Sider collapsible collapsed={collapsed} onCollapse={(value) => setCollapsed(value)}>
+                    <div className="demo-logo-vertical" />
+                    <Menu theme="dark" mode="inline" items={items} onClick={(e) => handleChooseOption(e.key)} />
+                </Sider>
+                <Layout>
+                    <Content style={{ margin: '10px 16px' }}>
+                        {/* <Breadcrumb style={{ margin: '16px 0' }}>
                         <Breadcrumb.Item>User</Breadcrumb.Item>
                         <Breadcrumb.Item>Bill</Breadcrumb.Item>
                     </Breadcrumb> */}
-                    <div style={{ background: colorBgContainer }}>
-                        {children}
-                    </div>
-                </Content>
+                        <div style={{ background: colorBgContainer }}>
+                            {children}
+                        </div>
+                    </Content>
+                </Layout>
             </Layout>
-        </Layout>
         </div>
     );
 };

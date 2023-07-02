@@ -13,10 +13,13 @@ import { toast } from "react-toastify";
 import PageLayout from "@/components/layouts/PageLayout";
 import { readContract, signMessage, writeContract, waitForTransaction } from '@wagmi/core'
 import jwtDecode from "jwt-decode";
-import { Anchor, Button, Card, Col, List, Row } from "antd";
+import { Anchor, Button, Card, Col, List, Row, Table } from "antd";
 import { ApolloClient, gql, InMemoryCache } from "@apollo/client";
 import BigNumber from "bignumber.js";
 import dayjs from "dayjs";
+import { ColumnsType } from "antd/es/table";
+import { shortenAddress } from "@/components/shortenAddress";
+import { MonitorOutlined } from '@ant-design/icons';
 
 interface Props {
     children: ReactNode;
@@ -35,6 +38,7 @@ export default function AccountPage() {
     const [chainId, setChainId] = useState(0)
     const [userUIDBalance, setUserUIDBalance] = useState(0)
     const [accountInvestments, setAccountInvestments] = useState([])
+    const [historyTx, setHistoryTx] = useState([])
 
     const tokenDetailLoanQuery = `
     query AccountInvesment($userId: String!) {
@@ -50,8 +54,75 @@ export default function AccountPage() {
             }
           }
         }
-      }
-    `
+        transactions(orderBy: timestamp, orderDirection: desc, where: {user: $userId}) {
+            sentAmount
+            timestamp
+            receivedNftId
+            receivedAmount
+            sentToken
+            receivedToken
+            sentNftType
+            sentNftId
+            receivedNftType
+            transactionHash
+            category
+            fiduPrice
+            id
+            user {
+              id
+            }
+            loan {
+                address
+            }
+        }
+    }`
+
+    const ActionPresentation = {
+        TRANCHED_POOL_REPAYMENT: "Borrower repay",
+        SENIOR_POOL_REDEMPTION: "Senior redeem",
+        TRANCHED_POOL_DRAWDOWN: "Borrower drawdown",
+        SENIOR_POOL_WITHDRAWAL: "Investor withdraw",
+        SENIOR_POOL_DEPOSIT: "Investor deposit",
+        TRANCHED_POOL_DEPOSIT: "Investor deposit",
+        TRANCHED_POOL_WITHDRAWAL: "Investor withdraw"
+    }
+
+    interface DataType {
+        key: React.Key;
+        pool: string;
+        action: string;
+        amount: string;
+        timestamp: string;
+        tx: ReactNode;
+    }
+
+    const columns: ColumnsType<DataType> = [
+        {
+            title: 'Pool',
+            dataIndex: 'pool',
+            width: 150,
+        },
+        {
+            title: 'Action',
+            dataIndex: 'action',
+            width: 200,
+        },
+        {
+            title: 'Amount',
+            dataIndex: 'amount',
+            width: 250,
+        },
+        {
+            title: 'Timestamp',
+            dataIndex: 'timestamp',
+            width: 200,
+        },
+        {
+            title: 'Tx',
+            dataIndex: 'tx',
+            width: 150,
+        },
+    ];
 
     const client = new ApolloClient({
         uri: process.env.NEXT_PUBLIC_SUB_GRAPH_API_URL as string,
@@ -88,6 +159,21 @@ export default function AccountPage() {
             } else {
                 setAccountInvestments([])
             }
+
+            const txData: DataType[] = []
+            res.data.transactions.map((item: any) => {
+                txData.push({
+                    key: item.id,
+                    // pool: shortenAddress(item.loan.address),
+                    pool: item.loan == null ? "Senior Pool" : shortenAddress(item.loan.address),
+                    action: (ActionPresentation as any)[item.category as any],
+                    // action: item.category,
+                    amount: '$ ' + Number(BigNumber(item.category == 'SENIOR_POOL_WITHDRAWAL' ? item.receivedAmount : (item.receivedAmount || item.sentAmount)).div(constants.ONE_MILLION)).toLocaleString(),
+                    timestamp: dayjs(Number(item.timestamp) * 1000).format('DD/MM/YYYY HH:mm:ss'),
+                    tx: <div><MonitorOutlined style={{ padding: '5px' }} /><a href={`https://mumbai.polygonscan.com/tx/${item.transactionHash}`} target='_blank' className="underline underline-offset-2">Tx</a></div>,
+                })
+            })
+            setHistoryTx(txData as any)
         } catch (error) {
             console.log(error)
         }
@@ -289,7 +375,12 @@ export default function AccountPage() {
                                     key: 'my-investment',
                                     href: '#my-investment',
                                     title: 'My investment'
-                                }
+                                },
+                                {
+                                    key: 'my-activities',
+                                    href: '#my-activities',
+                                    title: 'My activities'
+                                },
                             ]} />
                     </Col>
                     <Col span={14}>
@@ -334,7 +425,7 @@ export default function AccountPage() {
                             )}
                         </div>
 
-                        <div className='font-bold' style={{ fontSize: '20px', marginBottom: '50px', marginTop: '30px' }}>
+                        <div id="my-investment" className='font-bold' style={{ fontSize: '20px', marginBottom: '50px', marginTop: '30px' }}>
                             My invested pool tokens
                         </div>
 
@@ -396,6 +487,18 @@ export default function AccountPage() {
                                 </List.Item>
                             )}
                         />
+
+                        <div id="my-activities" className='font-bold' style={{ fontSize: '20px', marginBottom: '50px', marginTop: '30px' }}>
+                            My invested pool tokens
+                        </div>
+                        <Table
+                            columns={columns}
+                            dataSource={historyTx}
+                            pagination={{ pageSize: 10 }}
+                            scroll={{ y: 500 }}
+                        // showHeader={false}
+                        />
+
 
                     </Col>
                     <Col span={5}></Col>
