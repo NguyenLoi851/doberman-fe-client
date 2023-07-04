@@ -9,6 +9,7 @@ import { List } from "antd";
 import { encodePacked, keccak256, hexToBytes } from "viem";
 import { contractAddr } from "@/commons/contractAddress";
 import { toast } from "react-toastify";
+import { useRouter } from "next/router";
 
 interface Props {
     children: ReactNode;
@@ -19,6 +20,7 @@ export default function AdminUserAcceptedPage() {
     const [chainId, setChainId] = useState(0);
     const { address } = useAccount()
     const [registerUsers, setRegisterUsers] = useState([])
+    const router = useRouter()
 
     const getAcceptedUsers = async () => {
         try {
@@ -66,6 +68,9 @@ export default function AdminUserAcceptedPage() {
     }
 
     useEffect(() => {
+        if (address == null) {
+            router.push('/admin')
+        }
         setChainId(chain?.id || 80001)
         getAcceptedUsers()
     }, [chain])

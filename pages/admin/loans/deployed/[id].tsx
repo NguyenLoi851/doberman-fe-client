@@ -45,18 +45,26 @@ export default function DeployedLoanDetailPage() {
         if (!props.ownerAddress) {
             return;
         }
-        const res = await client.query({
-            query: gql(tokensQuery),
-            variables: {
-                userId: (props.ownerAddress as any).toLowerCase() ?? "",
-            },
-        })
-        if (res.data.borrowerContracts.length > 0) {
-            setBorrowerProxy(res.data.borrowerContracts[0].id)
+        try {
+            const res = await client.query({
+                query: gql(tokensQuery),
+                variables: {
+                    userId: (props.ownerAddress as any).toLowerCase() ?? "",
+                },
+            })
+            if (res.data.borrowerContracts.length > 0) {
+                setBorrowerProxy(res.data.borrowerContracts[0].id)
+            }
+        } catch (error) {
+            console.log(error)
         }
+
     }
 
     useEffect(() => {
+        if (address == null) {
+            router.push('/admin')
+        }
         getBorrowerProxy()
         setChainId(chain?.id || 80001)
     }, [chain, props])

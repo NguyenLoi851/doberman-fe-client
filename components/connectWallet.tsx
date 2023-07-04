@@ -109,10 +109,11 @@ export default function ConnectWallet() {
       {isConnected && connector ? (
         chainId == constants.MUMBAI_ID ? (
           <Tooltip
+            color='yellow'
             placement='bottom'
             title=
             <div className='bg-white text-black' style={{ padding: '0px' }}>
-              <div style={{ display: 'flex', justifyContent: 'center' }}>
+              <div style={{ paddingTop: '15px', display: 'flex', justifyContent: 'center' }}>
                 Your Balances
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>

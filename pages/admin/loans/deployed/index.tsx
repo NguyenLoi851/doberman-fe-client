@@ -1,3 +1,5 @@
+"use client";
+
 import { constants } from "@/commons/constants";
 import AdminLayout from "@/components/layouts/AdminLayout";
 import { selectAccessTokenState } from "@/store/accessTokenSlice";
@@ -5,6 +7,7 @@ import { Button, List } from "antd";
 import axios from "axios";
 import Router, { useRouter } from "next/router";
 import { ReactNode, useEffect, useState } from "react";
+import { useAccount } from "wagmi";
 
 interface Props {
     children: ReactNode;
@@ -13,15 +16,22 @@ interface Props {
 export default function AdminLoansDeployedPage() {
     const [deployedLoans, setDeployedLoans] = useState([])
     const router = useRouter();
-
+    const { address } = useAccount()
     const getDeployedLoans = async () => {
-        const accessToken = localStorage.getItem(constants.ACCESS_TOKEN_ADMIN)
+        try {
+            const accessToken = localStorage.getItem(constants.ACCESS_TOKEN_ADMIN)
 
-        const res = await axios.get(process.env.NEXT_PUBLIC_API_BASE_URL + '/loans/deployed')
-        setDeployedLoans(res.data.loans)
+            const res = await axios.get(process.env.NEXT_PUBLIC_API_BASE_URL + '/loans/deployed')
+            setDeployedLoans(res.data.loans.reverse())
+        } catch (error) {
+            console.log(error)
+        }
     }
 
     useEffect(() => {
+        if (address == null) {
+            router.push('/admin')
+        }
         getDeployedLoans()
 
     }, [])

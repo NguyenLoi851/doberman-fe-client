@@ -63,6 +63,9 @@ export default function AppliedLoanDetailPage() {
     }
 
     useEffect(() => {
+        if (address == null) {
+            router.push('/admin')
+        }
         getBorrowerProxy()
         setChainId(chain?.id || 80001)
     }, [chain, props])

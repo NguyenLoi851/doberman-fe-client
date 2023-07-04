@@ -96,7 +96,7 @@ export default function BorrowPage() {
                 address: address
             }
         })
-        setUserLoans(res.data.loans)
+        setUserLoans(res.data.loans.reverse())
     }
 
     useEffect(() => {
@@ -175,7 +175,7 @@ export default function BorrowPage() {
                                             avatar={index + 1 + '.'}
                                             title={(item as any).projectName}
                                             description={(item as any).projectIntro}
-                                            style={{ alignItems: 'justify' }}
+                                            style={{ alignItems: 'justify', marginLeft: '10px' }}
                                         />
                                         {(item as any).deployed ?
                                             <div className="text-lime-600 rounded-lg" style={{ border: 'solid', padding: '5px' }}>

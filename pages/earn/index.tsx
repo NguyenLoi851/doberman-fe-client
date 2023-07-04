@@ -33,6 +33,7 @@ export default function EarnPage() {
   const [uidStatus, setUidStatus] = useState(false)
   const [openLoans, setOpenLoans] = useState([])
   const [closeLoans, setCloseLoans] = useState([])
+  const [auctionLoans, setAuctionLoans] = useState([])
   const [protocol, setProtocol] = useState({})
   const [seniorPool, setSeniorPool] = useState({})
 
@@ -66,6 +67,14 @@ export default function EarnPage() {
       estimatedTotalAssets
       termEndTime
       termStartTime
+      creditLine {
+        paymentPeriodInDays
+        termEndTime
+        auctionWinner
+        auctionLivePrice
+        auctionEnd
+        balance
+      }
     }
     protocols {
       numLoans
@@ -134,7 +143,10 @@ export default function EarnPage() {
               txHash: item.txHash
             }
           })
-
+          console.log("hello", {
+            ...item,
+            ...res2.data
+          })
           return {
             ...item,
             ...res2.data
@@ -142,8 +154,10 @@ export default function EarnPage() {
         })
 
         Promise.all(addMetadata).then((result2) => {
-          result2 = result2.filter(item => item.companyName)
-          setCloseLoans(result2 as any)
+          let result21 = result2.filter(item => (item.companyName && !(Number(item.creditLine.balance) > 0 && (Number(item.creditLine.termEndTime) + Number(item.creditLine.paymentPeriodInDays) * 60 < Math.floor(Date.now() / 1000)))))
+          let result22 = result2.filter(item => (item.companyName && (Number(item.creditLine.balance) > 0 && (Number(item.creditLine.termEndTime) + Number(item.creditLine.paymentPeriodInDays) * 60 < Math.floor(Date.now() / 1000)))))
+          setCloseLoans(result21 as any)
+          setAuctionLoans(result22 as any)
         })
       }
 
@@ -227,44 +241,53 @@ export default function EarnPage() {
 
           <div className='font-bold' style={{ fontSize: '20px', marginBottom: '50px', marginTop: '30px' }}>Open deals</div>
 
-          <Card
-            title={
-              <div style={{ marginTop: '20px' }}>
-                <div style={{ fontSize: '24px' }}>Senior Pool</div>
-                <div style={{ fontWeight: 'normal', fontSize: '12px' }}>Automated diversified portfolio</div>
-              </div>
-            }
-            style={{ cursor: 'pointer', width: '35vh' }}
-            className='bg-amber-200 hover:bg-amber-300 border-2 border-amber-300'
-            onClick={() => handleDetailSeniorLoanInfo()}
-          >
-            <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
-              <div>
-                Invested Amount:
-              </div>
-              <div style={{ fontWeight: 'bold' }}>
-                $ {Number(BigNumber((seniorPool as any).assets).div(BigNumber(constants.ONE_MILLION))).toLocaleString()}
-              </div>
-            </div>
+          <List
+            itemLayout="horizontal"
+            dataSource={[1]}
+            grid={{ gutter: 16, column: 3 }}
+            renderItem={() => (
+              <List.Item>
+                <Card
+                  title={
+                    <div style={{ marginTop: '20px' }}>
+                      <div style={{ fontSize: '24px' }}>Senior Pool</div>
+                      <div style={{ fontWeight: 'normal', fontSize: '12px' }}>Automated diversified portfolio</div>
+                    </div>
+                  }
+                  style={{ cursor: 'pointer' }}
+                  className='bg-amber-200 hover:bg-amber-300 border-2 border-amber-300'
+                  onClick={() => handleDetailSeniorLoanInfo()}
+                >
+                  <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
+                    <div>
+                      Assets:
+                    </div>
+                    <div style={{ fontWeight: 'bold' }}>
+                      $ {Number(BigNumber((seniorPool as any).assets).div(BigNumber(constants.ONE_MILLION))).toLocaleString()}
+                    </div>
+                  </div>
 
-            <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
-              <div>
-                Loan term:
-              </div>
-              <div style={{ fontWeight: 'bold' }}>
-                Open-ended
-              </div>
-            </div>
+                  <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
+                    <div>
+                      Loan term:
+                    </div>
+                    <div style={{ fontWeight: 'bold' }}>
+                      Open-ended
+                    </div>
+                  </div>
 
-            <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
-              <div>
-                Interest:
-              </div>
-              <div style={{ fontWeight: 'bold' }}>
-                {(Number((seniorPool as any).estimatedApy) * 100).toPrecision(2)} %
-              </div>
-            </div>
-          </Card>
+                  <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
+                    <div>
+                      Interest:
+                    </div>
+                    <div style={{ fontWeight: 'bold' }}>
+                      {(Number((seniorPool as any).estimatedApy) * 100).toPrecision(2)} %
+                    </div>
+                  </div>
+                </Card>
+              </List.Item>
+            )}
+          />
 
           <List
             itemLayout="horizontal"
@@ -287,7 +310,7 @@ export default function EarnPage() {
                 >
                   <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
                     <div>
-                      Invested Amount:
+                      Assets:
                     </div>
                     <div style={{ fontWeight: 'bold' }}>
                       $ {Number(BigNumber((item as any).juniorDeposited).div(BigNumber(constants.ONE_MILLION))).toLocaleString()}
@@ -329,6 +352,34 @@ export default function EarnPage() {
                   avatar={index + 1 + '.'}
                   title={(item as any).companyName}
                   description={(item as any).projectName}
+                  style={{ marginLeft: '10px' }}
+                />
+                <div style={{ marginRight: '80px' }}>
+                  <div>Loan term</div>
+                  <div style={{ fontWeight: 'bold' }}>{(Number((item as any).termEndTime) - Number((item as any).termStartTime)) / 60} months</div>
+                </div>
+                <div>
+                  <div>Invested amount</div>
+                  <div style={{ fontWeight: 'bold' }}>$ {Number(BigNumber((item as any).estimatedTotalAssets).div(BigNumber(constants.ONE_MILLION))).toLocaleString()}</div>
+                </div>
+              </List.Item>
+            )}
+          />
+
+          <div className='font-bold' style={{ fontSize: '20px', marginBottom: '50px', marginTop: '30px' }}>Auction deals</div>
+          <List
+            itemLayout="horizontal"
+            dataSource={auctionLoans}
+            renderItem={(item, index) => (
+              <List.Item
+                actions={[<div className='btn-sm bg-sky-300 text-black rounded-md hover:bg-sky-500 hover:text-white' onClick={() => handleDetailLoanInfo(item)}>View Detail</div>]}
+                style={{ cursor: 'pointer', marginTop: '12px', marginBottom: '12px' }}
+                className='bg-white rounded-lg '>
+                <List.Item.Meta
+                  avatar={index + 1 + '.'}
+                  title={(item as any).companyName}
+                  description={(item as any).projectName}
+                  style={{ marginLeft: '10px' }}
                 />
                 <div style={{ marginRight: '80px' }}>
                   <div>Loan term</div>

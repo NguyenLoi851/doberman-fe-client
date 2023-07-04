@@ -209,7 +209,12 @@ export default function LoanDetailPage() {
             loanTerm: Number(props.loanTerm),
             fundableAt: dayjs(dayjs.unix(Number(props.fundableAt)), dateFormat)
         })
-    }, [chain, props, address])
+
+        if (creditLineAddr != '') {
+            getNextDueTime()
+            getInterestAndPrincipalOwedAsOfCurrent()
+        }
+    }, [chain, props, address, creditLineAddr])
 
     const handleSubmit = async () => {
         try {
@@ -399,16 +404,11 @@ export default function LoanDetailPage() {
         }
     }
 
-    useEffect(() => {
-        if (creditLineAddr != '') {
-            getNextDueTime()
-            getInterestAndPrincipalOwedAsOfCurrent()
-        }
-
-    }, [creditLineAddr])
-
-
     const handleRepay = async () => {
+        if (wantRepayAmount == 0) {
+            toast.error("Repay amount must be greater than 0")
+            return;
+        }
         setRepayLoading(true)
         try {
             const nonces = await readContract({
