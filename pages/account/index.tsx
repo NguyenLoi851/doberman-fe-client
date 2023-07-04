@@ -84,7 +84,8 @@ export default function AccountPage() {
         SENIOR_POOL_WITHDRAWAL: "Investor withdraw",
         SENIOR_POOL_DEPOSIT: "Investor deposit",
         TRANCHED_POOL_DEPOSIT: "Investor deposit",
-        TRANCHED_POOL_WITHDRAWAL: "Investor withdraw"
+        TRANCHED_POOL_WITHDRAWAL: "Investor withdraw",
+        BID: "User bids",
     }
 
     interface DataType {

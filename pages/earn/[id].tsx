@@ -93,6 +93,7 @@ export default function LoanDetailPage() {
         TRANCHED_POOL_DEPOSIT: "Investor deposits",
         TRANCHED_POOL_DRAWDOWN: "Borrower drawdowns",
         TRANCHED_POOL_WITHDRAWAL: "Investor withdraws",
+        BID: "User bids",
     }
     interface DataType {
         key: React.Key;
@@ -642,7 +643,7 @@ export default function LoanDetailPage() {
                                                         addonAfter="USDC"
                                                     />
                                                 </div>
-                                                <div onClick={handleBidNextSmallestLivePrice} style={{ display: 'flex', justifyContent: 'end' }}>
+                                                <div onClick={handleBidNextSmallestLivePrice} style={{ display: 'flex', justifyContent: 'center' }}>
                                                     <Button size="small" className="border-2 border-black rounded-lg hover:bg-sky-100" style={{ padding: '3px', marginTop: '1px', marginBottom: '20px', cursor: 'pointer', fontSize: '10px' }}>
                                                         Next Smallest Price
                                                     </Button>
@@ -718,7 +719,7 @@ export default function LoanDetailPage() {
                         dataSource={historyTx}
                         pagination={{ pageSize: 10 }}
                         scroll={{ y: 500 }}
-                        showHeader={false}
+                    // showHeader={false}
                     />
                 </div>
             </Col>

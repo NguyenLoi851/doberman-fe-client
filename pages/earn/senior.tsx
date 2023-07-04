@@ -92,7 +92,8 @@ export default function SeniorLoanDetailPage() {
         SENIOR_POOL_REDEMPTION: "Senior redeem",
         TRANCHED_POOL_DRAWDOWN: "Borrower drawdown",
         SENIOR_POOL_WITHDRAWAL: "Investor withdraw",
-        SENIOR_POOL_DEPOSIT: "Investor deposit"
+        SENIOR_POOL_DEPOSIT: "Investor deposit",
+        BID: "User bids",
     }
 
     interface DataType {
