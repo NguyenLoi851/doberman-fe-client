@@ -19,6 +19,7 @@ import Link from "next/link";
 import CreditLine from "../../abi/CreditLine.json";
 import { ColumnsType } from "antd/es/table";
 import { shortenAddress } from "@/components/shortenAddress";
+import axios from "axios";
 
 interface Props {
     children: ReactNode;
@@ -32,7 +33,8 @@ enum TrancheInvestStatus {
 
 export default function LoanDetailPage() {
     const router = useRouter()
-    const props = router.query
+    // const props = router.query
+    const loanAddr = router.asPath.split('/earn/')[1]
     const { address } = useAccount()
     const { chain } = useNetwork()
     const [chainId, setChainId] = useState(0);
@@ -222,19 +224,25 @@ export default function LoanDetailPage() {
 
     const getLoanDetailInfo = async () => {
         try {
-            if (!props.address) {
+            if (!loanAddr) {
                 return;
             }
 
             const res = await client.query({
                 query: gql(tokenDetailLoanQuery),
                 variables: {
-                    poolId: (props.address as any).toLowerCase() ?? "",
+                    poolId: (loanAddr as any).toLowerCase() ?? "",
                     userId: (address as any).toLowerCase()
                 }
             })
-            setLoanDetailInfo(res.data.tranchedPool)
-            console.log(res.data.tranchedPool)
+            const res2 = await axios.get(process.env.NEXT_PUBLIC_API_BASE_URL + '/loans/getLoanByFilter', {
+                params: {
+                    txHash: res.data.tranchedPool.txHash
+                }
+            })
+
+            console.log("here", { ...res.data.tranchedPool, ...res2.data })
+            setLoanDetailInfo({ ...res.data.tranchedPool, ...res2.data })
             setFundingLimit(Number((res.data.tranchedPool as any).fundingLimit) / constants.ONE_MILLION)
             setJuniorDeposited(Number((res.data.tranchedPool as any).juniorDeposited) / constants.ONE_MILLION)
             setSeniorDeposited(Number((res.data.tranchedPool as any).seniorDeposited) / constants.ONE_MILLION)
@@ -295,7 +303,7 @@ export default function LoanDetailPage() {
         }
         try {
             const res = await readContract({
-                address: props.address as any,
+                address: loanAddr as any,
                 abi: TranchedPool,
                 functionName: 'availableToWithdrawMultiple',
                 args: [tokenIdsArr]
@@ -334,7 +342,7 @@ export default function LoanDetailPage() {
             getNextDueTime()
             getInterestAndPrincipalOwedAsOfCurrent()
         }
-    }, [chain, props, address, creditLineAddr])
+    }, [chain, loanAddr, address, creditLineAddr])
 
     const domain: Domain = {
         version: '2',
@@ -358,14 +366,14 @@ export default function LoanDetailPage() {
             const splitedSignature = await buildPermitSignature(
                 walletClient as any,
                 { ...domain },
-                props.address as any,
+                loanAddr as any,
                 BigNumber(wantInvestAmount).multipliedBy(BigNumber(constants.ONE_MILLION)),
                 signatureDeadline,
                 nonces as any
             )
 
             const { hash } = await writeContract({
-                address: props.address as any,
+                address: loanAddr as any,
                 abi: TranchedPool,
                 functionName: 'depositWithPermit',
                 args: [2, BigNumber(wantInvestAmount).multipliedBy(BigNumber(constants.ONE_MILLION)), signatureDeadline, splitedSignature.v, splitedSignature.r, splitedSignature.s],
@@ -457,7 +465,7 @@ export default function LoanDetailPage() {
         setLoadingWithdraw(true)
         try {
             const { hash } = await writeContract({
-                address: props.address as any,
+                address: loanAddr as any,
                 abi: TranchedPool,
                 functionName: 'withdrawMaxMultiple',
                 args: [tokenIds]
@@ -528,15 +536,15 @@ export default function LoanDetailPage() {
             <Col span={12}>
                 <div id="invest" style={{ height: 'auto', marginBottom: '50px', padding: '10px' }} className="bg-sky-200 rounded-lg">
                     <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
-                        <div style={{ margin: '10px', fontSize: '16px' }}>{props.companyName}</div>
-                        <a style={{ margin: '10px' }} href={`https://mumbai.polygonscan.com/address/${props.address}#code`} target="_blank" className="text-sky-500 hover:underline hover:underline-offset-3 hover:text-sky-800"><MonitorOutlined style={{ marginRight: '5px', fontSize: '20px' }} />MumbaiScan </a>
+                        <div style={{ margin: '10px', fontSize: '16px' }}>{(loanDetailInfo as any).companyName}</div>
+                        <a style={{ margin: '10px' }} href={`https://mumbai.polygonscan.com/address/${loanAddr}#code`} target="_blank" className="text-sky-500 hover:underline hover:underline-offset-3 hover:text-sky-800"><MonitorOutlined style={{ marginRight: '5px', fontSize: '20px' }} />MumbaiScan </a>
                     </div>
-                    <div style={{ margin: '10px', fontSize: '24px', fontWeight: 'bold' }}>{props.projectName}</div>
-                    <div style={{ margin: '10px', fontSize: '14px', textAlign: 'justify', lineHeight: 1.5 }}>{props.projectIntro}</div>
+                    <div style={{ margin: '10px', fontSize: '24px', fontWeight: 'bold' }}>{(loanDetailInfo as any).projectName}</div>
+                    <div style={{ margin: '10px', fontSize: '14px', textAlign: 'justify', lineHeight: 1.5 }}>{(loanDetailInfo as any).projectIntro}</div>
                     <div className="flex justify-between" style={{ margin: '10px', fontSize: '16px', marginTop: '50px' }}>
                         <Statistic title="Fundable At" value={dayjs(Number((loanDetailInfo as any).fundableAt) * 1000).format('DD/MM/YYYY hh:mm:ss')} />
-                        <Statistic title="Term" value={Number(props.loanTerm)} suffix="months" />
-                        <Statistic title="Interest Rate (APR)" value={Number(props.interestRate)} suffix="%" />
+                        <Statistic title="Term" value={Number((loanDetailInfo as any).loanTerm)} suffix="months" />
+                        <Statistic title="Interest Rate (APR)" value={Number((loanDetailInfo as any).interestRate)} suffix="%" />
                     </div>
                     <div className="flex justify-between" style={{ margin: '10px', fontSize: '16px', marginTop: '50px' }}>
                         <Statistic title="Junior Deposited Amount (USDC)" value={juniorDeposited} precision={2} />
@@ -687,14 +695,14 @@ export default function LoanDetailPage() {
 
                 <div id="borrower" style={{ height: 'auto', marginBottom: '50px', padding: '10px' }} className="rounded-lg bg-white" >
                     <div style={{ margin: '10px', fontSize: '16px', fontWeight: 'bold' }}>Borrower details</div>
-                    <div style={{ margin: '10px', fontSize: '14px', textAlign: 'justify', lineHeight: 1.5 }}>{props.companyName}</div>
-                    <div style={{ margin: '10px', fontSize: '14px', textAlign: 'justify', lineHeight: 1.5 }}>{props.companyIntro}</div>
+                    <div style={{ margin: '10px', fontSize: '14px', textAlign: 'justify', lineHeight: 1.5 }}>{(loanDetailInfo as any).companyName}</div>
+                    <div style={{ margin: '10px', fontSize: '14px', textAlign: 'justify', lineHeight: 1.5 }}>{(loanDetailInfo as any).companyIntro}</div>
                     <div style={{ margin: '10px', display: 'flex', flexDirection: 'row' }}>
                         <div style={{ margin: '10px', padding: '5px' }} className="bg-amber-200 rounded-lg">
-                            <a href={`${props.companyPage}`} target='_blank'>Website</a>
+                            <a href={`${(loanDetailInfo as any).companyPage}`} target='_blank'>Website</a>
                         </div>
                         <div style={{ margin: '10px', padding: '5px' }} className="bg-amber-200 rounded-lg">
-                            <a href={`${props.companyContact}`} target='_blank'>Contact</a>
+                            <a href={`${(loanDetailInfo as any).companyContact}`} target='_blank'>Contact</a>
                         </div>
                     </div>
                 </div>
@@ -703,12 +711,12 @@ export default function LoanDetailPage() {
                     <div style={{ margin: '10px', fontSize: '16px', fontWeight: 'bold' }}>Repayment terms</div>
 
                     <div className="grid grid-cols-3 border-2 rounded-lg">
-                        <Statistic style={{ margin: '30px' }} suffix="months" title="Loan terms" value={(props as any).loanTerm} />
+                        <Statistic style={{ margin: '30px' }} suffix="months" title="Loan terms" value={(loanDetailInfo as any).loanTerm} />
                         <Statistic style={{ margin: '30px' }} title="Term start date" value={dayjs(Number((loanDetailInfo as any).termStartTime * 1000)).format("DD/MM/YYYY HH:mm:ss").toString()} />
                         <Statistic style={{ margin: '30px' }} title="Term start date" value={dayjs(Number((loanDetailInfo as any).termEndTime * 1000)).format("DD/MM/YYYY HH:mm:ss").toString()} />
-                        <Statistic style={{ margin: '30px' }} suffix="months" title="Payment Frequency" value={InterestPaymentFrequency[(props as any).interestPaymentFrequency]} />
+                        <Statistic style={{ margin: '30px' }} suffix="months" title="Payment Frequency" value={InterestPaymentFrequency[(loanDetailInfo as any).interestPaymentFrequency]} />
                         <Statistic style={{ margin: '30px' }} title="Repayment structure" value="Bullet" />
-                        <Statistic style={{ margin: '30px' }} title="Total interest payments (USDC)" value={(juniorDeposited + seniorDeposited) / 100 * Number((loanDetailInfo as any).interestRate) / 365 * Number((props as any).loanTerm) * 100} precision={2} />
+                        <Statistic style={{ margin: '30px' }} title="Total interest payments (USDC)" value={(juniorDeposited + seniorDeposited) / 100 * Number((loanDetailInfo as any).interestRate) / 365 * Number((loanDetailInfo as any).loanTerm) * 100} precision={2} />
                     </div>
                 </div>
 

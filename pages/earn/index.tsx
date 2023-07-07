@@ -195,13 +195,8 @@ export default function EarnPage() {
     getLoans()
   }, [address])
 
-  const handleDetailLoanInfo = async (item: any) => {
-    Router.push({
-      pathname: `/earn/${item.address}`,
-      query: {
-        ...item
-      }
-    })
+  const handleDetailLoanInfo = async (itemAddr: any) => {
+    router.push(`/earn/${itemAddr}`)
   }
 
   const handleDetailSeniorLoanInfo = async () => {
@@ -306,7 +301,7 @@ export default function EarnPage() {
                   }
                   style={{ borderRadius: '5%' }}
                   className='bg-amber-200 hover:bg-amber-300 border-2 border-amber-300'
-                  onClick={() => handleDetailLoanInfo(item)}
+                  onClick={() => handleDetailLoanInfo((item as any).address)}
                 >
                   <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
                     <div>
@@ -345,7 +340,7 @@ export default function EarnPage() {
             dataSource={closeLoans}
             renderItem={(item, index) => (
               <List.Item
-                actions={[<div className='btn-sm bg-sky-300 text-black rounded-md hover:bg-sky-500 hover:text-white' onClick={() => handleDetailLoanInfo(item)}>View Detail</div>]}
+                actions={[<div className='btn-sm bg-sky-300 text-black rounded-md hover:bg-sky-500 hover:text-white' onClick={() => handleDetailLoanInfo((item as any).address)}>View Detail</div>]}
                 style={{ cursor: 'pointer', marginTop: '12px', marginBottom: '12px' }}
                 className='bg-white rounded-lg '>
                 <List.Item.Meta
@@ -372,7 +367,7 @@ export default function EarnPage() {
             dataSource={auctionLoans}
             renderItem={(item, index) => (
               <List.Item
-                actions={[<div className='btn-sm bg-sky-300 text-black rounded-md hover:bg-sky-500 hover:text-white' onClick={() => handleDetailLoanInfo(item)}>View Detail</div>]}
+                actions={[<div className='btn-sm bg-sky-300 text-black rounded-md hover:bg-sky-500 hover:text-white' onClick={() => handleDetailLoanInfo((item as any).address)}>View Detail</div>]}
                 style={{ cursor: 'pointer', marginTop: '12px', marginBottom: '12px' }}
                 className='bg-white rounded-lg '>
                 <List.Item.Meta
