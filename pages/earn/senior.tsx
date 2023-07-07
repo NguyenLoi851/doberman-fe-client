@@ -392,7 +392,10 @@ export default function SeniorLoanDetailPage() {
             <Col span={2}>
             </Col>
             <Col span={12}>
-                <div id="invest" style={{ height: 'auto', marginBottom: '50px', borderRadius: '5%', padding: '10px' }} className='bg-amber-250' >
+                <div id="invest" style={{ height: 'auto', marginBottom: '50px', padding: '10px', backgroundColor: '#c2eded' }}
+                    className="rounded-lg"
+                //  className='bg-amber-250' 
+                >
                     <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
                         <div style={{ margin: '10px', fontSize: '16px' }}>Doberman Protocol</div>
                         <a style={{ margin: '10px' }} href={`https://mumbai.polygonscan.com/address/${contractAddr.mumbai.seniorPool}#code`} target="_blank" className="text-sky-500 hover:underline hover:underline-offset-3 "><MonitorOutlined style={{ marginRight: '5px', fontSize: '20px' }} />MumbaiScan </a>
@@ -488,7 +491,10 @@ export default function SeniorLoanDetailPage() {
 
                 </div>
 
-                <div id="portfolio-details" style={{ height: 'auto', marginBottom: '50px', padding: '10px' }} className="rounded-lg bg-amber-200">
+                <div id="portfolio-details" style={{ height: 'auto', marginBottom: '50px', padding: '10px', backgroundColor: '#c2eded' }}
+                    className="rounded-lg"
+                // className="rounded-lg bg-amber-200"
+                >
                     <div style={{ margin: '10px', fontSize: '16px', fontWeight: 'bold' }}>Porfolio details</div>
                     <div style={{ margin: '10px', fontSize: '18px' }}>Goldfinch Senior Pool</div>
                     <div style={{ margin: '10px', fontSize: '16px', textAlign: 'justify' }}>The Goldfinch Senior Pool is automatically managed by The Goldfinch protocol. Capital is automatically allocated from the Senior Pool into the senior tranches of various direct-lending deals on Goldfinch according to the Leverage Model. This capital is protected by first-loss capital in all deals.</div>

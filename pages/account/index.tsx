@@ -90,7 +90,7 @@ export default function AccountPage() {
 
     interface DataType {
         key: React.Key;
-        pool: string;
+        pool: ReactNode;
         action: string;
         amount: string;
         timestamp: string;
@@ -132,6 +132,7 @@ export default function AccountPage() {
 
     const getAccountInvestmentInfo = async () => {
         try {
+            let totalResult: any[];
             const res = await client.query({
                 query: gql(tokenDetailLoanQuery),
                 variables: {
@@ -153,9 +154,9 @@ export default function AccountPage() {
                     };
                 })
 
-                Promise.all(addMetadata).then((result) => {
-                    result = result.filter(item => item.companyName)
-                    setAccountInvestments(result as any)
+                await Promise.all(addMetadata).then((result) => {
+                    totalResult = result.filter(item => item.companyName)
+                    setAccountInvestments(totalResult as any)
                 })
             } else {
                 setAccountInvestments([])
@@ -163,13 +164,27 @@ export default function AccountPage() {
 
             const txData: DataType[] = []
             res.data.transactions.map((item: any) => {
+                let poolDetail
+                if (item.loan != null && totalResult) {
+                    poolDetail = (totalResult).filter(pool => (pool as any).address.toLowerCase() == item.loan.address)
+                    if (poolDetail.length > 0) {
+                        poolDetail = poolDetail[0]
+                    }
+                }
+
+                let amount = '$ ';
+                if (item.category == 'SENIOR_POOL_DEPOSIT') {
+                    amount = '$ ' + Number(BigNumber(item.sentAmount).div(BigNumber(constants.ONE_MILLION))).toLocaleString()
+                } else if (item.category == 'SENIOR_POOL_WITHDRAWAL') {
+                    amount = '$ ' + Number(BigNumber(item.receivedAmount).div(BigNumber(constants.ONE_MILLION))).toLocaleString()
+                } else {
+                    amount = '$ ' + Number(BigNumber(item.receivedAmount || item.sentAmount).div(BigNumber(constants.ONE_MILLION))).toLocaleString()
+                }
                 txData.push({
                     key: item.id,
-                    // pool: shortenAddress(item.loan.address),
-                    pool: item.loan == null ? "Senior Pool" : shortenAddress(item.loan.address),
+                    pool: item.loan == null ? <div style={{ cursor: 'pointer' }} className="hover:underline hover:text-sky-500 underline-offset-4" onClick={() => router.push('/earn/senior')}>Senior Pool</div> : <div style={{ cursor: 'pointer' }} className="hover:underline hover:text-sky-500 underline-offset-4" onClick={() => router.push(`/earn/${item.loan.address}`)}>{(poolDetail as any).projectName}</div>,
                     action: (ActionPresentation as any)[item.category as any],
-                    // action: item.category,
-                    amount: '$ ' + Number(BigNumber(item.category == 'SENIOR_POOL_WITHDRAWAL' ? item.receivedAmount : (item.receivedAmount || item.sentAmount)).div(constants.ONE_MILLION)).toLocaleString(),
+                    amount,
                     timestamp: dayjs(Number(item.timestamp) * 1000).format('DD/MM/YYYY HH:mm:ss'),
                     tx: <div><MonitorOutlined style={{ padding: '5px' }} /><a href={`https://mumbai.polygonscan.com/tx/${item.transactionHash}`} target='_blank' className="underline underline-offset-2">Tx</a></div>,
                 })
