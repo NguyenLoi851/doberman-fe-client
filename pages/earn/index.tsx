@@ -130,7 +130,7 @@ export default function EarnPage() {
           };
         })
 
-        Promise.all(addMetadata).then((result) => {
+        await Promise.all(addMetadata).then((result) => {
           result = result.filter(item => item.companyName)
           setOpenLoans(result as any)
         })
@@ -143,17 +143,17 @@ export default function EarnPage() {
               txHash: item.txHash
             }
           })
-          console.log("hello", {
-            ...item,
-            ...res2.data
-          })
+          // console.log("hello", {
+          //   ...item,
+          //   ...res2.data
+          // })
           return {
             ...item,
             ...res2.data
           }
         })
 
-        Promise.all(addMetadata).then((result2) => {
+        await Promise.all(addMetadata).then((result2) => {
           let result21 = result2.filter(item => (item.companyName && !(Number(item.creditLine.balance) > 0 && (Number(item.creditLine.termEndTime) + Number(item.creditLine.paymentPeriodInDays) * 60 < Math.floor(Date.now() / 1000)))))
           let result22 = result2.filter(item => (item.companyName && (Number(item.creditLine.balance) > 0 && (Number(item.creditLine.termEndTime) + Number(item.creditLine.paymentPeriodInDays) * 60 < Math.floor(Date.now() / 1000)))))
           setCloseLoans(result21 as any)
@@ -349,13 +349,9 @@ export default function EarnPage() {
                   description={(item as any).projectName}
                   style={{ marginLeft: '10px' }}
                 />
-                <div style={{ marginRight: '80px' }}>
-                  <div>Loan term</div>
-                  <div style={{ fontWeight: 'bold' }}>{(Number((item as any).termEndTime) - Number((item as any).termStartTime)) / 60} months</div>
-                </div>
-                <div>
-                  <div>Invested amount</div>
-                  <div style={{ fontWeight: 'bold' }}>$ {Number(BigNumber((item as any).estimatedTotalAssets).div(BigNumber(constants.ONE_MILLION))).toLocaleString()}</div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <Statistic style={{ minWidth: '22vh' }} title="Loan term" value={(Number((item as any).termEndTime) - Number((item as any).termStartTime)) / 60} suffix="months"></Statistic>
+                  <Statistic style={{ minWidth: '10vh' }} title="Invested amount" value={Number(BigNumber((item as any).estimatedTotalAssets).div(BigNumber(constants.ONE_MILLION))).toLocaleString()} prefix="$"></Statistic>
                 </div>
               </List.Item>
             )}
@@ -376,13 +372,9 @@ export default function EarnPage() {
                   description={(item as any).projectName}
                   style={{ marginLeft: '10px' }}
                 />
-                <div style={{ marginRight: '80px' }}>
-                  <div>Loan term</div>
-                  <div style={{ fontWeight: 'bold' }}>{(Number((item as any).termEndTime) - Number((item as any).termStartTime)) / 60} months</div>
-                </div>
-                <div>
-                  <div>Invested amount</div>
-                  <div style={{ fontWeight: 'bold' }}>$ {Number(BigNumber((item as any).estimatedTotalAssets).div(BigNumber(constants.ONE_MILLION))).toLocaleString()}</div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <Statistic style={{ minWidth: '22vh' }} title="Loan term" value={(Number((item as any).termEndTime) - Number((item as any).termStartTime)) / 60} suffix="months"></Statistic>
+                  <Statistic style={{ minWidth: '10vh' }} title="Invested amount" value={Number(BigNumber((item as any).estimatedTotalAssets).div(BigNumber(constants.ONE_MILLION))).toLocaleString()} prefix="$"></Statistic>
                 </div>
               </List.Item>
             )}

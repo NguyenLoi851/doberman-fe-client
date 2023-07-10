@@ -19,6 +19,7 @@ import { MonitorOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import Fidu from "../../abi/Fidu.json";
 import { ColumnsType } from "antd/es/table";
 import { shortenAddress } from "@/components/shortenAddress";
+import axios from "axios";
 interface Props {
     children: ReactNode;
 }
@@ -42,6 +43,7 @@ export default function SeniorLoanDetailPage() {
     const [historyTx, setHistoryTx] = useState([])
     const [totalInvested, setTotalInvested] = useState(0)
     const [porfolioLoans, setPorfolioLoans] = useState([])
+    const [tranchedInvestHistory, setTranchedInvestHistory] = useState([])
 
     const tokenDetailSeniorLoanQuery = `
     query SeniorLoanDetail {
@@ -59,8 +61,13 @@ export default function SeniorLoanDetailPage() {
           totalShares
           totalWrittenDown
           tranchedPools {
+            id
             actualSeniorPoolInvestment
             juniorDeposited
+            txHash
+            creditLine {
+                termEndTime
+            }
           }
         }
         transactions(
@@ -139,6 +146,37 @@ export default function SeniorLoanDetailPage() {
         },
     ];
 
+    interface TranchedInvestDataType {
+        key: React.Key;
+        deals: ReactNode;
+        investedAmount: string;
+        porfolioShares: string;
+        maturityDate: string;
+    }
+
+    const tranchedInvestColumns: ColumnsType<TranchedInvestDataType> = [
+        {
+            title: 'Deals',
+            dataIndex: 'deals',
+            width: 150,
+        },
+        {
+            title: 'Invested Amount',
+            dataIndex: 'investedAmount',
+            width: 150,
+        },
+        {
+            title: 'Porfolio Shares',
+            dataIndex: 'porfolioShares',
+            width: 150,
+        },
+        {
+            title: 'Maturity Date',
+            dataIndex: 'maturityDate',
+            width: 200,
+        },
+    ];
+
     const client = new ApolloClient({
         uri: process.env.NEXT_PUBLIC_SUB_GRAPH_API_URL as string,
         cache: new InMemoryCache(),
@@ -154,39 +192,87 @@ export default function SeniorLoanDetailPage() {
             setTotalShares(Number(BigNumber(res.data.seniorPool.totalShares).div(constants.ONE_BILLION).div(constants.ONE_BILLION)))
             setTotalInvested(Number(BigNumber(res.data.seniorPool.totalInvested).div(constants.ONE_MILLION)))
             setPorfolioLoans(res.data.seniorPool.tranchedPools)
+            console.log("senior pool deposit", res.data.seniorPool.tranchedPools)
 
-            const txData: DataType[] = []
-            res.data.transactions.map((item: any) => {
-                let sentAmount = ''
-                if (item.sentAmount == null) {
-                    sentAmount = '0'
-                } else if (item.sentToken == 'USDC') {
-                    sentAmount = Number(BigNumber(item.sentAmount).div(BigNumber(constants.ONE_MILLION))).toLocaleString()
-                } else {
-                    sentAmount = Number(BigNumber(item.sentAmount).div(BigNumber(constants.ONE_BILLION)).div(BigNumber(constants.ONE_BILLION))).toLocaleString()
-                }
+            try {
+                const txData: DataType[] = []
+                res.data.transactions.map((item: any) => {
+                    let sentAmount = ''
+                    if (item.sentAmount == null) {
+                        sentAmount = '0'
+                    } else if (item.sentToken == 'USDC') {
+                        sentAmount = Number(BigNumber(item.sentAmount).div(BigNumber(constants.ONE_MILLION))).toLocaleString()
+                    } else {
+                        sentAmount = Number(BigNumber(item.sentAmount).div(BigNumber(constants.ONE_BILLION)).div(BigNumber(constants.ONE_BILLION))).toLocaleString()
+                    }
 
-                let receivedAmount = ''
-                if (item.receivedAmount == null) {
-                    receivedAmount = '0'
-                } else if (item.receivedToken == 'USDC') {
-                    receivedAmount = Number(BigNumber(item.receivedAmount).div(BigNumber(constants.ONE_MILLION))).toLocaleString()
-                } else {
-                    receivedAmount = Number(BigNumber(item.receivedAmount).div(BigNumber(constants.ONE_BILLION)).div(BigNumber(constants.ONE_BILLION))).toLocaleString()
-                }
+                    let receivedAmount = ''
+                    if (item.receivedAmount == null) {
+                        receivedAmount = '0'
+                    } else if (item.receivedToken == 'USDC') {
+                        receivedAmount = Number(BigNumber(item.receivedAmount).div(BigNumber(constants.ONE_MILLION))).toLocaleString()
+                    } else {
+                        receivedAmount = Number(BigNumber(item.receivedAmount).div(BigNumber(constants.ONE_BILLION)).div(BigNumber(constants.ONE_BILLION))).toLocaleString()
+                    }
 
-                txData.push({
-                    key: item.id,
-                    user: shortenAddress(item.user.id),
-                    action: (ActionPresentation as any)[item.category as any],
-                    // action: item.category,
-                    sentAmount: sentAmount + ' ' + (item.sentToken ?? ''),
-                    receivedAmount: receivedAmount + ' ' + (item.receivedToken ?? ''),
-                    timestamp: dayjs(Number(item.timestamp) * 1000).format('DD/MM/YYYY HH:mm:ss'),
-                    tx: <div><MonitorOutlined style={{ padding: '5px' }} /><a href={`https://mumbai.polygonscan.com/tx/${item.transactionHash}`} target='_blank' className="underline underline-offset-2">Tx</a></div>,
+                    txData.push({
+                        key: item.id,
+                        user: shortenAddress(item.user.id),
+                        action: (ActionPresentation as any)[item.category as any],
+                        // action: item.category,
+                        sentAmount: sentAmount + ' ' + (item.sentToken ?? ''),
+                        receivedAmount: receivedAmount + ' ' + (item.receivedToken ?? ''),
+                        timestamp: dayjs(Number(item.timestamp) * 1000).format('DD/MM/YYYY HH:mm:ss'),
+                        tx: <div><MonitorOutlined style={{ padding: '5px' }} /><a href={`https://mumbai.polygonscan.com/tx/${item.transactionHash}`} target='_blank' className="underline underline-offset-2">Tx</a></div>,
+                    })
                 })
-            })
-            setHistoryTx(txData as any)
+                setHistoryTx(txData as any)
+            } catch (error) {
+                console.log(error)
+            }
+
+            let totalResult: any[];
+            if (res.data && res.data.seniorPool && res.data.seniorPool.tranchedPools && res.data.seniorPool.tranchedPools.length > 0) {
+                const addMetadata = res.data.seniorPool.tranchedPools.map(async (item: any) => {
+                    const res2 = await axios.get(process.env.NEXT_PUBLIC_API_BASE_URL + '/loans/getLoanByFilter', {
+                        params: {
+                            txHash: item.txHash
+                        }
+                    })
+
+                    return {
+                        ...res2.data
+                    }
+                })
+
+                await Promise.all(addMetadata).then((result) => {
+                    totalResult = result.filter(item => item.companyName)
+                })
+            }
+
+            try {
+                const tranchedInvestData: TranchedInvestDataType[] = []
+                res.data.seniorPool.tranchedPools.map((item: any) => {
+                    let poolDetail
+                    if (item.txHash != null && totalResult) {
+                        poolDetail = totalResult.filter(pool => (pool as any).txHash.toLowerCase() == item.txHash.toLowerCase())
+                        if (poolDetail.length > 0) {
+                            poolDetail = poolDetail[0]
+                        }
+                    }
+                    tranchedInvestData.push({
+                        key: item.id,
+                        deals: <div style={{ cursor: 'pointer' }} className="hover:underline hover:text-sky-500 underline-offset-4" onClick={() => router.push(`/earn/${item.id}`)}>{(poolDetail as any).projectName}</div>,
+                        investedAmount: '$ ' + Number(BigNumber(item.actualSeniorPoolInvestment).div(BigNumber(constants.ONE_MILLION))).toLocaleString(),
+                        porfolioShares: (Number(BigNumber(item.actualSeniorPoolInvestment).div(BigNumber(item.juniorDeposited).plus(BigNumber(item.actualSeniorPoolInvestment)))) * 100).toLocaleString() + ' %',
+                        maturityDate: dayjs(Number(item.creditLine.termEndTime) * 1000).format('DD/MM/YYYY HH:mm:ss'),
+                    })
+                })
+                setTranchedInvestHistory(tranchedInvestData as any)
+            } catch (error) {
+                console.log(error)
+            }
+
         } catch (error) {
             console.log(error)
         }
@@ -511,9 +597,19 @@ export default function SeniorLoanDetailPage() {
                     </div>
 
                     <div style={{ marginTop: '50px', display: 'flex', justifyContent: 'space-between' }}>
-                        <Statistic title="Total Shares Amount" prefix="$" value={totalInvested} precision={2} />
+                        <Statistic title="Total Invested Amount" prefix="$" value={totalInvested} precision={2} />
                         <Statistic title="No. of porfolio loans" value={porfolioLoans.length} />
-                        <Statistic title="Total Shares Amount" prefix="$" value={assets} precision={2} />
+                        <Statistic title="Total Assets Amount" prefix="$" value={assets} precision={2} />
+                    </div>
+
+                    <div style={{ marginTop: '50px' }}>
+                        <Table
+                            columns={tranchedInvestColumns}
+                            dataSource={tranchedInvestHistory}
+                            pagination={{ pageSize: 10 }}
+                            scroll={{ y: 500 }}
+                        // showHeader={false}
+                        />
                     </div>
                 </div>
 
