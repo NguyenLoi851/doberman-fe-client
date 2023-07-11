@@ -12,7 +12,7 @@ import { toast } from "react-toastify";
 import { constants } from "@/commons/constants";
 import { useAccount, useNetwork } from "wagmi";
 import jwtDecode from "jwt-decode";
-import { Descriptions } from "antd";
+import { Descriptions, Upload } from "antd";
 import dayjs from "dayjs";
 
 interface Props {
@@ -29,6 +29,7 @@ export default function DeployedLoanDetailPage() {
     const { chain } = useNetwork()
     const [chainId, setChainId] = useState(0);
     const dateFormat = "DD/MM/YYYY HH:mm:ss";
+    const [link, setLink] = useState('')
 
     const tokensQuery = `query BorrowerPage($userId: String!){
         borrowerContracts(where: {user: $userId}) {
@@ -67,6 +68,9 @@ export default function DeployedLoanDetailPage() {
         }
         getBorrowerProxy()
         setChainId(chain?.id || 80001)
+        if (props.fileKey) {
+            setLink(process.env.NEXT_PUBLIC_S3_BASE_URL as any + props.fileKey)
+        }
     }, [chain, props])
 
     return (
@@ -86,6 +90,21 @@ export default function DeployedLoanDetailPage() {
                 <Descriptions.Item style={{ fontSize: '18px' }} label="Fundable At">{dayjs(dayjs.unix(Number(props.fundableAt)), dateFormat).toString()}</Descriptions.Item>
                 <Descriptions.Item style={{ fontSize: '18px' }} label="Borrower Proxy">{borrowerProxy != zeroAddress ? borrowerProxy : 'Not existed'}</Descriptions.Item>
                 <Descriptions.Item style={{ fontSize: '18px' }} label="Owner Address">{props.ownerAddress}</Descriptions.Item>
+                <Descriptions.Item style={{ fontSize: '18px' }} label="Legal Documents">
+                    {/* {process.env.NEXT_PUBLIC_S3_BASE_URL as any + props.fileKey} */}
+                    {link && <Upload
+                        defaultFileList={[{
+                            url: link,
+                            uid: link.slice(53, 89),
+                            name: link.slice(90),
+                        }]}
+                        showUploadList={
+                            {
+                                showRemoveIcon: false
+                            }
+                        }
+                    />}
+                </Descriptions.Item>
             </Descriptions>
         </div>
     )

@@ -13,6 +13,7 @@ import {
     Col,
     Input,
     DatePicker,
+    Upload,
 } from "antd";
 import { constants, Frequency } from "@/commons/constants";
 import dayjs from "dayjs";
@@ -23,6 +24,8 @@ import { useDispatch } from "react-redux";
 import { setAccessTokenState } from "@/store/accessTokenSlice";
 import { toast } from "react-toastify";
 import { useRouter } from "next/router";
+import { UploadOutlined } from '@ant-design/icons';
+import jwtDecode from "jwt-decode";
 
 interface Props {
     children: ReactNode;
@@ -39,6 +42,7 @@ export default function ApplyNewLoan() {
     const dispatch = useDispatch();
     const router = useRouter();
     const [submitLoading, setSubmitLoading] = useState(false)
+    const [file, setFile] = useState()
 
     useEffect(() => {
         setChainId(chain?.id || 0)
@@ -59,6 +63,15 @@ export default function ApplyNewLoan() {
         fundableAt: dayjs().unix()
     })
 
+    const normFile = (e: any) => {
+        console.log('Upload event:', e);
+        if (Array.isArray(e)) {
+            // setFile((e as any).file)
+            return e;
+        }
+        return e?.fileList;
+    };
+
     const handleChange = (e: any, name: any) => {
         try {
             if (e && e.target && e.target.value) {
@@ -73,26 +86,50 @@ export default function ApplyNewLoan() {
 
     const handleSubmit = async () => {
         setSubmitLoading(true)
+        let token = localStorage.getItem(constants.ACCESS_TOKEN);
+
         try {
-            const timestamp = Math.round(Date.now() / 1000)
-            const signature = await signMessage({
-                message: process.env.NEXT_PUBLIC_APP_ID + '#' + timestamp + '#' + chainId,
-            })
+            let exp;
+            let jwtAddress;
+            if (token) {
+                const decode = jwtDecode(token as any) as any
+                exp = decode.exp
+                jwtAddress = decode.address
+            }
+            if (!token || exp < Date.now() / 1000 || (address as any).toLowerCase() != jwtAddress.toLowerCase()) {
+                const timestamp = Math.round(Date.now() / 1000)
+                const signature = await signMessage({
+                    message: process.env.NEXT_PUBLIC_APP_ID + '#' + timestamp + '#' + chainId,
+                })
 
-            const res = await axios.post(process.env.NEXT_PUBLIC_API_BASE_URL + '/auth/signin', {
-                address: (address as string).toLowerCase(),
-                sign: signature,
-                timestamp,
-                chainId
-            })
+                const res = await axios.post(process.env.NEXT_PUBLIC_API_BASE_URL + '/auth/signin', {
+                    address: (address as string).toLowerCase(),
+                    sign: signature,
+                    timestamp,
+                    chainId
+                })
 
-            localStorage.setItem(constants.ACCESS_TOKEN, res.data.accessToken)
-            dispatch(setAccessTokenState(res.data.accessToken))
+                localStorage.setItem(constants.ACCESS_TOKEN, res.data.accessToken)
+                // dispatch(setAccessTokenState(res.data.accessToken))
+                token = localStorage.getItem(constants.ACCESS_TOKEN);
+            }
 
             try {
-                const res2 = await axios.post(process.env.NEXT_PUBLIC_API_BASE_URL + '/loans/apply', loanInfo, {
-                    headers: { Authorization: `Bearer ${res.data.accessToken}` }
+                const formData = new FormData()
+                formData.append('file', file as any)
+
+                for (var key in loanInfo) {
+                    formData.append(key, (loanInfo as any)[key as any]);
+                }
+
+                const res2 = await axios.post(process.env.NEXT_PUBLIC_API_BASE_URL + '/loans/applyWithFile', formData, {
+                    headers: {
+                        "Content-Type": "multipart/form-data",
+                        Authorization: `Bearer ${token}`,
+                    }
                 })
+                setSubmitLoading(false)
+
                 toast.success("Apply new loan successfully.")
                 router.push('/borrow')
             } catch (error) {
@@ -106,7 +143,7 @@ export default function ApplyNewLoan() {
     }
 
     return (
-        <div style={{ height: 'calc(100% - 64px - 30px)' }}>
+        <div style={{ height: 'calc(100vh - 89px - 76px)' }}>
             <Row>
                 <Col span={5}></Col>
                 <Col span={14}>
@@ -358,6 +395,32 @@ export default function ApplyNewLoan() {
                                     showTime={true}
                                     onChange={(e) => handleChange(e?.unix(), "fundableAt")}
                                 />
+                            </Form.Item>
+
+                            <Form.Item
+                                name="upload"
+                                rules={[
+                                    {
+                                        required: true,
+                                        message: "Please upload legal documents in 1 file pdf"
+                                    }
+                                ]}
+                                label="Upload Legal Documents"
+                                valuePropName="fileList"
+                                getValueFromEvent={normFile}
+                                extra=<div className="text-red-500">*** Upload all documents in 1 file pdf***</div>
+                            >
+                                <Upload
+                                    name="logo"
+                                    onChange={(info) => {
+                                        setFile((info as any).file.originFileObj);
+                                    }}
+                                    listType="picture"
+                                    maxCount={1}
+                                    accept=".pdf"
+                                    onPreview={() => { }} >
+                                    <Button icon={<UploadOutlined />}>Click to upload</Button>
+                                </Upload>
                             </Form.Item>
 
                             <Form.Item className="flex justify-center">

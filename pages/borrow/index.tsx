@@ -96,7 +96,9 @@ export default function BorrowPage() {
                 address: address
             }
         })
-        setUserLoans(res.data.loans.reverse())
+        if (res.data.loans) {
+            setUserLoans(res.data.loans.reverse())
+        }
     }
 
     useEffect(() => {
@@ -139,7 +141,7 @@ export default function BorrowPage() {
     }
 
     return (
-        <div style={{ height: 'calc(100vh - 64px - 30px)' }}>
+        <div style={{ height: 'calc(100vh - 89px - 76px)' }}>
             <div>
                 <Row>
                     <Col span={5}></Col>

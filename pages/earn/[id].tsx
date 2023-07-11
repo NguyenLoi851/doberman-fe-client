@@ -11,7 +11,7 @@ import { readContract, writeContract, waitForTransaction } from "@wagmi/core"
 import USDC from "../../abi/USDC.json"
 import TranchedPool from "../../abi/TranchedPool.json"
 import { constants } from "@/commons/constants";
-import { Anchor, Button, Col, Descriptions, InputNumber, Row, Slider, Statistic, Table } from "antd";
+import { Anchor, Button, Col, Descriptions, InputNumber, Row, Slider, Statistic, Table, Upload } from "antd";
 import { toast } from "react-toastify";
 import { MonitorOutlined } from '@ant-design/icons';
 import UniqueIdentity from "@/abi/UniqueIdentity.json"
@@ -70,6 +70,7 @@ export default function LoanDetailPage() {
     })
     const [interestOwe, setInterestOwe] = useState(0)
     const [principleOwe, setPrincipleOwe] = useState(0)
+    const [link, setLink] = useState('')
 
     const getInterestAndPrincipalOwedAsOfCurrent = async () => {
         try {
@@ -240,8 +241,9 @@ export default function LoanDetailPage() {
                     txHash: res.data.tranchedPool.txHash
                 }
             })
-
-            console.log("here", { ...res.data.tranchedPool, ...res2.data })
+            if (res2.data.fileKey) {
+                setLink(process.env.NEXT_PUBLIC_S3_BASE_URL as any + res2.data.fileKey)
+            }
             setLoanDetailInfo({ ...res.data.tranchedPool, ...res2.data })
             setFundingLimit(Number((res.data.tranchedPool as any).fundingLimit) / constants.ONE_MILLION)
             setJuniorDeposited(Number((res.data.tranchedPool as any).juniorDeposited) / constants.ONE_MILLION)
@@ -514,6 +516,11 @@ export default function LoanDetailPage() {
                             title: 'Overview'
                         },
                         {
+                            key: 'document',
+                            href: '#document',
+                            title: 'Legal Documents'
+                        },
+                        {
                             key: 'borrower',
                             href: '#borrower',
                             title: 'Borrower',
@@ -691,6 +698,28 @@ export default function LoanDetailPage() {
                             />
                         </div>
                     </div>
+                </div>
+
+                <div id="document" style={{ height: 'auto', marginBottom: '50px', padding: '10px' }} className="rounded-lg bg-white" >
+                    <div style={{ margin: '10px', fontSize: '16px', fontWeight: 'bold' }}>Legal Documents</div>
+
+                    {link &&
+                        <div style={{ marginLeft: '50px', marginRight: '50px', marginTop: '10px', marginBottom: '20px' }}>
+                            <Upload
+                                listType="picture"
+                                defaultFileList={[{
+                                    url: link,
+                                    uid: link.slice(53, 89),
+                                    name: link.slice(90),
+                                }]}
+                                showUploadList={
+                                    {
+                                        showRemoveIcon: false
+                                    }
+                                }
+                            />
+                        </div>
+                    }
                 </div>
 
                 <div id="borrower" style={{ height: 'auto', marginBottom: '50px', padding: '10px' }} className="rounded-lg bg-white" >

@@ -4,7 +4,7 @@ import { constants, Frequency } from "@/commons/constants";
 import PageLayout from "@/components/layouts/PageLayout";
 import { ApolloClient, gql, InMemoryCache } from "@apollo/client";
 import { signMessage } from "@wagmi/core";
-import { Anchor, Button, Col, DatePicker, Form, Input, InputNumber, Modal, Row, Select, Slider, Statistic, Steps, Typography } from "antd";
+import { Anchor, Button, Col, DatePicker, Form, Input, InputNumber, Modal, Row, Select, Slider, Statistic, Steps, Typography, Upload } from "antd";
 import axios from "axios";
 import dayjs from "dayjs";
 import jwtDecode from "jwt-decode";
@@ -22,6 +22,7 @@ import BigNumber from "bignumber.js";
 import CreditLine from "../../../abi/CreditLine.json";
 import USDC from "../../../abi/USDC.json"
 import { buildPermitSignature, buildPermitSignatureV2, Domain } from "@/commons/functions";
+import { UploadOutlined } from '@ant-design/icons';
 
 interface Props {
     children: ReactNode;
@@ -56,6 +57,11 @@ export default function LoanDetailPage() {
     const [nextDueTime, setNextDueTime] = useState(0)
     const [interestOwe, setInterestOwe] = useState(0)
     const [principleOwe, setPrincipleOwe] = useState(0)
+    const [file, setFile] = useState()
+    const [link, setLink] = useState('')
+    const [isNeedChange, setIsNeedChange] = useState(false)
+    const [loadingSavesChanges, setLoadingSavesChanges] = useState(false)
+
     const signatureDeadline = Math.floor(Date.now() / 1000 + 90000);
     const domain: Domain = {
         version: '2',
@@ -66,6 +72,15 @@ export default function LoanDetailPage() {
 
     // const { data: walletClient } = useWalletClient()
 
+    const normFile = (e: any) => {
+        console.log('Upload event:', e);
+        setIsNeedChange(true)
+        if (Array.isArray(e)) {
+            // setFile((e as any).file)
+            return e;
+        }
+        return e?.fileList;
+    };
     const tokensQuery = `query BorrowerPage($userId: String!, $txHash: String!){
         borrowerContracts: borrowerContracts(where: {user: $userId}) {
           id
@@ -145,7 +160,9 @@ export default function LoanDetailPage() {
                 setTranchedPool(res.data.tranchedPool[0])
             }
 
-            setCreditLineAddr(res.data.tranchedPool[0].creditLineAddress)
+            if (res.data.tranchedPool && res.data.tranchedPool.length > 0 && res.data.tranchedPool[0].hasOwnProperty('creditLineAddress')) {
+                setCreditLineAddr(res.data.tranchedPool[0].creditLineAddress)
+            }
 
             if (res && res.data && res.data.tranchedPool[0]) {
                 if (res.data.tranchedPool[0].creditLine.termStartTime > 0) {
@@ -182,7 +199,7 @@ export default function LoanDetailPage() {
 
     useEffect(() => {
         getBorrowerProxy()
-        // console.log("ll", props.ownerAddress, address)
+
         try {
             if (props.ownerAddress) {
                 if ((props.ownerAddress as any).toLowerCase() != address?.toLowerCase()) {
@@ -193,6 +210,13 @@ export default function LoanDetailPage() {
             console.log(error)
         }
 
+        try {
+            if (props.fileKey) {
+                getLegalDocument()
+            }
+        } catch (error) {
+            console.log(error)
+        }
         setChainId(chain?.id || 80001)
         setDisableEdit(props.deployed == "false" ? false : true)
         form.setFieldsValue({
@@ -210,13 +234,14 @@ export default function LoanDetailPage() {
             fundableAt: dayjs(dayjs.unix(Number(props.fundableAt)), dateFormat)
         })
 
-        if (creditLineAddr != '') {
+        if (creditLineAddr != '' && creditLineAddr != null && creditLineAddr != undefined) {
             getNextDueTime()
             getInterestAndPrincipalOwedAsOfCurrent()
         }
     }, [chain, props, address, creditLineAddr])
 
     const handleSubmit = async () => {
+        setLoadingSavesChanges(true)
         try {
             let token = localStorage.getItem(constants.ACCESS_TOKEN)
             let exp;
@@ -248,17 +273,36 @@ export default function LoanDetailPage() {
                     console.log(error)
                 }
             }
+            if (file == null || file == undefined) {
+                await axios.post(process.env.NEXT_PUBLIC_API_BASE_URL + `/loans/update/${props.id}`, {
+                    ...updateLoanInfo
+                }, {
+                    headers: { Authorization: `Bearer ${token}` }
+                })
+            } else {
+                const formData = new FormData()
+                console.log('filefile', file)
+                formData.append('file', file as any)
 
-            await axios.post(process.env.NEXT_PUBLIC_API_BASE_URL + `/loans/update/${props.id}`, {
-                ...updateLoanInfo
-            }, {
-                headers: { Authorization: `Bearer ${token}` }
-            })
+                for (var key in updateLoanInfo) {
+                    formData.append(key, (updateLoanInfo as any)[key as any]);
+                }
+
+                await axios.post(process.env.NEXT_PUBLIC_API_BASE_URL + `/loans/updateWithFile/${props.id}`, formData, {
+                    headers: {
+                        "Content-Type": "multipart/form-data",
+                        Authorization: `Bearer ${token}`,
+                    }
+                })
+            }
+            setLoadingSavesChanges(false)
+
             toast.success(`Update infor of loan ${props.index} successfully`)
             router.push('/borrow')
         } catch (error) {
             console.log(error)
         }
+        setLoadingSavesChanges(false)
     }
 
     const handleChange = (e: any, name: any) => {
@@ -268,6 +312,8 @@ export default function LoanDetailPage() {
             } else {
                 setUpdateLoanInfo({ ...updateLoanInfo, [name]: e });
             }
+            setIsNeedChange(true)
+
         } catch (error) {
             console.log(error)
         }
@@ -479,8 +525,18 @@ export default function LoanDetailPage() {
         setWantRepayAmount(interestOwe + principleOwe)
     }
 
+    const getLegalDocument = async () => {
+        try {
+            if (props.fileKey != '' && props.fileKey != null && props.fileKey != undefined) {
+                setLink(process.env.NEXT_PUBLIC_S3_BASE_URL as any + props.fileKey)
+            }
+        } catch (error) {
+            console.log(error)
+        }
+    }
+
     return (
-        <div style={{ height: 'calc(100% - 64px - 30px)' }}>
+        <div style={{ height: 'calc(100vh - 89px - 76px)' }}>
             <Row>
                 <Col span={5}>
                 </Col>
@@ -758,9 +814,47 @@ export default function LoanDetailPage() {
                                         onChange={(e) => handleChange(e?.unix(), "fundableAt")}
                                     />
                                 </Form.Item>
+                                <Form.Item
+                                    name="upload"
+                                    rules={[
+                                        {
+                                            required: true,
+                                            message: "Please upload legal documents in 1 file pdf"
+                                        }
+                                    ]}
+                                    label="Upload Legal Documents"
+                                    valuePropName="fileList"
+                                    getValueFromEvent={normFile}
+                                    extra=<div className="text-red-500">*** Upload all documents in 1 file ***</div>
+                                >
+                                    {
+                                        link && <Upload
+                                            defaultFileList={[{
+                                                url: link,
+                                                uid: link.slice(53, 89),
+                                                name: link.slice(90),
+                                            }]}
+                                            name="logo"
+                                            onChange={(info) => {
+                                                setFile((info as any).file.originFileObj);
+                                            }}
+                                            listType="picture"
+                                            maxCount={1}
+                                            accept=".pdf"
+                                            showUploadList={
+                                                {
+                                                    showRemoveIcon: false
+                                                }
+                                            }
+                                        >
+                                            <Button disabled={disableEdit} icon={<UploadOutlined />}>Click to upload</Button>
+                                        </Upload>
+                                    }
+
+                                </Form.Item>
                                 {props.deployed == "false" && (
                                     <Form.Item className="flex justify-center">
-                                        <Button className="btn-sm bg-sky-400 flex justify-center rounded-lg" type="primary" htmlType="submit">Saves changes</Button>
+                                        <Button loading={loadingSavesChanges} disabled={!isNeedChange} className="btn-sm bg-sky-400 flex justify-center rounded-lg" type="primary" htmlType="submit">Saves changes</Button>
                                     </Form.Item>
                                 )}
                             </Form>
