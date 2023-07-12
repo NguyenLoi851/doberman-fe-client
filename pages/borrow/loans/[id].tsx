@@ -57,8 +57,8 @@ export default function LoanDetailPage() {
     const [nextDueTime, setNextDueTime] = useState(0)
     const [interestOwe, setInterestOwe] = useState(0)
     const [principleOwe, setPrincipleOwe] = useState(0)
-    const [file, setFile] = useState()
-    const [link, setLink] = useState('')
+    const [files, setFiles] = useState([])
+    const [links, setLinks] = useState('')
     const [isNeedChange, setIsNeedChange] = useState(false)
     const [loadingSavesChanges, setLoadingSavesChanges] = useState(false)
 
@@ -79,6 +79,7 @@ export default function LoanDetailPage() {
             // setFile((e as any).file)
             return e;
         }
+        setFiles(e?.fileList)
         return e?.fileList;
     };
     const tokensQuery = `query BorrowerPage($userId: String!, $txHash: String!){
@@ -211,7 +212,7 @@ export default function LoanDetailPage() {
         }
 
         try {
-            if (props.fileKey) {
+            if (props.fileKeys) {
                 getLegalDocument()
             }
         } catch (error) {
@@ -273,28 +274,42 @@ export default function LoanDetailPage() {
                     console.log(error)
                 }
             }
-            if (file == null || file == undefined) {
-                await axios.post(process.env.NEXT_PUBLIC_API_BASE_URL + `/loans/update/${props.id}`, {
-                    ...updateLoanInfo
-                }, {
-                    headers: { Authorization: `Bearer ${token}` }
-                })
-            } else {
-                const formData = new FormData()
-                console.log('filefile', file)
-                formData.append('file', file as any)
+            // if (files == null || files == undefined || files.length == 0) {
+            //     console.log("gg");
+            //     await axios.post(process.env.NEXT_PUBLIC_API_BASE_URL + `/loans/update/${props.id}`, {
+            //         ...updateLoanInfo
+            //     }, {
+            //         headers: { Authorization: `Bearer ${token}` }
+            //     })
+            // } else {
+            console.log("hh");
 
-                for (var key in updateLoanInfo) {
-                    formData.append(key, (updateLoanInfo as any)[key as any]);
-                }
+            const formData = new FormData()
 
-                await axios.post(process.env.NEXT_PUBLIC_API_BASE_URL + `/loans/updateWithFile/${props.id}`, formData, {
-                    headers: {
-                        "Content-Type": "multipart/form-data",
-                        Authorization: `Bearer ${token}`,
-                    }
-                })
+            const newFiles = files.filter((item: any) => item.originFileObj)
+            if (newFiles.length > 0) {
+                newFiles.forEach(file => formData.append('files', (file as any).originFileObj))
             }
+            const oldFiles = files.filter((item: any) => !item.originFileObj)
+
+            let oldFileKeyMerge = '==='
+            oldFiles.forEach((item: any) => {
+                oldFileKeyMerge += item.url.slice(53)
+                oldFileKeyMerge += '==='
+            })
+            formData.append('oldFileKeyMerge', oldFileKeyMerge)
+
+            for (var key in updateLoanInfo) {
+                formData.append(key, (updateLoanInfo as any)[key as any]);
+            }
+
+            await axios.post(process.env.NEXT_PUBLIC_API_BASE_URL + `/loans/updateWithFile/${props.id}`, formData, {
+                headers: {
+                    "Content-Type": "multipart/form-data",
+                    Authorization: `Bearer ${token}`,
+                }
+            })
+            // }
             setLoadingSavesChanges(false)
 
             toast.success(`Update infor of loan ${props.index} successfully`)
@@ -527,8 +542,12 @@ export default function LoanDetailPage() {
 
     const getLegalDocument = async () => {
         try {
-            if (props.fileKey != '' && props.fileKey != null && props.fileKey != undefined) {
-                setLink(process.env.NEXT_PUBLIC_S3_BASE_URL as any + props.fileKey)
+            if (props.fileKeys != '' && props.fileKeys != null && props.fileKeys != undefined) {
+                const fileKeysParse = JSON.parse(props.fileKeys as any)
+                const fileURLs = fileKeysParse.map((item: any) => {
+                    return process.env.NEXT_PUBLIC_S3_BASE_URL as any + item.fileKey
+                })
+                setLinks(fileURLs)
             }
         } catch (error) {
             console.log(error)
@@ -536,7 +555,8 @@ export default function LoanDetailPage() {
     }
 
     return (
-        <div style={{ height: 'calc(100vh - 89px - 76px)' }}>
+        // <div style={{ height: 'calc(100vh - 89px - 76px)' }}>
+        <div>
             <Row>
                 <Col span={5}>
                 </Col>
@@ -816,41 +836,43 @@ export default function LoanDetailPage() {
                                 </Form.Item>
                                 <Form.Item
                                     name="upload"
-                                    rules={[
-                                        {
-                                            required: true,
-                                            message: "Please upload legal documents in 1 file pdf"
-                                        }
-                                    ]}
+                                    // rules={[
+                                    //     {
+                                    //         required: props.fileKeys == '' || (links == '' && files.length == 0),
+                                    //         message: "Please upload legal documents in maximum 3 files pdf"
+                                    //     }
+                                    // ]}
                                     label="Upload Legal Documents"
-                                    valuePropName="fileList"
+                                    valuePropName="links"
                                     getValueFromEvent={normFile}
-                                    extra=<div className="text-red-500">*** Upload all documents in 1 file ***</div>
+                                    extra=<div className="text-red-500">*** Upload all documents in maximum 3 files pdf ***</div>
                                 >
                                     {
-                                        link && <Upload
-                                            defaultFileList={[{
-                                                url: link,
-                                                uid: link.slice(53, 89),
-                                                name: link.slice(90),
-                                            }]}
+                                        links && <Upload
+                                            defaultFileList={(links as any).map((item: any) => {
+                                                return {
+                                                    url: item,
+                                                    uid: item.slice(53, 89),
+                                                    name: item.slice(90),
+                                                }
+                                            })}
                                             name="logo"
                                             onChange={(info) => {
-                                                setFile((info as any).file.originFileObj);
+                                                // const originFileObjs = (info as any).fileList.map((item: any) => item.originFileObj)
+                                                setFiles((info as any).fileList);
                                             }}
                                             listType="picture"
-                                            maxCount={1}
+                                            maxCount={3}
                                             accept=".pdf"
                                             showUploadList={
                                                 {
-                                                    showRemoveIcon: false
+                                                    showRemoveIcon: !disableEdit
                                                 }
                                             }
                                         >
-                                            <Button disabled={disableEdit} icon={<UploadOutlined />}>Click to upload</Button>
+                                            <Button disabled={disableEdit} icon={<UploadOutlined />}>Click to upload all files again</Button>
                                         </Upload>
                                     }
-
                                 </Form.Item>
                                 {props.deployed == "false" && (
                                     <Form.Item className="flex justify-center">

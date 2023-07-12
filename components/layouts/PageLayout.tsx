@@ -10,7 +10,7 @@ const PageLayout: FC<Props> = ({ children }) => {
     return (
         <div className="bg-amber-100">
             <Header />
-            <div>{children}</div>
+            <div style={{ minHeight: '100vh' }}>{children}</div>
             <Footer />
         </div>
     )

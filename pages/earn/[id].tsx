@@ -70,7 +70,7 @@ export default function LoanDetailPage() {
     })
     const [interestOwe, setInterestOwe] = useState(0)
     const [principleOwe, setPrincipleOwe] = useState(0)
-    const [link, setLink] = useState('')
+    const [links, setLinks] = useState('')
 
     const getInterestAndPrincipalOwedAsOfCurrent = async () => {
         try {
@@ -236,13 +236,20 @@ export default function LoanDetailPage() {
                     userId: (address as any).toLowerCase()
                 }
             })
+            console.log("res.data.tranchedPool.txHash", res.data.tranchedPool.txHash)
             const res2 = await axios.get(process.env.NEXT_PUBLIC_API_BASE_URL + '/loans/getLoanByFilter', {
                 params: {
                     txHash: res.data.tranchedPool.txHash
                 }
             })
-            if (res2.data.fileKey) {
-                setLink(process.env.NEXT_PUBLIC_S3_BASE_URL as any + res2.data.fileKey)
+            console.log("res2", res2)
+            if (res2.data.legalDocuments != '' && res2.data.legalDocuments != null && res2.data.legalDocuments != undefined) {
+                const fileKeysParse = res2.data.legalDocuments as any
+                const fileURLs = fileKeysParse.map((item: any) => {
+                    return process.env.NEXT_PUBLIC_S3_BASE_URL as any + item.fileKey
+                })
+                console.log('fileURLs', fileURLs)
+                setLinks(fileURLs)
             }
             setLoanDetailInfo({ ...res.data.tranchedPool, ...res2.data })
             setFundingLimit(Number((res.data.tranchedPool as any).fundingLimit) / constants.ONE_MILLION)
@@ -703,15 +710,17 @@ export default function LoanDetailPage() {
                 <div id="document" style={{ height: 'auto', marginBottom: '50px', padding: '10px' }} className="rounded-lg bg-white" >
                     <div style={{ margin: '10px', fontSize: '16px', fontWeight: 'bold' }}>Legal Documents</div>
 
-                    {link &&
+                    {links &&
                         <div style={{ marginLeft: '50px', marginRight: '50px', marginTop: '10px', marginBottom: '20px' }}>
                             <Upload
                                 listType="picture"
-                                defaultFileList={[{
-                                    url: link,
-                                    uid: link.slice(53, 89),
-                                    name: link.slice(90),
-                                }]}
+                                defaultFileList={(links as any).map((item: any) => {
+                                    return {
+                                        url: item,
+                                        uid: item.slice(53, 89),
+                                        name: item.slice(90),
+                                    }
+                                })}
                                 showUploadList={
                                     {
                                         showRemoveIcon: false

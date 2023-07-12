@@ -40,7 +40,8 @@ export default function AdminLoansDeployedPage() {
         Router.push({
             pathname: `/admin/loans/deployed/${item.id}`,
             query: {
-                ...item
+                ...item,
+                fileKeys: JSON.stringify(item.legalDocuments || "")
             }
         })
     }

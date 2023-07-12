@@ -42,7 +42,7 @@ export default function ApplyNewLoan() {
     const dispatch = useDispatch();
     const router = useRouter();
     const [submitLoading, setSubmitLoading] = useState(false)
-    const [file, setFile] = useState()
+    const [files, setFiles] = useState([])
 
     useEffect(() => {
         setChainId(chain?.id || 0)
@@ -116,9 +116,10 @@ export default function ApplyNewLoan() {
 
             try {
                 const formData = new FormData()
-                formData.append('file', file as any)
+                files.forEach((file) => formData.append('files', file as any))
 
                 for (var key in loanInfo) {
+                    console.log("foreach", key, (loanInfo as any)[key as any])
                     formData.append(key, (loanInfo as any)[key as any]);
                 }
 
@@ -143,7 +144,8 @@ export default function ApplyNewLoan() {
     }
 
     return (
-        <div style={{ height: 'calc(100vh - 89px - 76px)' }}>
+        // <div style={{ height: 'calc(100% - 89px - 76px)' }}>
+        <div>
             <Row>
                 <Col span={5}></Col>
                 <Col span={14}>
@@ -402,21 +404,22 @@ export default function ApplyNewLoan() {
                                 rules={[
                                     {
                                         required: true,
-                                        message: "Please upload legal documents in 1 file pdf"
+                                        message: "Please upload legal documents in 3 files pdf"
                                     }
                                 ]}
                                 label="Upload Legal Documents"
                                 valuePropName="fileList"
                                 getValueFromEvent={normFile}
-                                extra=<div className="text-red-500">*** Upload all documents in 1 file pdf***</div>
+                                extra=<div className="text-red-500">*** Upload all documents in 3 files pdf***</div>
                             >
                                 <Upload
                                     name="logo"
                                     onChange={(info) => {
-                                        setFile((info as any).file.originFileObj);
+                                        const originFileObjs = (info as any).fileList.map((item: any) => item.originFileObj)
+                                        setFiles(originFileObjs);
                                     }}
                                     listType="picture"
-                                    maxCount={1}
+                                    maxCount={3}
                                     accept=".pdf"
                                     onPreview={() => { }} >
                                     <Button icon={<UploadOutlined />}>Click to upload</Button>

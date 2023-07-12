@@ -206,8 +206,8 @@ export default function EarnPage() {
   }
 
   return (
-    <div style={{ height: 'calc(100vh - 89px - 76px)' }}>
-
+    // <div style={{ height: 'calc(100% - 89px - 76px)' }}>
+    <div>
       <Row >
         <Col span={5}>
         </Col>

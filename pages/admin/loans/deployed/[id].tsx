@@ -29,7 +29,7 @@ export default function DeployedLoanDetailPage() {
     const { chain } = useNetwork()
     const [chainId, setChainId] = useState(0);
     const dateFormat = "DD/MM/YYYY HH:mm:ss";
-    const [link, setLink] = useState('')
+    const [links, setLinks] = useState('')
 
     const tokensQuery = `query BorrowerPage($userId: String!){
         borrowerContracts(where: {user: $userId}) {
@@ -68,8 +68,13 @@ export default function DeployedLoanDetailPage() {
         }
         getBorrowerProxy()
         setChainId(chain?.id || 80001)
-        if (props.fileKey) {
-            setLink(process.env.NEXT_PUBLIC_S3_BASE_URL as any + props.fileKey)
+        if (props.fileKeys != '' && props.fileKeys != null && props.fileKeys != undefined) {
+            const fileKeysParse = JSON.parse(props.fileKeys as any)
+            const fileURLs = fileKeysParse.map((item: any) => {
+                return process.env.NEXT_PUBLIC_S3_BASE_URL as any + item.fileKey
+            })
+            console.log('fileURLs', fileURLs)
+            setLinks(fileURLs)
         }
     }, [chain, props])
 
@@ -89,20 +94,23 @@ export default function DeployedLoanDetailPage() {
                 <Descriptions.Item style={{ fontSize: '18px' }} label="Target Funding">$ {props.targetFunding?.toLocaleString()}</Descriptions.Item>
                 <Descriptions.Item style={{ fontSize: '18px' }} label="Fundable At">{dayjs(dayjs.unix(Number(props.fundableAt)), dateFormat).toString()}</Descriptions.Item>
                 <Descriptions.Item style={{ fontSize: '18px' }} label="Borrower Proxy">{borrowerProxy != zeroAddress ? borrowerProxy : 'Not existed'}</Descriptions.Item>
-                <Descriptions.Item style={{ fontSize: '18px' }} label="Owner Address">{props.ownerAddress}</Descriptions.Item>
-                <Descriptions.Item style={{ fontSize: '18px' }} label="Legal Documents">
+                <Descriptions.Item style={{ fontSize: '18px' }} label="Owner Address" span={2}>{props.ownerAddress}</Descriptions.Item>
+                <Descriptions.Item style={{ fontSize: '18px' }} label="Legal Documents" span={2}>
                     {/* {process.env.NEXT_PUBLIC_S3_BASE_URL as any + props.fileKey} */}
-                    {link && <Upload
-                        defaultFileList={[{
-                            url: link,
-                            uid: link.slice(53, 89),
-                            name: link.slice(90),
-                        }]}
+                    {links && <Upload
+                        defaultFileList={(links as any).map((item: any) => {
+                            return {
+                                url: item,
+                                uid: item.slice(53, 89),
+                                name: item.slice(90),
+                            }
+                        })}
                         showUploadList={
                             {
                                 showRemoveIcon: false
                             }
                         }
+                        listType='picture'
                     />}
                 </Descriptions.Item>
             </Descriptions>

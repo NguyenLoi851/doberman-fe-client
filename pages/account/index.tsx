@@ -372,7 +372,8 @@ export default function AccountPage() {
     }, [chain, address])
 
     return (
-        <div style={{ height: 'calc(100vh - 89px - 76px)' }}>
+        // <div style={{ height: 'calc(100vh - 89px - 76px)' }}>
+        <div>
             <div>
                 <Row>
                     <Col span={1}>

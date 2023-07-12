@@ -42,7 +42,8 @@ export default function AdminLoansAppliedPage() {
         Router.push({
             pathname: `/admin/loans/applied/${item.id}`,
             query: {
-                ...item
+                ...item,
+                fileKeys: JSON.stringify(item.legalDocuments || "")
             }
         })
     }
