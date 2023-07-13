@@ -1,4 +1,4 @@
-import { constants } from "@/commons/constants"
+import { constants, KycStatus } from "@/commons/constants"
 import axios from "axios";
 import { useEffect, useState, ReactNode } from "react";
 import { useAccount, useContractRead, useContractWrite, useNetwork, usePrepareContractWrite, useSignMessage, useWaitForTransaction } from "wagmi";
@@ -13,13 +13,14 @@ import { toast } from "react-toastify";
 import PageLayout from "@/components/layouts/PageLayout";
 import { readContract, signMessage, writeContract, waitForTransaction } from '@wagmi/core'
 import jwtDecode from "jwt-decode";
-import { Anchor, Button, Card, Col, List, Row, Table } from "antd";
+import { Anchor, Button, Card, Col, List, Modal, Row, Table } from "antd";
 import { ApolloClient, gql, InMemoryCache } from "@apollo/client";
 import BigNumber from "bignumber.js";
 import dayjs from "dayjs";
 import { ColumnsType } from "antd/es/table";
 import { shortenAddress } from "@/components/shortenAddress";
 import { MonitorOutlined } from '@ant-design/icons';
+import SumsubWebSdk from '@sumsub/websdk-react'
 
 interface Props {
     children: ReactNode;
@@ -32,13 +33,22 @@ export default function AccountPage() {
     const { chain } = useNetwork()
     const { address } = useAccount()
     // const timestamp = Math.round(Date.now() / 1000)
-    const [kycStatus, setKycStatus] = useState(false)
-    const [kycVerifiedStatus, setKycVerifiedStatus] = useState(false)
+    const [kycStatus, setKycStatus] = useState(KycStatus.INIT)
     const [mintSignature, setMintSignature] = useState('0x')
     const [chainId, setChainId] = useState(0)
     const [userUIDBalance, setUserUIDBalance] = useState(0)
     const [accountInvestments, setAccountInvestments] = useState([])
     const [historyTx, setHistoryTx] = useState([])
+    const [kycAccessToken, setKycAccessToken] = useState('')
+    const [showKycModal, setShowKycModal] = useState(false)
+
+    const handleOk = async () => {
+        setShowKycModal(false);
+    };
+
+    const handleCancel = () => {
+        setShowKycModal(false);
+    };
 
     const tokenDetailLoanQuery = `
     query AccountInvesment($userId: String!) {
@@ -271,34 +281,36 @@ export default function AccountPage() {
             return;
         }
 
+        await requestKycSumSubAccessToken()
+        setShowKycModal(true)
+        // // check whether KYCed or not
+        // const resKYCed = true;
+        // setKycStatus(resKYCed)
 
-        // check whether KYCed or not
-        const resKYCed = true;
-        setKycStatus(resKYCed)
-
-        // check whether approved by admin or not (get mint signature)
-        try {
-            const res2 = await axios.get(process.env.NEXT_PUBLIC_API_BASE_URL + '/kyc/info', {
-                headers: { Authorization: `Bearer ${token}` }
-            })
-            if (res2.data != '') {
-                setKycVerifiedStatus(true);
-                setMintSignature(res2.data.mintSignature)
-            } else {
-                await axios.post(process.env.NEXT_PUBLIC_API_BASE_URL + '/kyc/requestMintUIDSignature', {
-                    userAddr: (address as string).toLowerCase()
-                }, {
-                    headers: { Authorization: `Bearer ${token}` }
-                }
-                )
-            }
-        } catch (error) {
-            console.log(error)
-        }
+        // // check whether approved by admin or not (get mint signature)
+        // try {
+        //     const res2 = await axios.get(process.env.NEXT_PUBLIC_API_BASE_URL + '/kyc/info', {
+        //         headers: { Authorization: `Bearer ${token}` }
+        //     })
+        //     if (res2.data != '') {
+        //         setKycVerifiedStatus(true);
+        //         setMintSignature(res2.data.mintSignature)
+        //     } else {
+        //         await axios.post(process.env.NEXT_PUBLIC_API_BASE_URL + '/kyc/requestMintUIDSignature', {
+        //             userAddr: (address as string).toLowerCase()
+        //         }, {
+        //             headers: { Authorization: `Bearer ${token}` }
+        //         }
+        //         )
+        //     }
+        // } catch (error) {
+        //     console.log(error)
+        // }
 
     }
 
     const getKYCInfo = async () => {
+        console.log("getKYCInfo")
         let token = localStorage.getItem(constants.ACCESS_TOKEN);
         try {
             let exp;
@@ -335,15 +347,15 @@ export default function AccountPage() {
             const res = await axios.get(process.env.NEXT_PUBLIC_API_BASE_URL + '/kyc/info', {
                 headers: { Authorization: `Bearer ${token}` }
             })
-            if (res.data.id != '' && res.data.id != null) {
-                setKycStatus(true)
-                setKycVerifiedStatus(false)
-            }
-            if (res.data.mintSignature != '' && res.data.mintSignature != null) {
-                setKycVerifiedStatus(true)
-                setMintSignature(res.data.mintSignature)
-
-            }
+            console.log("349", res)
+            if (res.data == '') {
+                setKycStatus(KycStatus.INIT)
+            } else { }
+            // if (res.data.id != '' && res.data.id != null) {
+            // }
+            // if (res.data.mintSignature != '' && res.data.mintSignature != null) {
+            //     setMintSignature(res.data.mintSignature)
+            // }
         } catch (error) {
             console.log(error)
         }
@@ -360,7 +372,7 @@ export default function AccountPage() {
     }
 
     useEffect(() => {
-        setChainId(chain?.id || 0)
+        setChainId(chain?.id || 80001)
         if (address) {
             getUserUIDBalance()
             getAccountInvestmentInfo()
@@ -371,8 +383,50 @@ export default function AccountPage() {
         getKYCInfo()
     }, [chain, address])
 
+    const requestKycSumSubAccessToken = async () => {
+        let token = localStorage.getItem(constants.ACCESS_TOKEN);
+        try {
+            let exp;
+            let jwtAddress;
+            if (token) {
+                const decode = jwtDecode(token as any) as any
+                exp = decode.exp
+                jwtAddress = decode.address
+            }
+            if (!token || exp < Date.now() / 1000 || (address as any).toLowerCase() != jwtAddress.toLowerCase()) {
+                // sign again
+                const timestamp = Math.round(Date.now() / 1000)
+                const signature = await signMessage({
+                    message: process.env.NEXT_PUBLIC_APP_ID + '#' + timestamp + '#' + chainId,
+                })
+                console.log('signature', signature);
+
+                const res = await axios.post(process.env.NEXT_PUBLIC_API_BASE_URL + '/auth/signin', {
+                    address: (address as string).toLowerCase(),
+                    sign: signature,
+                    timestamp,
+                    chainId: chainId
+                })
+
+                localStorage.setItem(constants.ACCESS_TOKEN, res.data.accessToken)
+                // dispatch(setAccessTokenState(res.data.accessToken))
+                token = localStorage.getItem(constants.ACCESS_TOKEN);
+            }
+        } catch (error) {
+            console.log(error)
+            return;
+        }
+        try {
+            const res = await axios.get(process.env.NEXT_PUBLIC_API_BASE_URL + '/kyc/requestKyc', {
+                headers: { Authorization: `Bearer ${token}` }
+            })
+            setKycAccessToken(res.data.token)
+        } catch (error) {
+            console.log(error)
+        }
+    }
+
     return (
-        // <div style={{ height: 'calc(100vh - 89px - 76px)' }}>
         <div>
             <div>
                 <Row>
@@ -401,6 +455,19 @@ export default function AccountPage() {
                             ]} />
                     </Col>
                     <Col span={14}>
+                        {kycAccessToken && <Modal open={showKycModal} onOk={handleOk} onCancel={handleCancel} okText={<div className="text-black hover:text-white">OK</div>}>
+                            <SumsubWebSdk
+                                accessToken={kycAccessToken}
+                                expirationHandler={() => Promise.resolve(kycAccessToken)}
+                                config={{
+                                    lang: 'en',
+                                }}
+                                options={{ addViewportTag: false, adaptIframeHeight: true }}
+                                onMessage={(data: any, payload: any) => console.log('onMessage', data, payload)}
+                                onError={(data: any) => console.log('onError', data)}
+                            />
+                        </Modal>
+                        }
                         <div>
                             <div style={{ height: '15vh', display: 'flex', alignItems: 'end', fontSize: '50px', fontWeight: 'bold' }}>Account</div>
                         </div>
@@ -412,31 +479,46 @@ export default function AccountPage() {
                             {chainId != constants.MUMBAI_ID ? (
                                 <div className="text-red-500">Wrong network or not connect wallet</div>
                             ) : (
+                                // old logic
+                                // <div>
+                                //     {userUIDBalance != 0 ? (
+                                //         <div id="uid-and-wallet" className="text-lime-500">You already own UID token</div>
+                                //     ) :
+                                //         userUIDBalance != 0 ? (
+                                //             <div id="uid-and-wallet">
+                                //                 Successfully minted your UID token
+                                //                 {/* <div>
+                                //                 <a href={`https://sepolia.etherscan.io/tx/${data?.hash}`}>Etherscan</a>
+                                //             </div> */}
+                                //             </div>
+                                //         ) : (
+                                //             kycStatus ? (
+                                //                 kycVerifiedStatus ?
+                                //                     (<div id='uid-and-wallet'>
+                                //                         <div className="btn-sm bg-sky-400" style={{ cursor: 'pointer' }} onClick={handleMintUIDToken}>Mint UID token</div>
+                                //                     </div>) : (
+                                //                         <div id="uid-and-wallet" className="text-lime-500">
+                                //                             Wait to be validated KYC info by admin
+                                //                         </div>
+                                //                     )
+                                //             ) : (
+                                //                 <Button className="btn-sm bg-white rounded-lg hover:bg-amber-200 border-2 border-black" style={{ cursor: 'pointer' }} onClick={handleSetUpUID}>Begin UID setup</Button>
+                                //             )
+                                //         )
+                                //     }
+                                // </div>
+
+                                // new logic
                                 <div>
                                     {userUIDBalance != 0 ? (
                                         <div id="uid-and-wallet" className="text-lime-500">You already own UID token</div>
-                                    ) :
-                                        userUIDBalance != 0 ? (
-                                            <div id="uid-and-wallet">
-                                                Successfully minted your UID token
-                                                {/* <div>
-                                                <a href={`https://sepolia.etherscan.io/tx/${data?.hash}`}>Etherscan</a>
-                                            </div> */}
-                                            </div>
-                                        ) : (
-                                            kycStatus ? (
-                                                kycVerifiedStatus ?
-                                                    (<div id='uid-and-wallet'>
-                                                        <div className="btn-sm bg-sky-400" style={{ cursor: 'pointer' }} onClick={handleMintUIDToken}>Mint UID token</div>
-                                                    </div>) : (
-                                                        <div id="uid-and-wallet" className="text-lime-500">
-                                                            Wait to be validated KYC info by admin
-                                                        </div>
-                                                    )
-                                            ) : (
-                                                <Button className="btn-sm bg-white rounded-lg hover:bg-amber-200 border-2 border-black" style={{ cursor: 'pointer' }} onClick={handleSetUpUID}>Begin UID setup</Button>
-                                            )
-                                        )
+                                    ) : (kycStatus == KycStatus.INIT ? (
+                                        <div>
+                                            <Button className="btn-sm bg-white rounded-lg hover:bg-amber-200 border-2 border-black" style={{ cursor: 'pointer' }} onClick={handleSetUpUID}>Begin UID setup</Button>
+                                        </div>
+                                    ) : (
+                                        <div>Processing</div>
+                                    ))
                                     }
                                 </div>
                             )}

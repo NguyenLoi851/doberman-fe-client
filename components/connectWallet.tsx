@@ -92,7 +92,6 @@ export default function ConnectWallet() {
   }, [chain, address])
 
   const handleConnectWallet = (connector: any) => {
-    console.log("eh");
     try {
       if (connector.ready == true) {
         connectCore({ connector })

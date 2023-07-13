@@ -47,7 +47,9 @@ export default function Header() {
   ];
 
   return (
-    <div style={{ padding: '10px' }} className="bg-amber-100">
+    <div style={{ padding: '10px' }}
+    //  className="bg-amber-100"
+    >
       <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', margin: '10px' }}>
         <div className="shrink-0 mr-4">
           <div style={{ display: 'flex', flexDirection: 'row' }} className="flex grow justify-end flex-wrap items-center">

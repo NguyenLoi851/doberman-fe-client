@@ -33,6 +33,7 @@
     "wagmi": "^1.0.5"
   },
   "devDependencies": {
+    "@sumsub/websdk-react": "^2.0.1",
     "autoprefixer": "^10.4.14",
     "postcss": "^8.4.24",
     "tailwindcss": "^3.3.2"
