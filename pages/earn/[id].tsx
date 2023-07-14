@@ -343,7 +343,7 @@ export default function LoanDetailPage() {
 
     useEffect(() => {
         getLoanDetailInfo()
-        setChainId(chain?.id || 80001)
+        setChainId(chain?.id || constants.MUMBAI_ID)
         if (address != undefined && address != null && address != '0x0000000000000000000000000000000000000000') {
             getUIDBalanace()
         }

@@ -45,7 +45,7 @@ export default function ApplyNewLoan() {
     const [files, setFiles] = useState([])
 
     useEffect(() => {
-        setChainId(chain?.id || 0)
+        setChainId(chain?.id || constants.MUMBAI_ID)
     }, [chain])
 
     const [loanInfo, setLoanInfo] = useState({

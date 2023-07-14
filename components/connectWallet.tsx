@@ -76,19 +76,20 @@ export default function ConnectWallet() {
 
   useEffect(() => {
     try {
-      setChainId(chain?.id || 0)
+      setChainId(chain?.id || constants.MUMBAI_ID)
       if (chain?.id != constants.MUMBAI_ID && connector && isConnected) {
         handleSwitchNetworkCore()
-      }
-      if (!connector) {
-        return;
-      }
-      if (address) {
-        getBalances();
       }
       if (connectors) {
         setConnectorsClient(connectors)
       }
+      // if (!connector) {
+      //   return;
+      // }
+      if (address) {
+        getBalances();
+      }
+
     } catch (error) {
       console.log(error)
     }
@@ -147,19 +148,19 @@ export default function ConnectWallet() {
           </Tooltip>
         ) : (
           <div>
-            <Button onClick={() => switchNetwork?.(constants.MUMBAI_ID)}>Wrong network</Button>
+            <button onClick={() => switchNetwork?.(constants.MUMBAI_ID)}>Wrong network</button>
           </div>
         )
       ) : (
         <div>
           {connectorsClient.length && connectorsClient.map((connector: any) => (
-            <Button
+            <button
               key={connector.id}
               // onClick={() => connect({ connector })}
               onClick={() => handleConnectWallet(connector)}
             >
               Connect Metamask Wallet
-            </Button>
+            </button>
           ))}
         </div>
       )}

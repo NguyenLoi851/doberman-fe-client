@@ -10,6 +10,7 @@ import { encodePacked, keccak256, hexToBytes } from "viem";
 import { contractAddr } from "@/commons/contractAddress";
 import { toast } from "react-toastify";
 import { useRouter } from "next/router";
+import { shortenAddress } from "@/components/shortenAddress";
 
 interface Props {
     children: ReactNode;
@@ -73,7 +74,7 @@ export default function AdminUserRegisterPage() {
         if (address == null) {
             router.push('/admin')
         }
-        setChainId(chain?.id || 80001)
+        setChainId(chain?.id || constants.MUMBAI_ID)
         getRegisterUsers()
     }, [chain])
 
@@ -139,11 +140,17 @@ export default function AdminUserRegisterPage() {
                 renderItem={(item, index) => (
                     <List.Item
                         style={{ cursor: 'pointer', margin: '30px' }}
-                        actions={[<Button style={{ fontSize: '18px' }} onClick={() => handleSignForMintUIDToken(item)}>Accept</Button>]}
+                        actions={[
+                            <div style={{ display: 'flex', flexDirection: 'row' }}>
+                                <Button style={{ fontSize: '18px', margin: '10px' }} ><a href={`https://cockpit.sumsub.com/checkus#/applicant/${(item as any).kycId}/basicInfo?clientId=${process.env.NEXT_PUBLIC_S3_CLIENT_ID}`} target='_blank'>Check KYC info</a></Button>,
+                                <Button style={{ fontSize: '18px', margin: '10px' }} onClick={() => handleSignForMintUIDToken(item)}>Accept</Button>,
+                            </div>
+                        ]}
                     >
                         <List.Item.Meta
+                            style={{ fontSize: '24px' }}
                             avatar={index + 1 + '.'}
-                            title={(item as any).address}
+                            title=<div style={{ fontSize: '24px' }}>{shortenAddress((item as any).address)}</div>
                         // description={(item as any).address}
                         />
                     </List.Item>

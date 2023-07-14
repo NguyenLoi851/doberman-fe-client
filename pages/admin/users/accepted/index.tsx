@@ -71,7 +71,7 @@ export default function AdminUserAcceptedPage() {
         if (address == null) {
             router.push('/admin')
         }
-        setChainId(chain?.id || 80001)
+        setChainId(chain?.id || constants.MUMBAI_ID)
         getAcceptedUsers()
     }, [chain])
 

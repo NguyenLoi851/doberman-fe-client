@@ -13,7 +13,7 @@ import { toast } from "react-toastify";
 import PageLayout from "@/components/layouts/PageLayout";
 import { readContract, signMessage, writeContract, waitForTransaction } from '@wagmi/core'
 import jwtDecode from "jwt-decode";
-import { Anchor, Button, Card, Col, List, Modal, Row, Table } from "antd";
+import { Anchor, Button, Card, Col, Empty, List, Modal, Row, Steps, Table } from "antd";
 import { ApolloClient, gql, InMemoryCache } from "@apollo/client";
 import BigNumber from "bignumber.js";
 import dayjs from "dayjs";
@@ -41,6 +41,7 @@ export default function AccountPage() {
     const [historyTx, setHistoryTx] = useState([])
     const [kycAccessToken, setKycAccessToken] = useState('')
     const [showKycModal, setShowKycModal] = useState(false)
+    const [currAction, setCurrAction] = useState(0)
 
     const handleOk = async () => {
         setShowKycModal(false);
@@ -229,6 +230,14 @@ export default function AccountPage() {
             await getKYCInfo()
         } catch (error) {
             console.log(error)
+            try {
+                if (JSON.parse(JSON.stringify(error)).cause.details.includes('insufficient funds')) {
+                    toast.error("You do not have enough MATIC token")
+                }
+            } catch (error2) {
+                console.log(error2)
+            }
+
         }
     }
 
@@ -241,13 +250,16 @@ export default function AccountPage() {
                 args: [address, constants.UID_ID]
             })
             setUserUIDBalance(data2)
+            if (data2 == 1) {
+                setCurrAction(2)
+            }
         } catch (error) {
             console.log(error)
         }
 
     }
 
-    const handleSetUpUID = async () => {
+    const handleVerifyKycInformation = async () => {
         let token = localStorage.getItem(constants.ACCESS_TOKEN);
         try {
             let exp;
@@ -309,8 +321,52 @@ export default function AccountPage() {
 
     }
 
+    // const handleRequestMintUID = async () => {
+    //     let token = localStorage.getItem(constants.ACCESS_TOKEN);
+    //     try {
+    //         let exp;
+    //         let jwtAddress;
+    //         if (token) {
+    //             const decode = jwtDecode(token as any) as any
+    //             exp = decode.exp
+    //             jwtAddress = decode.address
+    //         }
+    //         if (!token || exp < Date.now() / 1000 || (address as any).toLowerCase() != jwtAddress.toLowerCase()) {
+    //             // sign again
+    //             const timestamp = Math.round(Date.now() / 1000)
+    //             const signature = await signMessage({
+    //                 message: process.env.NEXT_PUBLIC_APP_ID + '#' + timestamp + '#' + chainId,
+    //             })
+    //             console.log('signature', signature);
+
+    //             const res = await axios.post(process.env.NEXT_PUBLIC_API_BASE_URL + '/auth/signin', {
+    //                 address: (address as string).toLowerCase(),
+    //                 sign: signature,
+    //                 timestamp,
+    //                 chainId: chainId
+    //             })
+
+    //             localStorage.setItem(constants.ACCESS_TOKEN, res.data.accessToken)
+    //             // dispatch(setAccessTokenState(res.data.accessToken))
+    //             token = localStorage.getItem(constants.ACCESS_TOKEN);
+    //         }
+    //     } catch (error) {
+    //         console.log(error)
+    //         return;
+    //     }
+
+    //     try {
+    //         await axios.post(process.env.NEXT_PUBLIC_API_BASE_URL + '/kyc/requestMintUIDSignature', {
+    //             userAddr: (address as string).toLowerCase()
+    //         }, {
+    //             headers: { Authorization: `Bearer ${token}` }
+    //         })
+    //     } catch (error) {
+    //         console.log(error)
+    //     }
+    // }
+
     const getKYCInfo = async () => {
-        console.log("getKYCInfo")
         let token = localStorage.getItem(constants.ACCESS_TOKEN);
         try {
             let exp;
@@ -348,9 +404,17 @@ export default function AccountPage() {
                 headers: { Authorization: `Bearer ${token}` }
             })
             console.log("349", res)
-            if (res.data == '') {
+            if (!res.data || res.data == '') {
                 setKycStatus(KycStatus.INIT)
-            } else { }
+                setCurrAction(currAction == 2 ? 2 : 0)
+            } else if (res.data.kycStatus == "completed") {
+                setKycStatus(KycStatus.SUCCESS)
+                setCurrAction(currAction == 2 ? 2 : 1)
+                if (res.data.mintSignature != '' && res.data.mintSignature != null) {
+                    setMintSignature(res.data.mintSignature)
+                    setCurrAction(currAction == 2 ? 2 : 1)
+                }
+            }
             // if (res.data.id != '' && res.data.id != null) {
             // }
             // if (res.data.mintSignature != '' && res.data.mintSignature != null) {
@@ -372,15 +436,16 @@ export default function AccountPage() {
     }
 
     useEffect(() => {
-        setChainId(chain?.id || 80001)
+        setChainId(chain?.id || constants.MUMBAI_ID)
         if (address) {
-            getUserUIDBalance()
             getAccountInvestmentInfo()
+            getKYCInfo()
+            getUserUIDBalance()
         }
         // if (isSuccess == true) {
         //     router.reload()
         // }
-        getKYCInfo()
+
     }, [chain, address])
 
     const requestKycSumSubAccessToken = async () => {
@@ -420,6 +485,7 @@ export default function AccountPage() {
             const res = await axios.get(process.env.NEXT_PUBLIC_API_BASE_URL + '/kyc/requestKyc', {
                 headers: { Authorization: `Bearer ${token}` }
             })
+            console.log("422 res", res)
             setKycAccessToken(res.data.token)
         } catch (error) {
             console.log(error)
@@ -476,7 +542,7 @@ export default function AccountPage() {
                             <div className='font-bold' style={{ fontSize: '20px', marginBottom: '50px', marginTop: '30px' }}>
                                 UID and Wallet
                             </div>
-                            {chainId != constants.MUMBAI_ID ? (
+                            {chainId != constants.MUMBAI_ID || !address ? (
                                 <div className="text-red-500">Wrong network or not connect wallet</div>
                             ) : (
                                 // old logic
@@ -509,17 +575,38 @@ export default function AccountPage() {
                                 // </div>
 
                                 // new logic
+                                // <div>
+                                //     {userUIDBalance != 0 ? (
+                                //         <div id="uid-and-wallet" className="text-lime-500">You already own UID token</div>
+                                //     ) : (kycStatus == KycStatus.INIT ? (
+                                //         <div>
+                                //             <Button className="btn-sm bg-white rounded-lg hover:bg-amber-200 border-2 border-black" style={{ cursor: 'pointer' }} onClick={handleSetUpUID}>Begin UID setup</Button>
+                                //         </div>
+                                //     ) : (
+                                //         <div>Processing</div>
+                                //     ))
+                                //     }
+                                // </div>
+
                                 <div>
-                                    {userUIDBalance != 0 ? (
-                                        <div id="uid-and-wallet" className="text-lime-500">You already own UID token</div>
-                                    ) : (kycStatus == KycStatus.INIT ? (
-                                        <div>
-                                            <Button className="btn-sm bg-white rounded-lg hover:bg-amber-200 border-2 border-black" style={{ cursor: 'pointer' }} onClick={handleSetUpUID}>Begin UID setup</Button>
-                                        </div>
-                                    ) : (
-                                        <div>Processing</div>
-                                    ))
-                                    }
+                                    <Steps
+                                        direction="vertical"
+                                        current={userUIDBalance == 1 ? 2 : currAction}
+                                        items={[
+                                            {
+                                                title: <div>Verify KYC information</div>,
+                                                description: <Button disabled={currAction != 0} className="btn-sm bg-white rounded-lg hover:bg-amber-200 border-2 border-black" onClick={handleVerifyKycInformation}>KYC off-chain information</Button>,
+                                            },
+                                            // {
+                                            //     title: <div>Request Mint Unique Identity token</div>,
+                                            //     description: <Button disabled={currAction != 1} className="btn-sm bg-white rounded-lg hover:bg-amber-200 border-2 border-black" onClick={handleRequestMintUID}>Request Mint NFT</Button>,
+                                            // },
+                                            {
+                                                title: <div>Mint Unique Identity token</div>,
+                                                description: <Button disabled={userUIDBalance == 1 || currAction != 1 || mintSignature == '0x'} className="btn-sm bg-white rounded-lg hover:bg-amber-200 border-2 border-black" onClick={handleMintUIDToken}>Mint NFT</Button>,
+                                            },
+                                        ]}
+                                    />
                                 </div>
                             )}
                         </div>
@@ -590,13 +677,15 @@ export default function AccountPage() {
                         <div id="my-activities" className='font-bold' style={{ fontSize: '20px', marginBottom: '50px', marginTop: '30px' }}>
                             My invested pool tokens
                         </div>
-                        <Table
+                        {historyTx.length > 0 ? <Table
                             columns={columns}
                             dataSource={historyTx}
                             pagination={{ pageSize: 10 }}
                             scroll={{ y: 500 }}
                         // showHeader={false}
-                        />
+                        /> :
+                            <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
+                        }
 
 
                     </Col>

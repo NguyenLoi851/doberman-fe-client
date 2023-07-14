@@ -310,7 +310,7 @@ export default function SeniorLoanDetailPage() {
 
     useEffect(() => {
         getSeniorLoanDetailInfo()
-        setChainId(chain?.id || 80001)
+        setChainId(chain?.id || constants.MUMBAI_ID)
         getUserShares()
         getSeniorBalance()
         getSharePrice()

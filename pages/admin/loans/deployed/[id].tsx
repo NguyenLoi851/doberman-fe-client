@@ -67,7 +67,7 @@ export default function DeployedLoanDetailPage() {
             router.push('/admin')
         }
         getBorrowerProxy()
-        setChainId(chain?.id || 80001)
+        setChainId(chain?.id || constants.MUMBAI_ID)
         if (props.fileKeys != '' && props.fileKeys != null && props.fileKeys != undefined) {
             const fileKeysParse = JSON.parse(props.fileKeys as any)
             const fileURLs = fileKeysParse.map((item: any) => {

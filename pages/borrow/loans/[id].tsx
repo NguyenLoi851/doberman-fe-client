@@ -218,7 +218,7 @@ export default function LoanDetailPage() {
         } catch (error) {
             console.log(error)
         }
-        setChainId(chain?.id || 80001)
+        setChainId(chain?.id || constants.MUMBAI_ID)
         setDisableEdit(props.deployed == "false" ? false : true)
         form.setFieldsValue({
             companyName: props.companyName,

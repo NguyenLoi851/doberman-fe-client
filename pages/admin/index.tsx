@@ -28,7 +28,7 @@ export default function AdminSignInPage() {
         connectors.map((connector) => {
             connect({ connector })
         })
-        setChainId(chain?.id || 0)
+        setChainId(chain?.id || constants.MUMBAI_ID)
 
         if (chainId != constants.MUMBAI_ID) {
             switchNetwork?.(constants.MUMBAI_ID)
