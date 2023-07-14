@@ -30,6 +30,7 @@ export default function ConnectWallet() {
   const [usdcBalance, setUsdcBalance] = useState(0)
   const [fiduBalance, setFiduBalance] = useState(0)
   const [showInstallMetamaskModal, setShowInstallMetamaskModal] = useState(false)
+  const [connectorsClient, setConnectorsClient] = useState<any>([])
 
   const handleOk = async () => {
     setShowInstallMetamaskModal(false);
@@ -85,11 +86,14 @@ export default function ConnectWallet() {
       if (address) {
         getBalances();
       }
+      if (connectors) {
+        setConnectorsClient(connectors)
+      }
     } catch (error) {
       console.log(error)
     }
 
-  }, [chain, address])
+  }, [chain, address, connectors])
 
   const handleConnectWallet = (connector: any) => {
     try {
@@ -143,19 +147,21 @@ export default function ConnectWallet() {
           </Tooltip>
         ) : (
           <div>
-            <button onClick={() => switchNetwork?.(constants.MUMBAI_ID)}>Wrong network</button>
+            <Button onClick={() => switchNetwork?.(constants.MUMBAI_ID)}>Wrong network</Button>
           </div>
         )
       ) : (
-        connectors.map((connector) => (
-          <button
-            key={connector.id}
-            // onClick={() => connect({ connector })}
-            onClick={() => handleConnectWallet(connector)}
-          >
-            Connect Metamask Wallet
-          </button>
-        ))
+        <div>
+          {connectorsClient.length && connectorsClient.map((connector: any) => (
+            <Button
+              key={connector.id}
+              // onClick={() => connect({ connector })}
+              onClick={() => handleConnectWallet(connector)}
+            >
+              Connect Metamask Wallet
+            </Button>
+          ))}
+        </div>
       )}
 
       {error && <div>{error.message}</div>}

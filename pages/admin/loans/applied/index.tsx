@@ -33,8 +33,10 @@ export default function AdminLoansAppliedPage() {
     useEffect(() => {
         if (address == null) {
             router.push('/admin')
+            return;
+        } else {
+            getAppliedLoans()
         }
-        getAppliedLoans()
 
     }, [address])
 
