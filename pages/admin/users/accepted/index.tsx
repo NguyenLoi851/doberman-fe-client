@@ -17,7 +17,7 @@ interface Props {
 
 export default function AdminUserAcceptedPage() {
     const { chain } = useNetwork()
-    const [chainId, setChainId] = useState(0);
+    const [chainId, setChainId] = useState(constants.MUMBAI_ID);
     const { address } = useAccount()
     const [registerUsers, setRegisterUsers] = useState([])
     const router = useRouter()

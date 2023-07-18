@@ -27,7 +27,7 @@ export default function AppliedLoanDetailPage() {
     const [borrowerProxy, setBorrowerProxy] = useState(zeroAddress)
     const { address } = useAccount()
     const { chain } = useNetwork()
-    const [chainId, setChainId] = useState(0);
+    const [chainId, setChainId] = useState(constants.MUMBAI_ID);
     const dateFormat = "DD/MM/YYYY HH:mm:ss";
     const [deployLoading, setDeployLoading] = useState(false)
     const [links, setLinks] = useState('')

@@ -36,7 +36,7 @@ const { TextArea } = Input
 export default function ApplyNewLoan() {
     const dateFormat = "DD/MM/YYYY HH:mm:ss";
     const { Title } = Typography;
-    const [chainId, setChainId] = useState(0)
+    const [chainId, setChainId] = useState(constants.MUMBAI_ID)
     const { chain } = useNetwork()
     const { address } = useAccount()
     const dispatch = useDispatch();

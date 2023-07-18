@@ -1,11 +1,12 @@
+import { constants } from "@/commons/constants"
 import { useNetwork, useSignMessage } from "wagmi"
 
 export const SignMessage = () => {
-    const {chain} = useNetwork()
+    const { chain } = useNetwork()
     const { data, isError, isLoading, isSuccess, signMessage } = useSignMessage({
-        message: process.env.NEXT_PUBLIC_APP_ID+'#'+Math.round(Date.now()/1000)+'#'+chain?.id,
+        message: process.env.NEXT_PUBLIC_APP_ID + '#' + Math.round(Date.now() / 1000) + '#' + (chain?.id || constants.MUMBAI_ID),
     })
-    
+
     return (
         <div>
             <button disabled={isLoading} onClick={() => signMessage()}>

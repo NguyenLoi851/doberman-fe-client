@@ -18,7 +18,7 @@ interface Props {
 export default function AdminSignInPage() {
     const { connector, address } = useAccount();
     const { connectors, connect } = useConnect();
-    const [chainId, setChainId] = useState(0);
+    const [chainId, setChainId] = useState(constants.MUMBAI_ID);
     const { chain } = useNetwork();
     const { switchNetwork } = useSwitchNetwork()
     const router = useRouter()

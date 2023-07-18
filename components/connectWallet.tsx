@@ -26,11 +26,12 @@ export default function ConnectWallet() {
     useConnect()
   const { chain } = useNetwork()
   const { switchNetwork } = useSwitchNetwork()
-  const [chainId, setChainId] = useState(0)
+  const [chainId, setChainId] = useState(constants.MUMBAI_ID)
   const [usdcBalance, setUsdcBalance] = useState(0)
   const [fiduBalance, setFiduBalance] = useState(0)
   const [showInstallMetamaskModal, setShowInstallMetamaskModal] = useState(false)
   const [connectorsClient, setConnectorsClient] = useState<any>([])
+  const [addressClient, setAddressClient] = useState('0x')
 
   const handleOk = async () => {
     setShowInstallMetamaskModal(false);
@@ -88,6 +89,7 @@ export default function ConnectWallet() {
       // }
       if (address) {
         getBalances();
+        setAddressClient(address)
       }
 
     } catch (error) {
@@ -143,7 +145,7 @@ export default function ConnectWallet() {
             </div>
           >
             <div>
-              {shortenAddress(address as any)}
+              {shortenAddress(addressClient as any)}
             </div>
           </Tooltip>
         ) : (

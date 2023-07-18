@@ -37,7 +37,7 @@ export default function LoanDetailPage() {
     const loanAddr = router.asPath.split('/earn/')[1]
     const { address } = useAccount()
     const { chain } = useNetwork()
-    const [chainId, setChainId] = useState(0);
+    const [chainId, setChainId] = useState(constants.MUMBAI_ID);
     const [loanDetailInfo, setLoanDetailInfo] = useState({
         creditLine: {
             balance: 0,

@@ -35,13 +35,14 @@ export default function AccountPage() {
     // const timestamp = Math.round(Date.now() / 1000)
     const [kycStatus, setKycStatus] = useState(KycStatus.INIT)
     const [mintSignature, setMintSignature] = useState('0x')
-    const [chainId, setChainId] = useState(0)
+    const [chainId, setChainId] = useState(constants.MUMBAI_ID)
     const [userUIDBalance, setUserUIDBalance] = useState(0)
     const [accountInvestments, setAccountInvestments] = useState([])
     const [historyTx, setHistoryTx] = useState([])
     const [kycAccessToken, setKycAccessToken] = useState('')
     const [showKycModal, setShowKycModal] = useState(false)
     const [currAction, setCurrAction] = useState(0)
+    const [addressClient, setAddressClient] = useState('0x')
 
     const handleOk = async () => {
         setShowKycModal(false);
@@ -441,6 +442,7 @@ export default function AccountPage() {
             getAccountInvestmentInfo()
             getKYCInfo()
             getUserUIDBalance()
+            setAddressClient(address)
         }
         // if (isSuccess == true) {
         //     router.reload()
@@ -542,7 +544,7 @@ export default function AccountPage() {
                             <div className='font-bold' style={{ fontSize: '20px', marginBottom: '50px', marginTop: '30px' }}>
                                 UID and Wallet
                             </div>
-                            {chainId != constants.MUMBAI_ID || !address ? (
+                            {chainId != constants.MUMBAI_ID || addressClient == '0x' ? (
                                 <div className="text-red-500">Wrong network or not connect wallet</div>
                             ) : (
                                 // old logic

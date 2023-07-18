@@ -34,7 +34,7 @@ export default function LoanDetailPage() {
     const router = useRouter()
     const props = router.query;
     const [borrowerProxy, setBorrowerProxy] = useState(zeroAddress)
-    const [chainId, setChainId] = useState(0);
+    const [chainId, setChainId] = useState(constants.MUMBAI_ID);
     const { chain } = useNetwork()
     const { Title } = Typography;
     const dateFormat = "DD/MM/YYYY HH:mm:ss";

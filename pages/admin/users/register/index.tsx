@@ -11,6 +11,7 @@ import { contractAddr } from "@/commons/contractAddress";
 import { toast } from "react-toastify";
 import { useRouter } from "next/router";
 import { shortenAddress } from "@/components/shortenAddress";
+import { buildMintUIDAllowanceSignature, Domain } from "@/commons/functions";
 
 interface Props {
     children: ReactNode;
@@ -18,7 +19,7 @@ interface Props {
 
 export default function AdminUserRegisterPage() {
     const { chain } = useNetwork()
-    const [chainId, setChainId] = useState(0);
+    const [chainId, setChainId] = useState(constants.MUMBAI_ID);
     const { address } = useAccount()
     const [registerUsers, setRegisterUsers] = useState([])
     const router = useRouter()
@@ -78,14 +79,23 @@ export default function AdminUserRegisterPage() {
         getRegisterUsers()
     }, [chain])
 
+    const domain: Domain = {
+        version: '1',
+        name: "Unique Identity",
+        chainId: chainId,
+        verifyingContract: contractAddr.mumbai.uniqueIdentity as any
+    }
+
     const handleSignForMintUIDToken = async (item: any) => {
         try {
-            const msgHash = keccak256(encodePacked(
-                ['address', 'uint256', 'uint256', 'address', 'uint256', 'uint256'],
-                [item.address, BigInt(constants.UID_ID), BigInt(constants.EXPIRES_AT), contractAddr.mumbai.uniqueIdentity as any, BigInt(0), BigInt(chainId)]
-            ))
+            // const msgHash = keccak256(encodePacked(
+            //     ['address', 'uint256', 'uint256', 'address', 'uint256', 'uint256'],
+            //     [item.address, BigInt(constants.UID_ID), BigInt(constants.EXPIRES_AT), contractAddr.mumbai.uniqueIdentity as any, BigInt(0), BigInt(chainId)]
+            // ))
 
-            const mintSignature = await signMessage({ message: hexToBytes(msgHash) as any });
+            // const mintSignature = await signMessage({ message: hexToBytes(msgHash) as any });
+
+            const mintSignature = await buildMintUIDAllowanceSignature({ ...domain }, item.address, BigInt(constants.UID_ID), BigInt(constants.EXPIRES_AT), BigInt(0))
 
             let token = localStorage.getItem(constants.ACCESS_TOKEN_ADMIN);
             const { exp, address: jwtAddress } = jwtDecode(token as any) as any

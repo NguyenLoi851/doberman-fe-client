@@ -83,3 +83,36 @@ export const buildPermitSignatureV2 = async (
         ...ethers.utils.splitSignature(signature),
     };
 }
+
+export const buildMintUIDAllowanceSignature = async (
+    domain: Domain,
+    account: string,
+    id: BigInt,
+    expiresAt: BigInt,
+    nonces: BigInt
+) => {
+    const types = {
+        MintAllowance: [
+            { name: 'account', type: 'address' },
+            { name: 'id', type: 'uint256' },
+            { name: 'expiresAt', type: 'uint256' },
+            { name: 'nonces', type: 'uint256' },
+        ],
+    }
+
+    const message = {
+        account: account,
+        id: id as any,
+        expiresAt: expiresAt as any,
+        nonces: nonces as any,
+    }
+
+    const signature = await signTypedData({
+        domain,
+        message,
+        primaryType: 'MintAllowance',
+        types,
+    })
+
+    return signature;
+}

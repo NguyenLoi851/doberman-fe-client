@@ -28,7 +28,7 @@ export default function SeniorLoanDetailPage() {
     const router = useRouter()
     const { address } = useAccount()
     const { chain } = useNetwork()
-    const [chainId, setChainId] = useState(0);
+    const [chainId, setChainId] = useState(constants.MUMBAI_ID);
     const [seniorLoanDetailInfo, setSeniorLoanDetailInfo] = useState({})
     const [wantInvestAmount, setWantInvestAmount] = useState(0)
     const [assets, setAssets] = useState(0)
