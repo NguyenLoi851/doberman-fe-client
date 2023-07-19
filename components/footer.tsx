@@ -10,9 +10,9 @@ export default function Footer() {
     return (
         <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', padding: '10px', marginLeft: '280px', marginRight: '280px' }} className="">
             <div style={{ display: 'flex', flexDirection: 'row', marginRight: '50px' }}>
-                <button className="font-medium text-purple-600 hover:text-gray-200 px-4 py-3 flex items-center transition duration-150 ease-in-out">About</button>
-                <button className="font-medium text-purple-600 hover:text-gray-200 px-4 py-3 flex items-center transition duration-150 ease-in-out">Terms</button>
-                <button className="font-medium text-purple-600 hover:text-gray-200 px-4 py-3 flex items-center transition duration-150 ease-in-out">Privacy</button>
+                <button className="text-purple-600 px-4 py-3 flex font-mono items-center border-0" style={{ fontWeight: 'bold', fontSize: '18px', cursor: 'pointer' }} >About</button>
+                <button className="text-purple-600 px-4 py-3 flex font-mono items-center border-0" style={{ fontWeight: 'bold', fontSize: '18px', cursor: 'pointer' }} >Terms</button>
+                <button className="text-purple-600 px-4 py-3 flex font-mono items-center border-0" style={{ fontWeight: 'bold', fontSize: '18px', cursor: 'pointer' }} >Privacy</button>
             </div>
             <div style={{ display: 'flex', flexDirection: 'row' }}>
                 <Link href='https://discord.gg/7FHgxdyW' target='_blank'>

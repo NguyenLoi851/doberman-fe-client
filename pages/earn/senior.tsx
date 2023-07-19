@@ -457,7 +457,7 @@ export default function SeniorLoanDetailPage() {
         <Row>
             <Col span={1}>
             </Col>
-            <Col span={5}>
+            <Col span={4}>
                 <Anchor
                     bounds={100}
                     items={[
@@ -491,7 +491,7 @@ export default function SeniorLoanDetailPage() {
                         <a style={{ margin: '10px' }} href={`https://mumbai.polygonscan.com/address/${contractAddr.mumbai.seniorPool}#code`} target="_blank" className="text-sky-200 hover:underline hover:underline-offset-2 "><MonitorOutlined style={{ marginRight: '5px', fontSize: '20px' }} />MumbaiScan </a>
                     </div>
                     <div style={{ paddingLeft: '10px', paddingRight: '10px' }}>
-                        <div style={{ margin: '10px', fontWeight: 'bold' }}>Doberman Senior Pool</div>
+                        <div style={{ margin: '10px', marginBottom: '20px', fontWeight: 'bold' }}>Doberman Senior Pool</div>
                         <div style={{ margin: '10px', fontSize: '14px', textAlign: 'justify', lineHeight: 1.5 }}>The Senior Pool is a pool of capital that is diversified across all Borrower Pools on the Doberman protocol. Liquidity Providers (LPs) who provide capital into the Senior Pool are capital providers in search of passive, diversified exposure across all Borrower Pools. This capital is protected by junior (first-loss) capital in each Borrower Pool.</div>
                     </div>
                     <div className="flex justify-between " style={{ marginLeft: '90px', marginRight: '90px', fontSize: '16px', marginTop: '50px', marginBottom: '30px' }} >
@@ -663,7 +663,7 @@ export default function SeniorLoanDetailPage() {
                     />
                 </div>
             </Col>
-            <Col span={4}>
+            <Col span={5}>
             </Col>
         </Row>
     )

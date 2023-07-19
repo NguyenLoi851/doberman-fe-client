@@ -563,8 +563,15 @@ export default function LoanDetailPage() {
                 <Col span={14}>
                     <Title>Loan's information</Title>
                     <div style={{ display: "flex", flexDirection: 'row' }}>
-                        <div style={{ fontSize: '20px', margin: '5px', cursor: 'pointer', marginRight: '15px' }} className=" text-sky-700 hover:underline hover:underline-offset-4" onClick={() => handleSetPart(0)}>Metadata</div>
-                        {disableEdit && <div style={{ fontSize: '20px', margin: '5px', cursor: 'pointer', marginRight: '15px' }} className=" text-sky-700 hover:underline hover:underline-offset-4" onClick={() => handleSetPart(1)}>Action</div>}
+                        {part == 0 ?
+                            <div style={{ fontSize: '24px', fontWeight: 'bold', margin: '5px', cursor: 'pointer', marginRight: '15px' }} className="text-sky-700 underline underline-offset-4" onClick={() => handleSetPart(0)}>Metadata</div>
+                            : <div style={{ fontSize: '24px', fontWeight: 'bold', margin: '5px', cursor: 'pointer', marginRight: '15px' }} className="text-sky-700 hover:underline hover:underline-offset-4" onClick={() => handleSetPart(0)}>Metadata</div>
+                        }
+                        {disableEdit &&
+                            part == 1 ?
+                            <div style={{ fontSize: '24px', fontWeight: 'bold', margin: '5px', cursor: 'pointer', marginRight: '15px' }} className="text-sky-700 underline underline-offset-4" onClick={() => handleSetPart(1)}>Action</div>
+                            : <div style={{ fontSize: '24px', fontWeight: 'bold', margin: '5px', cursor: 'pointer', marginRight: '15px' }} className="text-sky-700 hover:underline hover:underline-offset-4" onClick={() => handleSetPart(1)}>Action</div>
+                        }
                     </div>
                     <hr />
                     <hr />
@@ -699,141 +706,151 @@ export default function LoanDetailPage() {
                                     ></TextArea>
                                 </Form.Item>
 
-                                <Form.Item
-                                    label="Junior Fee Percent"
-                                    name="juniorFeePercent"
-                                    rules={[
-                                        {
-                                            required: true,
-                                            message: "Please input junior fee percent"
-                                        }
-                                    ]}
-                                >
-                                    <InputNumber
-                                        placeholder="Junior Fee Percent"
-                                        value={Number(props.juniorFeePercent)}
-                                        onChange={(e) => handleChange(e, "juniorFeePercent")}
-                                        addonAfter="%"
-                                        disabled={disableEdit}
-                                    ></InputNumber>
-                                </Form.Item>
-
-                                <Form.Item
-                                    label="Target Funding"
-                                    name="targetFunding"
-                                    rules={[
-                                        {
-                                            required: true,
-                                            message: "Please input target funding"
-                                        }
-                                    ]}
-                                >
-                                    <InputNumber
-                                        placeholder="Target Funding"
-                                        value={Number(props.targetFunding)}
-                                        onChange={(e) => handleChange(e, "targetFunding")}
-                                        addonAfter="$"
-                                        disabled={disableEdit}
-                                    ></InputNumber>
-                                </Form.Item>
-
-                                <Form.Item
-                                    label="Interest Rate"
-                                    name="interestRate"
-                                    rules={[
-                                        {
-                                            required: true,
-                                            message: "Please input interest rate"
-                                        }
-                                    ]}
-                                >
-                                    <InputNumber
-                                        placeholder="Interest Rate"
-                                        value={Number(props.interestRate)}
-                                        onChange={(e) => handleChange(e, "interestRate")}
-                                        addonAfter="%"
-                                        disabled={disableEdit}
-                                    ></InputNumber>
-                                </Form.Item>
-
-                                <Form.Item
-                                    label="Interest Payment Frequency"
-                                    name="interestPaymentFrequency"
-                                    rules={[
-                                        {
-                                            required: true,
-                                            message: "Please input interest payment frequency"
-                                        }
-                                    ]}
-                                >
-                                    <Select
-                                        style={{ width: '250px' }}
-                                        disabled={disableEdit}
-                                        showSearch
-                                        placeholder="Interest Payment Frequency"
-                                        optionFilterProp="children"
-                                        onChange={(e) => handleChange(e, "interestPaymentFrequency")}
-                                        filterOption={(input, option) =>
-                                            (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
-                                        }
-                                        options={[
+                                <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
+                                    <Form.Item
+                                        label="Junior Fee Percent"
+                                        name="juniorFeePercent"
+                                        rules={[
                                             {
-                                                value: Frequency.MONTHLY,
-                                                label: 'MONTHLY (1 minutes)'
-                                            },
-                                            {
-                                                value: Frequency.QUARTERLY,
-                                                label: 'QUARTERLY (3 minutes)'
-                                            },
-                                            {
-                                                value: Frequency.SEMI_ANNUALY,
-                                                label: 'SEMI ANNUALY (6 minutes)'
-                                            },
-                                            {
-                                                value: Frequency.ANNUALY,
-                                                label: 'ANNUALY (12 minutes)'
-                                            },
+                                                required: true,
+                                                message: "Please input junior fee percent"
+                                            }
                                         ]}
-                                    />
-                                </Form.Item>
+                                    >
+                                        <InputNumber
+                                            placeholder="Junior Fee Percent"
+                                            value={Number(props.juniorFeePercent)}
+                                            onChange={(e) => handleChange(e, "juniorFeePercent")}
+                                            addonAfter="%"
+                                            disabled={disableEdit}
+                                            style={{ width: '16vw' }}
+                                        ></InputNumber>
+                                    </Form.Item>
 
-                                <Form.Item
-                                    label="Loan Term"
-                                    name="loanTerm"
-                                    rules={[
-                                        {
-                                            required: true,
-                                            message: "Please input loan term"
-                                        }
-                                    ]}
-                                >
-                                    <InputNumber
-                                        placeholder="Loan Term"
-                                        value={Number(props.loanTerm)}
-                                        onChange={(e) => handleChange(e, "loanTerm")}
-                                        addonAfter="months (minutes)"
-                                        disabled={disableEdit}
-                                    ></InputNumber>
-                                </Form.Item>
+                                    <Form.Item
+                                        label="Target Funding"
+                                        name="targetFunding"
+                                        rules={[
+                                            {
+                                                required: true,
+                                                message: "Please input target funding"
+                                            }
+                                        ]}
+                                    >
+                                        <InputNumber
+                                            placeholder="Target Funding"
+                                            value={Number(props.targetFunding)}
+                                            onChange={(e) => handleChange(e, "targetFunding")}
+                                            addonAfter="$"
+                                            disabled={disableEdit}
+                                            style={{ width: '16vw' }}
+                                        ></InputNumber>
+                                    </Form.Item>
 
-                                <Form.Item
-                                    label="Fundable At"
-                                    name="fundableAt"
-                                    rules={[
-                                        {
-                                            required: true,
-                                            message: "Please input fundable at"
-                                        }
-                                    ]}
-                                    initialValue={dayjs("01/06/2023 00:00:00", dateFormat)}
-                                >
-                                    <DatePicker
-                                        disabled={disableEdit}
-                                        format={dateFormat}
-                                        showTime={true}
-                                        onChange={(e) => handleChange(e?.unix(), "fundableAt")}
-                                    />
-                                </Form.Item>
+                                    <Form.Item
+                                        label="Interest Rate"
+                                        name="interestRate"
+                                        rules={[
+                                            {
+                                                required: true,
+                                                message: "Please input interest rate"
+                                            }
+                                        ]}
+                                    >
+                                        <InputNumber
+                                            placeholder="Interest Rate"
+                                            value={Number(props.interestRate)}
+                                            onChange={(e) => handleChange(e, "interestRate")}
+                                            addonAfter="%"
+                                            disabled={disableEdit}
+                                            style={{ width: '16vw' }}
+                                        ></InputNumber>
+                                    </Form.Item>
+                                </div>
+
+                                <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
+                                    <Form.Item
+                                        label="Interest Payment Frequency"
+                                        name="interestPaymentFrequency"
+                                        rules={[
+                                            {
+                                                required: true,
+                                                message: "Please input interest payment frequency"
+                                            }
+                                        ]}
+                                    >
+                                        <Select
+                                            style={{ width: '16vw' }}
+                                            disabled={disableEdit}
+                                            showSearch
+                                            placeholder="Interest Payment Frequency"
+                                            optionFilterProp="children"
+                                            onChange={(e) => handleChange(e, "interestPaymentFrequency")}
+                                            filterOption={(input, option) =>
+                                                (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                                            }
+                                            options={[
+                                                {
+                                                    value: Frequency.MONTHLY,
+                                                    label: 'MONTHLY (1 minutes)'
+                                                },
+                                                {
+                                                    value: Frequency.QUARTERLY,
+                                                    label: 'QUARTERLY (3 minutes)'
+                                                },
+                                                {
+                                                    value: Frequency.SEMI_ANNUALY,
+                                                    label: 'SEMI ANNUALY (6 minutes)'
+                                                },
+                                                {
+                                                    value: Frequency.ANNUALY,
+                                                    label: 'ANNUALY (12 minutes)'
+                                                },
+                                            ]}
+                                        />
+                                    </Form.Item>
+
+                                    <Form.Item
+                                        label="Loan Term"
+                                        name="loanTerm"
+                                        rules={[
+                                            {
+                                                required: true,
+                                                message: "Please input loan term"
+                                            }
+                                        ]}
+                                    >
+                                        <InputNumber
+                                            placeholder="Loan Term"
+                                            value={Number(props.loanTerm)}
+                                            onChange={(e) => handleChange(e, "loanTerm")}
+                                            addonAfter="months (minutes)"
+                                            disabled={disableEdit}
+                                            style={{ width: '16vw' }}
+                                        ></InputNumber>
+                                    </Form.Item>
+
+                                    <Form.Item
+                                        label="Fundable At"
+                                        name="fundableAt"
+                                        rules={[
+                                            {
+                                                required: true,
+                                                message: "Please input fundable at"
+                                            }
+                                        ]}
+                                        initialValue={dayjs("01/06/2023 00:00:00", dateFormat)}
+                                    >
+                                        <DatePicker
+                                            disabled={disableEdit}
+                                            format={dateFormat}
+                                            showTime={true}
+                                            onChange={(e) => handleChange(e?.unix(), "fundableAt")}
+                                            style={{ width: '16vw' }}
+                                        />
+                                    </Form.Item>
+                                </div>
+
                                 <Form.Item
                                     name="upload"
                                     // rules={[
@@ -869,8 +886,9 @@ export default function LoanDetailPage() {
                                                     showRemoveIcon: !disableEdit
                                                 }
                                             }
+                                            disabled={disableEdit}
                                         >
-                                            <Button disabled={disableEdit} icon={<UploadOutlined />}>Click to upload all files again</Button>
+                                            <Button disabled={disableEdit} icon={<UploadOutlined />}>Click to upload files</Button>
                                         </Upload>
                                     }
                                 </Form.Item>
@@ -879,6 +897,7 @@ export default function LoanDetailPage() {
                                         <Button loading={loadingSavesChanges} disabled={!isNeedChange} className="btn-sm bg-sky-400 flex justify-center rounded-lg" type="primary" htmlType="submit">Saves changes</Button>
                                     </Form.Item>
                                 )}
+                                <div style={{ marginBottom: '80px' }}></div>
                             </Form>
                         )
                         : (
@@ -912,6 +931,7 @@ export default function LoanDetailPage() {
                                 <div className="border-2 border-lime-400 rounded-lg" style={{ padding: '10px' }}>
                                     <div style={{ marginTop: '50px' }}>
                                         <Steps
+                                            style={{ marginLeft: '20vw' }}
                                             direction="vertical"
                                             current={currAction}
                                             items={[
@@ -959,6 +979,7 @@ export default function LoanDetailPage() {
                                                 <div style={{ fontSize: '18px' }}>
                                                     <div style={{ margin: '10px' }}>Interest owe: <span style={{ fontWeight: 'bold' }}>{interestOwe.toLocaleString()}</span> USDC</div>
                                                     <div style={{ margin: '10px' }}>Principal owe: <span style={{ fontWeight: 'bold' }}>{principleOwe.toLocaleString()}</span> USDC</div>
+                                                    <hr style={{ backgroundColor: 'black', height: '1px' }} />
                                                     <div style={{ margin: '10px' }}>Total owe: <span style={{ fontWeight: 'bold' }}>{(interestOwe + principleOwe).toLocaleString()}</span> USDC</div>
                                                 </div>
                                                 <div style={{ margin: '0px' }}>

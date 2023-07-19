@@ -25,7 +25,7 @@ export default function Header() {
       label: (
         // <a rel="noopener noreferrer" href="/borrow" >
         <div onClick={() => router.push('/borrow')}>
-          <div className="font-medium text-purple-600 hover:text-gray-200 px-4 py-3 flex items-center transition duration-150 ease-in-out">
+          <div className="text-purple-600 px-4 py-3 flex font-mono items-center border-0" style={{ fontWeight: 'bold', fontSize: '18px', cursor: 'pointer' }} >
             Borrow
           </div>
         </div>
@@ -37,7 +37,7 @@ export default function Header() {
       label: (
         // <a rel="noopener noreferrer" href="/account" >
         <div onClick={() => router.push('/account')}>
-          <div className="font-medium text-purple-600 hover:text-gray-200 px-4 py-3 flex items-center transition duration-150 ease-in-out">
+          <div className="text-purple-600 px-4 py-3 flex font-mono items-center border-0" style={{ fontWeight: 'bold', fontSize: '18px', cursor: 'pointer' }} >
             Dashboard
           </div>
         </div>
@@ -55,11 +55,11 @@ export default function Header() {
           <div style={{ display: 'flex', flexDirection: 'row' }} className="flex grow justify-end flex-wrap items-center">
             <Image src={Logo} alt="Logo" className='rounded-full w-8 h-8' onClick={() => router.push('/earn')} />
             <div>
-              <button className="font-medium text-purple-600 px-4 py-3 flex items-center transition duration-150 ease-in-out" onClick={() => router.push('/earn')}>Deals</button>
+              <div className="text-purple-600 px-4 py-3 flex items-center border-0 font-mono" style={{ fontWeight: 'bold', fontSize: '18px', cursor: 'pointer' }} onClick={() => router.push('/earn')}>Deals</div>
             </div>
             <Dropdown menu={{ items }}>
               <a onClick={(e) => e.preventDefault()}>
-                <Space className="font-medium text-purple-600 hover:text-gray-200 px-4 py-3 flex items-center transition duration-150 ease-in-out">
+                <Space className="text-purple-600 px-4 py-3 flex items-center border-0 hover:text-gray-400 font-mono" style={{ fontWeight: 'bold', fontSize: '18px', cursor: 'pointer' }} >
                   Manage
                   <DownOutlined />
                 </Space>
@@ -67,7 +67,7 @@ export default function Header() {
             </Dropdown>
           </div>
         </div>
-        <div style={{ float: 'right' }} className="btn-sm text-white bg-purple-600 hover:bg-purple-900 ml-3">
+        <div style={{ float: 'right' }} className="btn-sm text-white bg-purple-600 hover:bg-purple-900 ml-3 rounded-lg font-mono">
           <ConnectWallet />
         </div>
       </div>

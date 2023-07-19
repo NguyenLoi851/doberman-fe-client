@@ -118,7 +118,7 @@ export default function AccountPage() {
         {
             title: 'Action',
             dataIndex: 'action',
-            width: 200,
+            width: 150,
             filters: [
                 {
                     text: 'Withdraws',
@@ -130,11 +130,12 @@ export default function AccountPage() {
                 }
             ],
             onFilter: (value: any, record) => record.action.indexOf(value) === 0,
+            // filterDropdown:
         },
         {
             title: 'Amount',
             dataIndex: 'amount',
-            width: 250,
+            width: 150,
             sorter: (a, b) => Number(a.amount.slice(2).replace(/\D/g, '')) - Number(b.amount.slice(2).replace(/\D/g, '')),
         },
         {
@@ -145,7 +146,7 @@ export default function AccountPage() {
         {
             title: 'Tx',
             dataIndex: 'tx',
-            width: 150,
+            width: 100,
         },
     ];
 

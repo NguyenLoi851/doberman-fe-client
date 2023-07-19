@@ -518,7 +518,7 @@ export default function LoanDetailPage() {
         <Row >
             <Col span={1}>
             </Col>
-            <Col span={5}>
+            <Col span={4}>
                 <Anchor
                     bounds={100}
                     items={[
@@ -569,7 +569,7 @@ export default function LoanDetailPage() {
                     </div>
                     <div style={{ margin: '20px', fontSize: '16px', fontWeight: 'bold' }}>{(loanDetailInfo as any).projectName}</div>
                     <div style={{ margin: '20px', fontSize: '14px', textAlign: 'justify', lineHeight: 1.5 }}>{(loanDetailInfo as any).projectIntro}</div>
-                    <div className="border-2 border-slate-300 rounded-lg" style={{ margin: '20px' }}>
+                    <div className="border-2 border-slate-400 rounded-lg" style={{ margin: '20px' }}>
                         {/* <div className="flex justify-between" style={{ marginTop: '20px', marginBottom: '50px', marginLeft: '20px', marginRight: '20px', fontSize: '16px' }}>
                             <Statistic title="Fundable At" value={dayjs(Number((loanDetailInfo as any).fundableAt) * 1000).format('DD/MM/YYYY hh:mm:ss')} />
                             <Statistic title="Term" value={Number((loanDetailInfo as any).loanTerm)} suffix="months" />
@@ -716,7 +716,7 @@ export default function LoanDetailPage() {
 
                 <div id="overview" style={{ marginBottom: '50px', padding: '0px', paddingBottom: '10px' }} className="rounded-lg bg-white shadow-2xl" >
                     <div style={{ padding: '10px', fontSize: '24px', fontWeight: 'bold' }} className="bg-sky-900 rounded-t-lg text-sky-200">Overview</div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginLeft: '100px', marginRight: '100px', marginTop: '30px', marginBottom: '20px' }} className="border-2 rounded-lg">
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginLeft: '100px', marginRight: '100px', marginTop: '30px', marginBottom: '20px' }} className="border-2 border-slate-400 rounded-lg">
                         <div>
                             <Statistic style={{ margin: '30px' }} title="Principal repaid (USDC)" value={principalAmountRepaid.toLocaleString()} precision={2} />
                             <Statistic style={{ margin: '30px' }} title="Interest repaid (USDC)" value={interestAmountRepaid.toLocaleString()} precision={2} />
@@ -790,7 +790,7 @@ export default function LoanDetailPage() {
                 <div id="repayment" style={{ height: 'auto', marginBottom: '50px', padding: '0px', paddingBottom: '10px' }} className="rounded-lg bg-white shadow-2xl" >
                     <div style={{ padding: '10px', fontSize: '24px', fontWeight: 'bold' }} className="bg-sky-900 rounded-t-lg text-sky-200">Repayment terms</div>
 
-                    <div className="grid grid-cols-3 border-2 rounded-lg" style={{ margin: '20px' }}>
+                    <div className="grid grid-cols-3 border-2 border-slate-400 rounded-lg" style={{ margin: '20px' }}>
                         <Statistic style={{ margin: '30px' }} suffix="months" title="Loan terms" value={(loanDetailInfo as any).loanTerm} />
                         <Statistic style={{ margin: '30px' }} title="Term start date" value={dayjs(Number((loanDetailInfo as any).termStartTime * 1000)).format("DD/MM/YYYY HH:mm:ss").toString()} />
                         <Statistic style={{ margin: '30px' }} title="Term start date" value={dayjs(Number((loanDetailInfo as any).termEndTime * 1000)).format("DD/MM/YYYY HH:mm:ss").toString()} />
@@ -802,7 +802,7 @@ export default function LoanDetailPage() {
 
                 <div id="history" style={{ marginBottom: '50px', padding: '0px', paddingBottom: '10px' }} className="rounded-lg bg-white shadow-2xl" >
                     <div style={{ padding: '10px', fontSize: '24px', fontWeight: 'bold' }} className="bg-sky-900 rounded-t-lg text-sky-200">Recent activity</div>
-                    <div className="border-2 border-slate-300 rounded-lg" style={{ margin: '20px' }}>
+                    <div className="border-2 border-slate-400 rounded-lg" style={{ margin: '20px' }}>
                         <Table
                             columns={columns}
                             dataSource={historyTx}
@@ -813,7 +813,7 @@ export default function LoanDetailPage() {
                     </div>
                 </div>
             </Col>
-            <Col span={4}>
+            <Col span={5}>
             </Col>
         </Row >
         // </div>

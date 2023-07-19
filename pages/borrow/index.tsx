@@ -6,7 +6,7 @@ import { useAccount, useContractWrite, useNetwork } from "wagmi";
 import { contractAddr } from "@/commons/contractAddress";
 import DobermanFactory from "../../abi/DobermanFactory.json";
 import { useState, ReactNode, useEffect } from "react";
-import { Anchor, Button, Col, List, Modal, Row } from 'antd';
+import { Anchor, Button, Col, List, Modal, Row, Statistic } from 'antd';
 import { toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 import PageLayout from "@/components/layouts/PageLayout";
@@ -162,7 +162,8 @@ export default function BorrowPage() {
                                     {
                                         key: 'my-loans',
                                         href: '#my-loans',
-                                        title: 'My Loans'
+                                        title: 'My Loans',
+                                        className: 'font-bold text-2xl'
                                     }
                                 ]} />
                         </div>
@@ -176,7 +177,7 @@ export default function BorrowPage() {
                                     <List.Item
                                         style={{ cursor: 'pointer', marginTop: '12px', marginBottom: '12px' }}
                                         actions={[<div className='btn-sm border-2 border-black text-black rounded-md hover:bg-slate-200' onClick={() => handleDetailLoanInfo(item, index + 1)}>View Detail</div>]}
-                                        className='bg-white rounded-lg border-amber-300'>
+                                        className='bg-white rounded-lg border-amber-300 shadow-lg hover:shadow-2xl'>
                                         <List.Item.Meta
                                             avatar={index + 1 + '.'}
                                             title={(item as any).projectName}
@@ -184,12 +185,9 @@ export default function BorrowPage() {
                                             style={{ alignItems: 'justify', marginLeft: '10px' }}
                                         />
                                         {(item as any).deployed ?
-                                            <div className="text-lime-600 rounded-lg" style={{ border: 'solid', padding: '5px' }}>
-                                                Deployed
-                                            </div>
-                                            : <div className="text-amber-300 rounded-lg" style={{ border: 'solid', padding: '5px' }}>
-                                                Undeployed
-                                            </div>}
+                                            <Statistic title="Status" value="Deployed" valueStyle={{ color: '#65A30D' }} /> :
+                                            <Statistic title="Status" value="Undeployed" valueStyle={{ color: '#FCD34D' }} />
+                                        }
                                     </List.Item>
                                 )}
                             />

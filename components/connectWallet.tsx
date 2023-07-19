@@ -144,7 +144,7 @@ export default function ConnectWallet() {
               </div>
             </div>
           >
-            <div>
+            <div style={{ fontWeight: 'bold' }} className="rounded-lg">
               {shortenAddress(addressClient as any)}
             </div>
           </Tooltip>
@@ -156,13 +156,14 @@ export default function ConnectWallet() {
       ) : (
         <div>
           {connectorsClient.length && connectorsClient.map((connector: any) => (
-            <button
+            <div
               key={connector.id}
               // onClick={() => connect({ connector })}
               onClick={() => handleConnectWallet(connector)}
+              className="font-bold font-mono cursor-pointer"
             >
               Connect Metamask Wallet
-            </button>
+            </div>
           ))}
         </div>
       )}
