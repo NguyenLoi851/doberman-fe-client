@@ -15,7 +15,7 @@ import SeniorPool from "../../abi/SeniorPool.json"
 import { constants } from "@/commons/constants";
 import { Anchor, Button, Col, InputNumber, Row, Slider, Statistic, Table, Tooltip } from "antd";
 import { toast } from "react-toastify";
-import { MonitorOutlined, InfoCircleOutlined } from '@ant-design/icons';
+import { MonitorOutlined, InfoCircleOutlined, LinkOutlined, LinkedinFilled, TwitterCircleFilled } from '@ant-design/icons';
 import Fidu from "../../abi/Fidu.json";
 import { ColumnsType } from "antd/es/table";
 import { shortenAddress } from "@/components/shortenAddress";
@@ -158,22 +158,25 @@ export default function SeniorLoanDetailPage() {
         {
             title: 'Deals',
             dataIndex: 'deals',
-            width: 150,
+            width: 200,
         },
         {
             title: 'Invested Amount',
             dataIndex: 'investedAmount',
-            width: 150,
+            width: 125,
+            sorter: (a, b) => Number(a.investedAmount.slice(2).replace(/\D/g, '')) - Number(b.investedAmount.slice(2).replace(/\D/g, '')),
         },
         {
             title: 'Porfolio Shares',
             dataIndex: 'porfolioShares',
-            width: 150,
+            width: 125,
+            sorter: (a, b) => Number(a.porfolioShares.slice(0, -2)) - Number(b.porfolioShares.slice(0, -2)),
         },
         {
             title: 'Maturity Date',
             dataIndex: 'maturityDate',
-            width: 200,
+            width: 150,
+            sorter: (a, b) => dayjs(a.maturityDate, "DD/MM/YYYY HH:mm:ss").unix() - dayjs(b.maturityDate, "DD/MM/YYYY HH:mm:ss").unix(),
         },
     ];
 
@@ -192,7 +195,6 @@ export default function SeniorLoanDetailPage() {
             setTotalShares(Number(BigNumber(res.data.seniorPool.totalShares).div(constants.ONE_BILLION).div(constants.ONE_BILLION)))
             setTotalInvested(Number(BigNumber(res.data.seniorPool.totalInvested).div(constants.ONE_MILLION)))
             setPorfolioLoans(res.data.seniorPool.tranchedPools)
-            console.log("senior pool deposit", res.data.seniorPool.tranchedPools)
 
             try {
                 const txData: DataType[] = []
@@ -311,7 +313,9 @@ export default function SeniorLoanDetailPage() {
     useEffect(() => {
         getSeniorLoanDetailInfo()
         setChainId(chain?.id || constants.MUMBAI_ID)
-        getUserShares()
+        if (address) {
+            getUserShares()
+        }
         getSeniorBalance()
         getSharePrice()
     }, [chain, address, myShares])
@@ -453,42 +457,44 @@ export default function SeniorLoanDetailPage() {
         <Row>
             <Col span={1}>
             </Col>
-            <Col span={4}>
+            <Col span={5}>
                 <Anchor
                     bounds={100}
                     items={[
                         {
                             key: 'invest',
                             href: '#invest',
-                            title: 'Invest'
+                            title: 'Invest',
+                            className: "hover:font-bold my-4",
                         },
                         {
                             key: 'portfolio-details',
                             href: '#portfolio-details',
                             title: 'Portfolio details',
+                            className: "hover:font-bold my-4",
                         },
                         {
                             key: 'repayment',
                             href: '#repayment',
-                            title: 'Repayment'
+                            title: 'Repayment',
+                            className: "hover:font-bold my-4",
                         }
                     ]}
                 />
             </Col>
-            <Col span={2}>
-            </Col>
-            <Col span={12}>
-                <div id="invest" style={{ height: 'auto', marginBottom: '50px', padding: '10px', backgroundColor: '#c2eded' }}
-                    className="rounded-lg"
-                //  className='bg-amber-250' 
+            <Col span={14}>
+                <div id="invest" style={{ height: 'auto', marginBottom: '50px', padding: '0px', backgroundColor: 'white' }}
+                    className="rounded-lg shadow-2xl"
                 >
-                    <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
-                        <div style={{ margin: '10px', fontSize: '16px' }}>Doberman Protocol</div>
-                        <a style={{ margin: '10px' }} href={`https://mumbai.polygonscan.com/address/${contractAddr.mumbai.seniorPool}#code`} target="_blank" className="text-sky-500 hover:underline hover:underline-offset-3 "><MonitorOutlined style={{ marginRight: '5px', fontSize: '20px' }} />MumbaiScan </a>
+                    <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }} className="bg-sky-900 rounded-t-lg text-sky-200">
+                        <div style={{ margin: '10px', fontSize: '24px', fontWeight: 'bold' }}>Doberman Protocol</div>
+                        <a style={{ margin: '10px' }} href={`https://mumbai.polygonscan.com/address/${contractAddr.mumbai.seniorPool}#code`} target="_blank" className="text-sky-200 hover:underline hover:underline-offset-2 "><MonitorOutlined style={{ marginRight: '5px', fontSize: '20px' }} />MumbaiScan </a>
                     </div>
-                    <div style={{ margin: '10px', fontSize: '24px', fontWeight: 'bold' }}>Doberman Senior Pool</div>
-                    <div style={{ margin: '10px', fontSize: '14px', textAlign: 'justify', lineHeight: 1.5 }}>The Senior Pool is a pool of capital that is diversified across all Borrower Pools on the Doberman protocol. Liquidity Providers (LPs) who provide capital into the Senior Pool are capital providers in search of passive, diversified exposure across all Borrower Pools. This capital is protected by junior (first-loss) capital in each Borrower Pool.</div>
-                    <div className="flex justify-between" style={{ margin: '30px', fontSize: '16px', marginTop: '50px' }}>
+                    <div style={{ paddingLeft: '10px', paddingRight: '10px' }}>
+                        <div style={{ margin: '10px', fontWeight: 'bold' }}>Doberman Senior Pool</div>
+                        <div style={{ margin: '10px', fontSize: '14px', textAlign: 'justify', lineHeight: 1.5 }}>The Senior Pool is a pool of capital that is diversified across all Borrower Pools on the Doberman protocol. Liquidity Providers (LPs) who provide capital into the Senior Pool are capital providers in search of passive, diversified exposure across all Borrower Pools. This capital is protected by junior (first-loss) capital in each Borrower Pool.</div>
+                    </div>
+                    <div className="flex justify-between " style={{ marginLeft: '90px', marginRight: '90px', fontSize: '16px', marginTop: '50px', marginBottom: '30px' }} >
                         <div>
                             <div style={{ marginTop: '20px' }}>
                                 <Statistic title="Total Assets (USDC)" value={assets} precision={2} />
@@ -503,10 +509,10 @@ export default function SeniorLoanDetailPage() {
                         </div>
                         <div>
                             <div style={{ marginTop: '20px' }}>
-                                <Statistic title="Total Shares Amount" value={totalShares} precision={2} />
+                                <Statistic title="Total Shares Amount (FIDU)" value={totalShares} precision={2} />
                             </div>
                             <div style={{ marginTop: '20px' }}>
-                                <Statistic title="Your Shares Amount" value={myShares} precision={2} />
+                                <Statistic title="Your Shares Amount (FIDU)" value={myShares} precision={2} />
                             </div>
                             <div style={{ marginTop: '20px' }}>
                                 <Statistic title="Your Shares Percentage" suffix="%" value={myShares / totalShares * 100} precision={2} />
@@ -514,23 +520,24 @@ export default function SeniorLoanDetailPage() {
                         </div>
                     </div>
 
-                    <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', marginLeft: '30px', marginRight: '30px' }}>
                         <div>
                             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                                 <InputNumber
                                     placeholder="Input value"
                                     value={wantInvestAmount}
                                     onChange={handleWantInvestAmount}
-                                    style={{ width: 300, marginTop: '10px' }}
+                                    style={{ marginTop: '10px' }}
                                     addonAfter='USDC ($)'
                                     precision={2}
                                     min={0}
                                 />
                             </div>
                             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                                <Button loading={loadingDeposit} onClick={handleDeposit} style={{ margin: '20px', marginTop: '25px', cursor: 'pointer' }}
+                                <Button loading={loadingDeposit} onClick={handleDeposit} style={{ margin: '20px', marginTop: '25px' }}
                                     // className="btn-sm bg-sky-600 text-white hover:text-black hover:bg-sky-400 border border-2 border-slate-600 rounded-md"
                                     className="btn-sm border-2 border-black hover:bg-sky-200 rounded-lg"
+                                    disabled={wantInvestAmount == 0}
                                 >Deposit</Button>
                             </div>
                         </div>
@@ -541,8 +548,8 @@ export default function SeniorLoanDetailPage() {
                                     placeholder="Input value"
                                     value={wantWithdrawAmount}
                                     onChange={handleWantWithdrawAmount}
-                                    style={{ width: 300, marginTop: '10px' }}
-                                    addonAfter='Shares'
+                                    style={{ marginTop: '10px' }}
+                                    addonAfter='Shares (FIDU)'
                                     precision={2}
                                     min={0}
                                 />
@@ -553,10 +560,10 @@ export default function SeniorLoanDetailPage() {
                                         <div className="mt-2" style={{ display: 'flex', justifyContent: 'center' }}>
                                             appropriate: {Number(wantWithdrawAmount * Number(sharePrice) * (100 - 0.5) / 100).toLocaleString()} USDC
                                             <Tooltip
-                                                placement="right"
+                                                placement="bottomLeft"
                                                 title=
                                                 <div>
-                                                    <div className="mt-2" style={{ display: 'flex', justifyContent: 'center', fontSize: '10px' }}> fee: {Number(wantWithdrawAmount * Number(sharePrice) * (0.5) / 100).toLocaleString()} USDC</div>
+                                                    <div className="mt-2" style={{ display: 'flex', justifyContent: 'center', fontSize: '10px' }}> fee: {Number(wantWithdrawAmount * Number(sharePrice) * (0.5) / 100).toLocaleString()} USDC (0,5%)</div>
                                                 </div>
                                             >
                                                 <InfoCircleOutlined style={{ marginLeft: '5px' }} />
@@ -566,9 +573,10 @@ export default function SeniorLoanDetailPage() {
                                     <div className="text-red-500 mt-2">You withdraw more than available amount</div>
                             )}
                             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                                <Button loading={loadingWithdraw} onClick={handleWithdraw} style={{ margin: '20px', marginTop: '25px', cursor: 'pointer' }}
+                                <Button loading={loadingWithdraw} onClick={handleWithdraw} style={{ margin: '20px', marginTop: '25px' }}
                                     // className="btn-sm bg-sky-600 text-white hover:text-black hover:bg-sky-400 border border-2 border-slate-600 rounded-md"
                                     className="btn-sm border-2 border-black hover:bg-sky-200 rounded-lg"
+                                    disabled={wantWithdrawAmount == 0}
                                 >Withdraw</Button>
                             </div>
                         </div>
@@ -577,54 +585,85 @@ export default function SeniorLoanDetailPage() {
 
                 </div>
 
-                <div id="portfolio-details" style={{ height: 'auto', marginBottom: '50px', padding: '10px', backgroundColor: '#c2eded' }}
-                    className="rounded-lg"
-                // className="rounded-lg bg-amber-200"
+                <div id="portfolio-details" style={{ height: 'auto', marginBottom: '50px', padding: '0px', backgroundColor: 'white' }}
+                    className="rounded-lg shadow-2xl"
                 >
-                    <div style={{ margin: '10px', fontSize: '16px', fontWeight: 'bold' }}>Porfolio details</div>
-                    <div style={{ margin: '10px', fontSize: '18px' }}>Goldfinch Senior Pool</div>
-                    <div style={{ margin: '10px', fontSize: '16px', textAlign: 'justify' }}>The Goldfinch Senior Pool is automatically managed by The Goldfinch protocol. Capital is automatically allocated from the Senior Pool into the senior tranches of various direct-lending deals on Goldfinch according to the Leverage Model. This capital is protected by first-loss capital in all deals.</div>
+                    <div style={{ padding: '10px' }} className="bg-sky-900 rounded-t-lg text-sky-200">
+                        <div style={{ fontSize: '24px', fontWeight: 'bold' }}>Porfolio details</div>
+                    </div>
+                    <div style={{ margin: '20px', fontWeight: 'bold' }}>Goldfinch Senior Pool</div>
+                    <div style={{ margin: '20px', textAlign: 'justify' }}>The Goldfinch Senior Pool is automatically managed by The Goldfinch protocol. Capital is automatically allocated from the Senior Pool into the senior tranches of various direct-lending deals on Goldfinch according to the Leverage Model. This capital is protected by first-loss capital in all deals.</div>
                     <div style={{ display: 'flex', flexDirection: 'row' }}>
-                        <div style={{ margin: '10px', padding: '8px' }} className="rounded-full bg-white hover:bg-slate-300">
-                            <a href='https://discord.gg/7FHgxdyW' target='_blank' className="text-black hover:text-black hover:underline">Website</a>
-                        </div>
-                        <div style={{ margin: '10px', padding: '8px' }} className="rounded-full bg-white hover:bg-slate-300">
-                            <a href='https://www.linkedin.com/in/loing851/' target='_blank' className="text-black hover:text-black hover:underline">LinkedIn</a>
-                        </div>
-                        <div style={{ margin: '10px', padding: '8px' }} className="rounded-full bg-white hover:bg-slate-300">
-                            <a href='https://twitter.com/' target='_blank' className="text-black hover:text-black hover:underline">Twitter</a>
+                        <Button style={{ margin: '20px' }} className="rounded-full bg-slate-300 hover:bg-slate-300">
+                            <a href='https://discord.gg/7FHgxdyW' target='_blank' className="text-black hover:text-black hover:underline">
+                                <div style={{ display: 'flex' }}>
+                                    <LinkOutlined style={{ margin: '5px', marginTop: '3px' }} />
+                                    <div>
+                                        Website
+                                    </div>
+                                </div>
+                            </a>
+                        </Button>
+                        <Button style={{ margin: '20px' }} className="rounded-full bg-slate-300 hover:bg-slate-300">
+                            <a href='https://www.linkedin.com/in/loing851/' target='_blank' className="text-black hover:text-black hover:underline">
+                                <div style={{ display: 'flex' }}>
+                                    <LinkedinFilled style={{ margin: '5px', marginTop: '3px' }} />
+                                    <div>
+                                        LinkedIn
+                                    </div>
+                                </div>
+                            </a>
+                        </Button>
+                        <Button style={{ margin: '20px' }} className="rounded-full bg-slate-300 hover:bg-slate-300">
+                            <a href='https://twitter.com/' target='_blank' className="text-black hover:text-black hover:underline">
+                                <div style={{ display: 'flex' }}>
+                                    <TwitterCircleFilled style={{ margin: '5px', marginTop: '3px' }} />
+                                    <div>
+                                        Twitter
+                                    </div>
+                                </div>
+                            </a>
+                        </Button>
+                    </div>
+
+                    <div style={{ padding: '20px' }}>
+                        <div style={{ marginTop: '30px', display: 'flex', justifyContent: 'space-between' }} className="border-2 border-slate-300 rounded-lg">
+                            <Statistic title="Total Invested Amount" prefix="$" value={totalInvested} precision={2} style={{ padding: '30px' }} />
+                            <div className="border-r-2 border-slate-300"></div>
+                            <Statistic title="No. of porfolio loans" value={porfolioLoans.length} style={{ padding: '30px' }} />
+                            <div className="border-r-2 border-slate-300"></div>
+                            <Statistic title="Total Assets Amount" prefix="$" value={assets} precision={2} style={{ padding: '30px' }} />
                         </div>
                     </div>
 
-                    <div style={{ marginTop: '50px', display: 'flex', justifyContent: 'space-between' }}>
-                        <Statistic title="Total Invested Amount" prefix="$" value={totalInvested} precision={2} />
-                        <Statistic title="No. of porfolio loans" value={porfolioLoans.length} />
-                        <Statistic title="Total Assets Amount" prefix="$" value={assets} precision={2} />
-                    </div>
-
-                    <div style={{ marginTop: '50px' }}>
-                        <Table
-                            columns={tranchedInvestColumns}
-                            dataSource={tranchedInvestHistory}
-                            pagination={{ pageSize: 10 }}
-                            scroll={{ y: 500 }}
-                        // showHeader={false}
-                        />
+                    <div style={{ padding: '20px' }}>
+                        <div style={{ marginTop: '50px' }}>
+                            <Table
+                                columns={tranchedInvestColumns}
+                                dataSource={tranchedInvestHistory}
+                                pagination={{ pageSize: 10 }}
+                                scroll={{ y: 500 }}
+                                className="border-2 border-slate-400 rounded-lg"
+                            // showHeader={false}
+                            />
+                        </div>
                     </div>
                 </div>
 
-                <div id="repayment" style={{ height: 'auto', marginBottom: '50px', borderRadius: '5%', padding: '10px' }} className="bg-white">
-                    <div style={{ margin: '10px', fontSize: '16px', fontWeight: 'bold' }}>Recent activity</div>
+                <div id="repayment" style={{ marginBottom: '50px', padding: '0px', paddingBottom: '30px' }} className="bg-white shadow-2xl rounded-lg">
+                    <div style={{ fontSize: '24px', fontWeight: 'bold', padding: '10px', marginBottom: '20px' }} className="bg-sky-900 rounded-t-lg text-sky-200">Recent activity</div>
                     <Table
                         columns={columns}
                         dataSource={historyTx}
                         pagination={{ pageSize: 10 }}
                         scroll={{ y: 500 }}
+                        className="border-2 border-slate-400 rounded-lg"
+                        style={{ margin: '20px' }}
                     // showHeader={false}
                     />
                 </div>
             </Col>
-            <Col span={5}>
+            <Col span={4}>
             </Col>
         </Row>
     )

@@ -30,7 +30,7 @@ const DefaultLayout: FC<Props> = ({ children }) => {
     const router = useRouter()
 
     return (
-        <div className={`${inter.variable} ${architects_daughter.variable} font-inter antialiased text-gray-9-00 tracking-tight`}>
+        <div className={`${inter.variable} ${architects_daughter.variable} font-inter antialiased text-gray-9-00 tracking-tight`} style={{ backgroundColor: '#f9f9f9' }}>
             <div>
                 <LandingPageHeader />
                 <Hero />

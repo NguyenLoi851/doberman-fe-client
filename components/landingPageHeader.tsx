@@ -16,8 +16,6 @@ export default function LandingPageHeader() {
                             </svg> */}
                             <Image src={Logo} alt="Logo" className='rounded-full w-8 h-8' />
                         </Link>
-
-
                     </div>
 
                     {/* Desktop navigation */}
@@ -26,8 +24,8 @@ export default function LandingPageHeader() {
                         <ul className="flex grow justify-end flex-wrap items-center">
                             <li>
                                 <Link
-                                    href="/signin"
-                                    className="font-medium text-purple-600 hover:text-gray-200 px-4 py-3 flex items-center transition duration-150 ease-in-out"
+                                    href="/earn"
+                                    className="font-medium text-purple-600 hover:text-gray-600 px-4 py-3 flex items-center transition duration-150 ease-in-out"
                                 >
                                     Borrow
                                 </Link>

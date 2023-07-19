@@ -11,9 +11,9 @@ import { readContract, writeContract, waitForTransaction } from "@wagmi/core"
 import USDC from "../../abi/USDC.json"
 import TranchedPool from "../../abi/TranchedPool.json"
 import { constants } from "@/commons/constants";
-import { Anchor, Button, Col, Descriptions, InputNumber, Row, Slider, Statistic, Table, Upload } from "antd";
+import { Anchor, Button, Col, Descriptions, Empty, InputNumber, Row, Slider, Statistic, Table, Upload } from "antd";
 import { toast } from "react-toastify";
-import { MonitorOutlined } from '@ant-design/icons';
+import { MonitorOutlined, LinkOutlined } from '@ant-design/icons';
 import UniqueIdentity from "@/abi/UniqueIdentity.json"
 import Link from "next/link";
 import CreditLine from "../../abi/CreditLine.json";
@@ -34,7 +34,7 @@ enum TrancheInvestStatus {
 export default function LoanDetailPage() {
     const router = useRouter()
     // const props = router.query
-    const loanAddr = router.asPath.split('/earn/')[1]
+    const loanAddr = router.asPath.split('/earn/')[1].split('#')[0]
     const { address } = useAccount()
     const { chain } = useNetwork()
     const [chainId, setChainId] = useState(constants.MUMBAI_ID);
@@ -225,39 +225,47 @@ export default function LoanDetailPage() {
 
     const getLoanDetailInfo = async () => {
         try {
-            if (!loanAddr) {
+            if (!loanAddr || loanAddr == "[id]") {
                 return;
             }
-
+            console.log(loanAddr)
             const res = await client.query({
                 query: gql(tokenDetailLoanQuery),
                 variables: {
                     poolId: (loanAddr as any).toLowerCase() ?? "",
-                    userId: (address as any).toLowerCase()
+                    userId: address ? (address as any).toLowerCase() : "",
                 }
             })
-            console.log("res.data.tranchedPool.txHash", res.data.tranchedPool.txHash)
+            console.log(res)
             const res2 = await axios.get(process.env.NEXT_PUBLIC_API_BASE_URL + '/loans/getLoanByFilter', {
                 params: {
                     txHash: res.data.tranchedPool.txHash
                 }
             })
-            console.log("res2", res2)
-            if (res2.data.legalDocuments != '' && res2.data.legalDocuments != null && res2.data.legalDocuments != undefined) {
-                const fileKeysParse = res2.data.legalDocuments as any
-                const fileURLs = fileKeysParse.map((item: any) => {
-                    return process.env.NEXT_PUBLIC_S3_BASE_URL as any + item.fileKey
-                })
-                console.log('fileURLs', fileURLs)
-                setLinks(fileURLs)
+
+            try {
+                if (res2.data.legalDocuments != '' && res2.data.legalDocuments != null && res2.data.legalDocuments != undefined) {
+                    const fileKeysParse = res2.data.legalDocuments as any
+                    const fileURLs = fileKeysParse.map((item: any) => {
+                        return process.env.NEXT_PUBLIC_S3_BASE_URL as any + item.fileKey
+                    })
+                    setLinks(fileURLs)
+                }
+            } catch (error) {
+                console.log(error)
             }
-            setLoanDetailInfo({ ...res.data.tranchedPool, ...res2.data })
-            setFundingLimit(Number((res.data.tranchedPool as any).fundingLimit) / constants.ONE_MILLION)
-            setJuniorDeposited(Number((res.data.tranchedPool as any).juniorDeposited) / constants.ONE_MILLION)
-            setSeniorDeposited(Number((res.data.tranchedPool as any).seniorDeposited) / constants.ONE_MILLION)
-            setInterestAmountRepaid(Number((res.data.tranchedPool as any).interestAmountRepaid) / constants.ONE_MILLION)
-            setPrincipalAmountRepaid(Number((res.data.tranchedPool as any).principalAmountRepaid) / constants.ONE_MILLION)
-            setCreditLineAddr((res.data.tranchedPool as any).creditLineAddress)
+
+            try {
+                setLoanDetailInfo({ ...res.data.tranchedPool, ...res2.data })
+                setFundingLimit(Number((res.data.tranchedPool as any).fundingLimit) / constants.ONE_MILLION)
+                setJuniorDeposited(Number((res.data.tranchedPool as any).juniorDeposited) / constants.ONE_MILLION)
+                setSeniorDeposited(Number((res.data.tranchedPool as any).seniorDeposited) / constants.ONE_MILLION)
+                setInterestAmountRepaid(Number((res.data.tranchedPool as any).interestAmountRepaid) / constants.ONE_MILLION)
+                setPrincipalAmountRepaid(Number((res.data.tranchedPool as any).principalAmountRepaid) / constants.ONE_MILLION)
+                setCreditLineAddr((res.data.tranchedPool as any).creditLineAddress)
+            } catch (error) {
+                console.log(error)
+            }
 
             if (res && res.data && res.data.tranchedPool) {
                 if ((res.data.tranchedPool as any).seniorLocked == true) {
@@ -267,12 +275,14 @@ export default function LoanDetailPage() {
                 }
             }
 
-            const tokenIdsArr: string[] = []
-            res.data.user.poolTokens.map((item: any) => {
-                tokenIdsArr.push(item.id)
-            })
-            setTokenIds(tokenIdsArr as any)
-            await getAvailableWithdraw(tokenIdsArr)
+            if (res.data.user && res.data.user.poolTokens && res.data.user.poolTokens.length > 0) {
+                const tokenIdsArr: string[] = []
+                res.data.user.poolTokens.map((item: any) => {
+                    tokenIdsArr.push(item.id)
+                })
+                setTokenIds(tokenIdsArr as any)
+                await getAvailableWithdraw(tokenIdsArr)
+            }
 
             const txData: DataType[] = []
             res.data.transactions.map((item: any) => {
@@ -505,80 +515,98 @@ export default function LoanDetailPage() {
     }
 
     return (
-        <Row style={{ backgroundColor: 'rgb(253, 245, 227)' }}>
+        <Row >
             <Col span={1}>
             </Col>
-            <Col span={4}>
+            <Col span={5}>
                 <Anchor
                     bounds={100}
                     items={[
                         {
                             key: 'invest',
                             href: '#invest',
-                            title: 'Invest'
+                            title: 'Invest',
+                            className: "hover:font-bold my-4",
                         },
                         {
                             key: 'overview',
                             href: '#overview',
-                            title: 'Overview'
+                            title: 'Overview',
+                            className: "hover:font-bold my-4",
                         },
                         {
                             key: 'document',
                             href: '#document',
-                            title: 'Legal Documents'
+                            title: 'Legal Documents',
+                            className: "hover:font-bold my-4",
                         },
                         {
                             key: 'borrower',
                             href: '#borrower',
                             title: 'Borrower',
+                            className: "hover:font-bold my-4",
                         },
                         {
                             key: 'repayment',
                             href: '#repayment',
-                            title: 'Repayment'
+                            title: 'Repayment',
+                            className: "hover:font-bold my-4",
                         },
                         {
                             key: 'history',
                             href: '#history',
-                            title: 'Recent activity'
+                            title: 'Recent activity',
+                            className: "hover:font-bold my-4",
                         }
                     ]}
                 />
             </Col>
-            <Col span={2}>
-            </Col>
-            <Col span={12}>
-                <div id="invest" style={{ height: 'auto', marginBottom: '50px', padding: '10px' }} className="bg-sky-200 rounded-lg">
-                    <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
-                        <div style={{ margin: '10px', fontSize: '16px' }}>{(loanDetailInfo as any).companyName}</div>
-                        <a style={{ margin: '10px' }} href={`https://mumbai.polygonscan.com/address/${loanAddr}#code`} target="_blank" className="text-sky-500 hover:underline hover:underline-offset-3 hover:text-sky-800"><MonitorOutlined style={{ marginRight: '5px', fontSize: '20px' }} />MumbaiScan </a>
+            <Col span={14}>
+                <div id="invest" style={{ marginBottom: '50px', padding: '0px', paddingBottom: '5px' }} className="bg-white rounded-lg shadow-2xl">
+                    <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }} className="bg-sky-900 rounded-t-lg text-sky-200">
+                        <div style={{ margin: '10px', fontSize: '24px', fontWeight: 'bold' }}>{(loanDetailInfo as any).companyName}</div>
+                        <a style={{ margin: '10px' }} href={`https://mumbai.polygonscan.com/address/${loanAddr}#code`} target="_blank" className="text-sky-400 hover:underline hover:underline-offset-2 hover:text-sky-200"><MonitorOutlined style={{ marginRight: '5px', fontSize: '20px' }} />MumbaiScan </a>
                     </div>
-                    <div style={{ margin: '10px', fontSize: '24px', fontWeight: 'bold' }}>{(loanDetailInfo as any).projectName}</div>
-                    <div style={{ margin: '10px', fontSize: '14px', textAlign: 'justify', lineHeight: 1.5 }}>{(loanDetailInfo as any).projectIntro}</div>
-                    <div className="flex justify-between" style={{ margin: '10px', fontSize: '16px', marginTop: '50px' }}>
-                        <Statistic title="Fundable At" value={dayjs(Number((loanDetailInfo as any).fundableAt) * 1000).format('DD/MM/YYYY hh:mm:ss')} />
-                        <Statistic title="Term" value={Number((loanDetailInfo as any).loanTerm)} suffix="months" />
-                        <Statistic title="Interest Rate (APR)" value={Number((loanDetailInfo as any).interestRate)} suffix="%" />
-                    </div>
-                    <div className="flex justify-between" style={{ margin: '10px', fontSize: '16px', marginTop: '50px' }}>
-                        <Statistic title="Junior Deposited Amount (USDC)" value={juniorDeposited} precision={2} />
-                        <Statistic title="Senior Deposited Amount (USDC)" value={seniorDeposited} precision={2} />
-                        <Statistic title="Funding Limit (USDC)" value={fundingLimit} precision={2} />
-                    </div>
-                    <div style={{ fontSize: '24px', margin: '10px', display: 'flex', flexDirection: 'row', justifyContent: 'space-between', marginTop: '80px' }}>
-                        <div style={{ textAlign: 'center' }}>Invested ratio </div>
-                        <div className="text-sky-600">{(juniorDeposited + seniorDeposited + wantInvestAmount).toLocaleString()} / {fundingLimit.toLocaleString()} USDC ({((juniorDeposited + seniorDeposited + wantInvestAmount) / fundingLimit * 100).toFixed(2)}%)</div>
-                    </div>
-                    <div style={{ margin: '10px', marginTop: '0px' }} >
-                        <Slider
-                            value={juniorDeposited + seniorDeposited + wantInvestAmount}
-                            max={fundingLimit}
-                            step={0.01}
-                            disabled={true}
-                        />
+                    <div style={{ margin: '20px', fontSize: '16px', fontWeight: 'bold' }}>{(loanDetailInfo as any).projectName}</div>
+                    <div style={{ margin: '20px', fontSize: '14px', textAlign: 'justify', lineHeight: 1.5 }}>{(loanDetailInfo as any).projectIntro}</div>
+                    <div className="border-2 border-slate-300 rounded-lg" style={{ margin: '20px' }}>
+                        {/* <div className="flex justify-between" style={{ marginTop: '20px', marginBottom: '50px', marginLeft: '20px', marginRight: '20px', fontSize: '16px' }}>
+                            <Statistic title="Fundable At" value={dayjs(Number((loanDetailInfo as any).fundableAt) * 1000).format('DD/MM/YYYY hh:mm:ss')} />
+                            <Statistic title="Term" value={Number((loanDetailInfo as any).loanTerm)} suffix="months" />
+                            <Statistic title="Interest Rate (APR)" value={Number((loanDetailInfo as any).interestRate)} suffix="%" />
+                        </div>
+                        <div className="flex justify-between" style={{ marginTop: '50px', marginLeft: '20px', marginRight: '20px', marginBottom: '20px', fontSize: '16px' }}>
+                            <Statistic title="Junior Deposited Amount (USDC)" value={juniorDeposited} precision={2} />
+                            <Statistic title="Senior Deposited Amount (USDC)" value={seniorDeposited} precision={2} />
+                            <Statistic title="Funding Limit (USDC)" value={fundingLimit} precision={2} />
+                        </div> */}
+                        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                            <div className="grid grid-cols-3 gap-12" style={{ marginTop: '30px', fontSize: '16px' }}>
+                                <Statistic title="Fundable At" value={dayjs(Number((loanDetailInfo as any).fundableAt) * 1000).format('DD/MM/YYYY hh:mm:ss')} />
+                                <Statistic title="Term" value={Number((loanDetailInfo as any).loanTerm)} suffix="months" />
+                                <Statistic title="Interest Rate (APR)" value={Number((loanDetailInfo as any).interestRate)} suffix="%" />
+                                <Statistic title="Junior Deposited Amount (USDC)" value={juniorDeposited} precision={2} />
+                                <Statistic title="Senior Deposited Amount (USDC)" value={seniorDeposited} precision={2} />
+                                <Statistic title="Funding Limit (USDC)" value={fundingLimit} precision={2} />
+                            </div>
+                        </div>
+
+                        <div style={{ margin: '20px' }}>
+                            <div style={{ fontSize: '24px', margin: '10px', display: 'flex', flexDirection: 'row', justifyContent: 'space-between', marginTop: '80px' }}>
+                                <div style={{ textAlign: 'center' }}>Invested ratio </div>
+                                <div className="text-sky-600">{(juniorDeposited + seniorDeposited + wantInvestAmount).toLocaleString()} / {fundingLimit.toLocaleString()} USDC ({((juniorDeposited + seniorDeposited + wantInvestAmount) / fundingLimit * 100).toFixed(2)}%)</div>
+                            </div>
+                            <div style={{ margin: '10px', marginTop: '0px' }} >
+                                <Slider
+                                    value={juniorDeposited + seniorDeposited + wantInvestAmount}
+                                    max={fundingLimit}
+                                    step={0.01}
+                                    disabled={true}
+                                />
+                            </div>
+                        </div>
                     </div>
 
-                    {/* <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}> */}
                     <div style={{ marginTop: '30px' }}>
                         {Number((loanDetailInfo as any).fundableAt) > dayjs().unix() && (
                             <div style={{ margin: '20px', marginTop: '25px' }}>Wait until {dayjs(Number((loanDetailInfo as any).fundableAt) * 1000).format('DD/MM/YYYY hh:mm:ss')}</div>
@@ -613,14 +641,13 @@ export default function LoanDetailPage() {
                                     </div>
                                 </div>
                                 :
-                                <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
+                                <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginLeft: '100px', marginRight: '100px', marginBottom: '20px', padding: '20px' }} className='rounded-lg text-white bg-sky-700 shadow-md'>
                                     <div style={{ margin: '10px' }}>You need set up your UID first to invest</div>
                                     <Link href='/account' >
                                         <div style={{ justifyContent: 'center', alignItems: 'center', cursor: 'pointer' }} className="rounded-md btn-sm text-black bg-sky-50 hover:bg-gray-200 hover:text-black ml-3">
                                             Go to my account
                                         </div>
                                     </Link>
-
                                 </div>)
                         )}
                         {trancheInvestStatus != 0 && Number((loanDetailInfo as any).fundableAt) <= dayjs().unix() && (
@@ -687,9 +714,9 @@ export default function LoanDetailPage() {
 
                 </div>
 
-                <div id="overview" style={{ height: 'auto', marginBottom: '50px', padding: '10px' }} className="rounded-lg bg-white" >
-                    <div style={{ margin: '10px', fontSize: '16px', fontWeight: 'bold' }}>Overview</div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginLeft: '50px', marginRight: '50px' }} className="border-2 rounded-lg">
+                <div id="overview" style={{ marginBottom: '50px', padding: '0px', paddingBottom: '10px' }} className="rounded-lg bg-white shadow-2xl" >
+                    <div style={{ padding: '10px', fontSize: '24px', fontWeight: 'bold' }} className="bg-sky-900 rounded-t-lg text-sky-200">Overview</div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginLeft: '100px', marginRight: '100px', marginTop: '30px', marginBottom: '20px' }} className="border-2 rounded-lg">
                         <div>
                             <Statistic style={{ margin: '30px' }} title="Principal repaid (USDC)" value={principalAmountRepaid.toLocaleString()} precision={2} />
                             <Statistic style={{ margin: '30px' }} title="Interest repaid (USDC)" value={interestAmountRepaid.toLocaleString()} precision={2} />
@@ -707,10 +734,10 @@ export default function LoanDetailPage() {
                     </div>
                 </div>
 
-                <div id="document" style={{ height: 'auto', marginBottom: '50px', padding: '10px' }} className="rounded-lg bg-white" >
-                    <div style={{ margin: '10px', fontSize: '16px', fontWeight: 'bold' }}>Legal Documents</div>
+                <div id="document" style={{ height: 'auto', marginBottom: '50px', padding: '0px', paddingBottom: '20px' }} className="rounded-lg bg-white shadow-2xl" >
+                    <div style={{ padding: '10px', fontSize: '24px', fontWeight: 'bold' }} className="bg-sky-900 rounded-t-lg text-sky-200">Legal Documents</div>
 
-                    {links &&
+                    {links ?
                         <div style={{ marginLeft: '50px', marginRight: '50px', marginTop: '10px', marginBottom: '20px' }}>
                             <Upload
                                 listType="picture"
@@ -728,27 +755,42 @@ export default function LoanDetailPage() {
                                 }
                             />
                         </div>
+                        : <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
                     }
                 </div>
 
-                <div id="borrower" style={{ height: 'auto', marginBottom: '50px', padding: '10px' }} className="rounded-lg bg-white" >
-                    <div style={{ margin: '10px', fontSize: '16px', fontWeight: 'bold' }}>Borrower details</div>
-                    <div style={{ margin: '10px', fontSize: '14px', textAlign: 'justify', lineHeight: 1.5 }}>{(loanDetailInfo as any).companyName}</div>
-                    <div style={{ margin: '10px', fontSize: '14px', textAlign: 'justify', lineHeight: 1.5 }}>{(loanDetailInfo as any).companyIntro}</div>
-                    <div style={{ margin: '10px', display: 'flex', flexDirection: 'row' }}>
-                        <div style={{ margin: '10px', padding: '5px' }} className="bg-amber-200 rounded-lg">
-                            <a href={`${(loanDetailInfo as any).companyPage}`} target='_blank'>Website</a>
+                <div id="borrower" style={{ height: 'auto', marginBottom: '50px', padding: '0px', paddingBottom: '10px' }} className="rounded-lg bg-white shadow-2xl" >
+                    <div style={{ padding: '10px', fontSize: '24px', fontWeight: 'bold' }} className="bg-sky-900 rounded-t-lg text-sky-200">Borrower details</div>
+                    <div style={{ margin: '20px', fontSize: '16px', fontWeight: 'bold', textAlign: 'justify', lineHeight: 1.5 }}>{(loanDetailInfo as any).companyName}</div>
+                    <div style={{ margin: '20px', fontSize: '14px', textAlign: 'justify', lineHeight: 1.5 }}>{(loanDetailInfo as any).companyIntro}</div>
+                    <div style={{ margin: '20px', display: 'flex', flexDirection: 'row' }}>
+                        <div style={{ margin: '10px', padding: '5px' }} className="rounded-full bg-slate-300 hover:bg-slate-300">
+                            <a href={`${(loanDetailInfo as any).companyPage}`} target='_blank'>
+                                <div style={{ display: 'flex' }}>
+                                    <LinkOutlined style={{ margin: '5px', marginTop: '3px' }} />
+                                    <div>
+                                        Website
+                                    </div>
+                                </div>
+                            </a>
                         </div>
-                        <div style={{ margin: '10px', padding: '5px' }} className="bg-amber-200 rounded-lg">
-                            <a href={`${(loanDetailInfo as any).companyContact}`} target='_blank'>Contact</a>
+                        <div style={{ margin: '10px', padding: '5px' }} className="rounded-full bg-slate-300 hover:bg-slate-300">
+                            <a href={`${(loanDetailInfo as any).companyContact}`} target='_blank'>
+                                <div style={{ display: 'flex' }}>
+                                    <LinkOutlined style={{ margin: '5px', marginTop: '3px' }} />
+                                    <div>
+                                        Contact
+                                    </div>
+                                </div>
+                            </a>
                         </div>
                     </div>
                 </div>
 
-                <div id="repayment" style={{ height: 'auto', marginBottom: '50px', padding: '10px' }} className="rounded-lg  bg-white" >
-                    <div style={{ margin: '10px', fontSize: '16px', fontWeight: 'bold' }}>Repayment terms</div>
+                <div id="repayment" style={{ height: 'auto', marginBottom: '50px', padding: '0px', paddingBottom: '10px' }} className="rounded-lg bg-white shadow-2xl" >
+                    <div style={{ padding: '10px', fontSize: '24px', fontWeight: 'bold' }} className="bg-sky-900 rounded-t-lg text-sky-200">Repayment terms</div>
 
-                    <div className="grid grid-cols-3 border-2 rounded-lg">
+                    <div className="grid grid-cols-3 border-2 rounded-lg" style={{ margin: '20px' }}>
                         <Statistic style={{ margin: '30px' }} suffix="months" title="Loan terms" value={(loanDetailInfo as any).loanTerm} />
                         <Statistic style={{ margin: '30px' }} title="Term start date" value={dayjs(Number((loanDetailInfo as any).termStartTime * 1000)).format("DD/MM/YYYY HH:mm:ss").toString()} />
                         <Statistic style={{ margin: '30px' }} title="Term start date" value={dayjs(Number((loanDetailInfo as any).termEndTime * 1000)).format("DD/MM/YYYY HH:mm:ss").toString()} />
@@ -758,18 +800,20 @@ export default function LoanDetailPage() {
                     </div>
                 </div>
 
-                <div id="history" style={{ height: 'auto', marginBottom: '50px', padding: '10px' }} className="rounded-lg  bg-white" >
-                    <div style={{ margin: '10px', fontSize: '16px', fontWeight: 'bold' }}>Recent activity</div>
-                    <Table
-                        columns={columns}
-                        dataSource={historyTx}
-                        pagination={{ pageSize: 10 }}
-                        scroll={{ y: 500 }}
-                    // showHeader={false}
-                    />
+                <div id="history" style={{ marginBottom: '50px', padding: '0px', paddingBottom: '10px' }} className="rounded-lg bg-white shadow-2xl" >
+                    <div style={{ padding: '10px', fontSize: '24px', fontWeight: 'bold' }} className="bg-sky-900 rounded-t-lg text-sky-200">Recent activity</div>
+                    <div className="border-2 border-slate-300 rounded-lg" style={{ margin: '20px' }}>
+                        <Table
+                            columns={columns}
+                            dataSource={historyTx}
+                            pagination={{ pageSize: 10 }}
+                            scroll={{ y: 500 }}
+                        // showHeader={false}
+                        />
+                    </div>
                 </div>
             </Col>
-            <Col span={5}>
+            <Col span={4}>
             </Col>
         </Row >
         // </div>

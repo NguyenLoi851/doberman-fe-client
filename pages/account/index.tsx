@@ -90,14 +90,14 @@ export default function AccountPage() {
     }`
 
     const ActionPresentation = {
-        TRANCHED_POOL_REPAYMENT: "Borrower repay",
+        TRANCHED_POOL_REPAYMENT: "Repays",
         SENIOR_POOL_REDEMPTION: "Senior redeem",
-        TRANCHED_POOL_DRAWDOWN: "Borrower drawdown",
-        SENIOR_POOL_WITHDRAWAL: "Investor withdraw",
-        SENIOR_POOL_DEPOSIT: "Investor deposit",
-        TRANCHED_POOL_DEPOSIT: "Investor deposit",
-        TRANCHED_POOL_WITHDRAWAL: "Investor withdraw",
-        BID: "User bids",
+        TRANCHED_POOL_DRAWDOWN: "Drawdowns",
+        SENIOR_POOL_WITHDRAWAL: "Withdraws",
+        SENIOR_POOL_DEPOSIT: "Deposits",
+        TRANCHED_POOL_DEPOSIT: "Deposits",
+        TRANCHED_POOL_WITHDRAWAL: "Withdraws",
+        BID: "Bids",
     }
 
     interface DataType {
@@ -119,11 +119,23 @@ export default function AccountPage() {
             title: 'Action',
             dataIndex: 'action',
             width: 200,
+            filters: [
+                {
+                    text: 'Withdraws',
+                    value: 'Withdraws'
+                },
+                {
+                    text: 'Deposits',
+                    value: 'Deposits'
+                }
+            ],
+            onFilter: (value: any, record) => record.action.indexOf(value) === 0,
         },
         {
             title: 'Amount',
             dataIndex: 'amount',
             width: 250,
+            sorter: (a, b) => Number(a.amount.slice(2).replace(/\D/g, '')) - Number(b.amount.slice(2).replace(/\D/g, '')),
         },
         {
             title: 'Timestamp',
@@ -508,17 +520,20 @@ export default function AccountPage() {
                                 {
                                     key: 'uid-and-wallet',
                                     href: '#uid-and-wallet',
-                                    title: 'UID and Wallet'
+                                    title: 'UID and Wallet',
+                                    className: "hover:font-bold my-4",
                                 },
                                 {
                                     key: 'my-investment',
                                     href: '#my-investment',
-                                    title: 'My investment'
+                                    title: 'My investment',
+                                    className: "hover:font-bold my-4",
                                 },
                                 {
                                     key: 'my-activities',
                                     href: '#my-activities',
-                                    title: 'My activities'
+                                    title: 'My activities',
+                                    className: "hover:font-bold my-4",
                                 },
                             ]} />
                     </Col>
@@ -633,7 +648,7 @@ export default function AccountPage() {
                                             </div>
                                         }
                                         style={{ borderRadius: '5%' }}
-                                        className='bg-amber-200 hover:bg-amber-300 border-2 border-amber-300'
+                                        className='hover:bg-amber-300 border-2 border-amber-300 shadow-lg hover:shadow-2xl'
                                         onClick={() => handleDetailLoanInfo(item)}
                                     >
                                         <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
@@ -677,13 +692,14 @@ export default function AccountPage() {
                         />
 
                         <div id="my-activities" className='font-bold' style={{ fontSize: '20px', marginBottom: '50px', marginTop: '30px' }}>
-                            My invested pool tokens
+                            My activities
                         </div>
                         {historyTx.length > 0 ? <Table
                             columns={columns}
                             dataSource={historyTx}
                             pagination={{ pageSize: 10 }}
                             scroll={{ y: 500 }}
+                            className="rounded-lg border-2 border-slate-300 shadow-2xl"
                         // showHeader={false}
                         /> :
                             <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />

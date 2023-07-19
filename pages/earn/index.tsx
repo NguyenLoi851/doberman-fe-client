@@ -213,7 +213,7 @@ export default function EarnPage() {
         </Col>
         <Col span={14}>
           {!uidStatus && (
-            <div style={{ display: 'flex', flexDirection: 'row', margin: '20px' }} className='rounded-lg text-white bg-sky-700'>
+            <div style={{ display: 'flex', flexDirection: 'row', margin: '10px' }} className='rounded-lg text-white bg-sky-700 shadow-md'>
               <div style={{ margin: '10px', width: '75%' }}>
                 <div style={{ marginBottom: '15px', fontSize: '20px' }}>Set up your UID to start</div>
                 <div style={{ display: 'flex', textAlign: 'justify' }}>Unique Identity (UID) is a non-transferrable NFT representing KYC-verification on-chain. A UID is required to participate in the Doberman lending protocol. No personal information is stored on-chain.</div>
@@ -228,7 +228,7 @@ export default function EarnPage() {
             </div>
           )}
 
-          <div className="flex justify-between border-2 border-amber-400 rounded-lg" style={{ margin: '10px', fontSize: '16px', marginTop: '50px', padding: '20px' }} >
+          <div className="flex justify-between border-2 border-amber-400 rounded-lg shadow-lg" style={{ margin: '10px', fontSize: '16px', marginTop: '50px', padding: '20px' }} >
             <Statistic title='Total Drawdown' prefix='$ ' value={(protocol as any).totalDrawdowns / constants.ONE_MILLION} precision={2}></Statistic>
             <Statistic title='Total Loans' value={(protocol as any).numLoans} precision={0}></Statistic>
             <Statistic title='Total Interest Repaid' prefix='$' value={(protocol as any).totalInterestCollected / constants.ONE_MILLION} precision={2}></Statistic>
@@ -250,7 +250,7 @@ export default function EarnPage() {
                     </div>
                   }
                   style={{ cursor: 'pointer' }}
-                  className='bg-amber-200 hover:bg-amber-300 border-2 border-amber-300'
+                  className='hover:bg-yellow-300 border-2 border-amber-300 shadow-lg hover:shadow-2xl'
                   onClick={() => handleDetailSeniorLoanInfo()}
                 >
                   <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
@@ -300,7 +300,7 @@ export default function EarnPage() {
                     </div>
                   }
                   style={{ borderRadius: '5%' }}
-                  className='bg-amber-200 hover:bg-amber-300 border-2 border-amber-300'
+                  className='hover:bg-yellow-300 border-2 border-amber-300 shadow-lg hover:shadow-2xl'
                   onClick={() => handleDetailLoanInfo((item as any).address)}
                 >
                   <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
@@ -342,7 +342,7 @@ export default function EarnPage() {
               <List.Item
                 actions={[<div className='btn-sm bg-sky-300 text-black rounded-md hover:bg-sky-500 hover:text-white' onClick={() => handleDetailLoanInfo((item as any).address)}>View Detail</div>]}
                 style={{ cursor: 'pointer', marginTop: '12px', marginBottom: '12px' }}
-                className='bg-white rounded-lg '>
+                className='bg-white rounded-lg shadow-lg hover:shadow-2xl'>
                 <List.Item.Meta
                   avatar={index + 1 + '.'}
                   title={(item as any).companyName}
@@ -365,7 +365,7 @@ export default function EarnPage() {
               <List.Item
                 actions={[<div className='btn-sm bg-sky-300 text-black rounded-md hover:bg-sky-500 hover:text-white' onClick={() => handleDetailLoanInfo((item as any).address)}>View Detail</div>]}
                 style={{ cursor: 'pointer', marginTop: '12px', marginBottom: '12px' }}
-                className='bg-white rounded-lg '>
+                className='bg-white rounded-lg shadow-lg hover:shadow-2xl'>
                 <List.Item.Meta
                   avatar={index + 1 + '.'}
                   title={(item as any).companyName}
