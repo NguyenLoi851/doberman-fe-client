@@ -4,7 +4,7 @@ import { constants, Frequency } from "@/commons/constants";
 import PageLayout from "@/components/layouts/PageLayout";
 import { ApolloClient, gql, InMemoryCache } from "@apollo/client";
 import { signMessage } from "@wagmi/core";
-import { Anchor, Button, Col, DatePicker, Form, Input, InputNumber, Modal, Popconfirm, Row, Select, Slider, Statistic, Steps, Typography, Upload } from "antd";
+import { Anchor, Button, Col, DatePicker, Form, Input, InputNumber, Modal, Popconfirm, Row, Select, Slider, Statistic, Steps, Typography, Upload, Table, Empty } from "antd";
 import axios from "axios";
 import dayjs from "dayjs";
 import jwtDecode from "jwt-decode";
@@ -23,6 +23,7 @@ import CreditLine from "../../../abi/CreditLine.json";
 import USDC from "../../../abi/USDC.json"
 import { buildPermitSignature, buildPermitSignatureV2, Domain } from "@/commons/functions";
 import { UploadOutlined } from '@ant-design/icons';
+import { ColumnsType } from "antd/es/table";
 
 interface Props {
     children: ReactNode;
@@ -62,6 +63,32 @@ export default function LoanDetailPage() {
     const [isNeedChange, setIsNeedChange] = useState(false)
     const [loadingSavesChanges, setLoadingSavesChanges] = useState(false)
     const [loadingDeletes, setLoadingDeletes] = useState(false)
+    const [historyTx, setHistoryTx] = useState([])
+
+    interface DataType {
+        key: React.Key;
+        amount: string;
+        timestamp: string;
+        tx: ReactNode;
+    }
+
+    const columns: ColumnsType<DataType> = [
+        {
+            title: 'Amount',
+            dataIndex: 'amount',
+            width: 250,
+        },
+        {
+            title: 'Timestamp',
+            dataIndex: 'timestamp',
+            width: 200,
+        },
+        {
+            title: 'Tx',
+            dataIndex: 'tx',
+            width: 150,
+        },
+    ];
 
     const signatureDeadline = Math.floor(Date.now() / 1000 + 90000);
     const domain: Domain = {
@@ -135,6 +162,26 @@ export default function LoanDetailPage() {
             termStartTime
           }
         }
+        transactions(
+            where: {loan_: {txHash: $txHash}, category: TRANCHED_POOL_REPAYMENT}
+          ) {
+            sentAmount
+            timestamp
+            receivedNftId
+            receivedAmount
+            sentToken
+            receivedToken
+            sentNftType
+            sentNftId
+            receivedNftType
+            transactionHash
+            category
+            fiduPrice
+            user {
+              id
+            }
+            id
+          }
     }`
 
     const client = new ApolloClient({
@@ -176,6 +223,19 @@ export default function LoanDetailPage() {
                 } else {
                     setCurrAction(0)
                 }
+            }
+
+            if (res && res.data && res.data.transactions && res.data.transactions.length > 0) {
+                const txData: DataType[] = []
+                res.data.transactions.map((item: any) => {
+                    txData.push({
+                        key: item.id,
+                        amount: (Number(item.sentAmount) / constants.ONE_MILLION).toLocaleString() + ' ' + item.sentToken,
+                        timestamp: dayjs(Number(item.timestamp) * 1000).format('DD/MM/YYYY HH:mm:ss'),
+                        tx: <div><MonitorOutlined style={{ padding: '5px' }} /><a href={`https://mumbai.polygonscan.com/tx/${item.transactionHash}`} target='_blank' className="underline underline-offset-2">Tx</a></div>,
+                    })
+                })
+                setHistoryTx(txData as any)
             }
         } catch (error) {
             console.log(error)
@@ -1031,7 +1091,7 @@ export default function LoanDetailPage() {
 
 
                                 <div style={{ fontWeight: 'bold', fontSize: '30px', textAlign: 'center', marginTop: '30px', marginBottom: '30px' }} className="underline underline-offset-4">Repayment</div>
-                                <div className="border-2 border-lime-400 rounded-lg" style={{ padding: '10px' }}>
+                                <div className="border-2 border-lime-400 rounded-lg" style={{ padding: '10px', marginBottom: '30px' }}>
                                     {currAction == 3 && (
                                         <div>
                                             <div className="flex justify-between" style={{ margin: '10px', fontSize: '16px', marginTop: '50px' }}>
@@ -1080,6 +1140,16 @@ export default function LoanDetailPage() {
                                                     </div>
                                                 </div>
                                             </div>
+                                            <div style={{ fontWeight: 'bold', fontSize: '20px', marginTop: '50px', marginBottom: '20px' }} className="underline underline-off-2 flex justify-center">Repayment History Transactions</div>
+                                            {historyTx.length > 0 ? <div className="border-2 border-slate-400 rounded-lg" style={{ margin: '10px' }}>
+                                                <Table
+                                                    columns={columns}
+                                                    dataSource={historyTx}
+                                                    pagination={{ pageSize: 10 }}
+                                                    scroll={{ y: 500 }}
+                                                // showHeader={false}
+                                                />
+                                            </div> : <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />}
                                         </div>)
                                     }
                                 </div>
