@@ -4,7 +4,7 @@ import { constants, Frequency } from "@/commons/constants";
 import PageLayout from "@/components/layouts/PageLayout";
 import { ApolloClient, gql, InMemoryCache } from "@apollo/client";
 import { signMessage } from "@wagmi/core";
-import { Anchor, Button, Col, DatePicker, Form, Input, InputNumber, Modal, Row, Select, Slider, Statistic, Steps, Typography, Upload } from "antd";
+import { Anchor, Button, Col, DatePicker, Form, Input, InputNumber, Modal, Popconfirm, Row, Select, Slider, Statistic, Steps, Typography, Upload } from "antd";
 import axios from "axios";
 import dayjs from "dayjs";
 import jwtDecode from "jwt-decode";
@@ -61,6 +61,7 @@ export default function LoanDetailPage() {
     const [links, setLinks] = useState('')
     const [isNeedChange, setIsNeedChange] = useState(false)
     const [loadingSavesChanges, setLoadingSavesChanges] = useState(false)
+    const [loadingDeletes, setLoadingDeletes] = useState(false)
 
     const signatureDeadline = Math.floor(Date.now() / 1000 + 90000);
     const domain: Domain = {
@@ -282,7 +283,6 @@ export default function LoanDetailPage() {
             //         headers: { Authorization: `Bearer ${token}` }
             //     })
             // } else {
-            console.log("hh");
 
             const formData = new FormData()
 
@@ -553,6 +553,58 @@ export default function LoanDetailPage() {
             console.log(error)
         }
     }
+
+    const handleDelete = async () => {
+        setLoadingDeletes(true)
+        try {
+            let token = localStorage.getItem(constants.ACCESS_TOKEN)
+            let exp;
+            let jwtAddress;
+            if (token) {
+                const decode = jwtDecode(token as any) as any
+                exp = decode.exp
+                jwtAddress = decode.address
+            }
+            if (!token || exp < (Date.now() / 1000) || jwtAddress.toLowerCase() != (address as any)?.toLowerCase()) {
+                // sign again
+                const timestamp = Math.round(Date.now() / 1000)
+                const signature = await signMessage({
+                    message: process.env.NEXT_PUBLIC_APP_ID + '#' + timestamp + '#' + chainId,
+                })
+                try {
+                    const res = await axios.post(process.env.NEXT_PUBLIC_API_BASE_URL + '/auth/signin', {
+                        address: (address as string).toLowerCase(),
+                        sign: signature,
+                        timestamp,
+                        chainId: chainId
+                    })
+
+                    // toast.success("Login successfully");
+                    localStorage.setItem(constants.ACCESS_TOKEN, res.data.accessToken)
+                    // dispatch(setAccessTokenState(res.data.accessToken))
+                    token = res.data.accessToken
+                } catch (error) {
+                    console.log(error)
+                }
+            }
+
+            await axios.delete(process.env.NEXT_PUBLIC_API_BASE_URL + `/loans/delete/${props.id}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                }
+            })
+
+            setLoadingDeletes(false)
+            toast.success(`Delete infor of loan ${props.index} successfully`)
+            router.push('/borrow')
+        } catch (error) {
+            console.log(error)
+        }
+        setLoadingDeletes(false)
+    };
+
+    const cancel = (e: any) => {
+    };
 
     return (
         // <div style={{ height: 'calc(100vh - 89px - 76px)' }}>
@@ -893,9 +945,25 @@ export default function LoanDetailPage() {
                                     }
                                 </Form.Item>
                                 {props.deployed == "false" && (
-                                    <Form.Item className="flex justify-center">
-                                        <Button loading={loadingSavesChanges} disabled={!isNeedChange} className="btn-sm bg-sky-400 flex justify-center rounded-lg" type="primary" htmlType="submit">Saves changes</Button>
-                                    </Form.Item>
+                                    <div style={{ marginTop: '50px', display: 'flex', justifyContent: 'space-between', marginLeft: '50px', marginRight: '50px' }}>
+                                        <Form.Item
+                                        // className="flex justify-center"
+                                        >
+                                            <Button loading={loadingSavesChanges} disabled={!isNeedChange} className="btn-sm bg-sky-400 flex justify-center rounded-lg" type="primary" htmlType="submit">Saves changes</Button>
+                                        </Form.Item>
+
+                                        <Popconfirm
+                                            title="Delete the task"
+                                            description="Are you sure to delete this task?"
+                                            onConfirm={handleDelete}
+                                            onCancel={cancel}
+                                            okText="Yes"
+                                            cancelText="No"
+                                        >
+                                            <Button danger style={{ fontWeight: 'bold' }} loading={loadingDeletes}>Delete</Button>
+                                        </Popconfirm>
+                                    </div>
+
                                 )}
                                 <div style={{ marginBottom: '80px' }}></div>
                             </Form>
