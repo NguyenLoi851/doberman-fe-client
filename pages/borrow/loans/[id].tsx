@@ -1051,6 +1051,7 @@ export default function LoanDetailPage() {
                                             max={((tranchedPool as any).fundingLimit) / constants.ONE_MILLION}
                                             step={0.01}
                                             disabled={true}
+                                            className="bg-sky-400 rounded-full"
                                         />
                                     </div>
                                 </div>
@@ -1133,7 +1134,7 @@ export default function LoanDetailPage() {
                                                     <div style={{ margin: '5px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                                                         <Button loading={repayLoading} className="btn-sm border-2 border-black hover:bg-sky-200 rounded-lg"
                                                             onClick={handleRepay}
-                                                            disabled={Number(nextDueTime) == 0}
+                                                            disabled={Number(nextDueTime) == 0 || wantRepayAmount == 0}
                                                         >
                                                             Make Payment
                                                         </Button>
@@ -1141,7 +1142,7 @@ export default function LoanDetailPage() {
                                                 </div>
                                             </div>
                                             <div style={{ fontWeight: 'bold', fontSize: '20px', marginTop: '50px', marginBottom: '20px' }} className="underline underline-off-2 flex justify-center">Repayment History Transactions</div>
-                                            {historyTx.length > 0 ? <div className="border-2 border-slate-400 rounded-lg" style={{ margin: '10px' }}>
+                                            <div className="border-2 border-slate-400 rounded-lg" style={{ margin: '10px' }}>
                                                 <Table
                                                     columns={columns}
                                                     dataSource={historyTx}
@@ -1149,7 +1150,7 @@ export default function LoanDetailPage() {
                                                     scroll={{ y: 500 }}
                                                 // showHeader={false}
                                                 />
-                                            </div> : <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />}
+                                            </div>
                                         </div>)
                                     }
                                 </div>

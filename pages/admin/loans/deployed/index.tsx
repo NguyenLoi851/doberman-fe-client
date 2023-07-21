@@ -48,22 +48,22 @@ export default function AdminLoansDeployedPage() {
 
     return (
         <div>
-            <div style={{ textAlign: 'center', fontSize: '30px', backgroundColor: '#f5f5f5', paddingLeft: 0, marginTop: '30px' }}>
+            <div style={{ textAlign: 'center', fontSize: '30px', backgroundColor: '#f5f5f5', paddingLeft: 0, marginTop: '30px', paddingBottom: '30px' }}>
                 Loans / Deployed loan
             </div>
 
             <List
                 itemLayout="horizontal"
                 dataSource={deployedLoans}
-                style={{ margin: '20px' }}
                 renderItem={(item, index) => (
                     <List.Item
-                        actions={[<Button style={{ fontSize: '18px' }} className="btn-sm border-2 border-black hover:bg-slate-200 rounded-lg" onClick={() => handleDetailLoanInfo(item)}>View Detail</Button>]}
-                        style={{ cursor: 'pointer', margin: '50px', fontSize: '16px' }}>
+                        actions={[<Button style={{ fontSize: '18px' }} className="btn-lg border-2 border-black rounded-lg" onClick={() => handleDetailLoanInfo(item)}>View Detail</Button>]}
+                        className="rounded-lg shadow-lg hover:shadow-xl"
+                        style={{ cursor: 'auto', fontSize: '20px', padding: '20px' }}>
                         <List.Item.Meta
                             avatar={index + 1 + '.'}
-                            title={(item as any).projectName}
                             description={(item as any).projectIntro}
+                            title=<div style={{ fontSize: '20px' }}>{(item as any).projectName}</div>
                         />
                     </List.Item>
                 )}

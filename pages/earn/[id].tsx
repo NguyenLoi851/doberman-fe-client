@@ -602,6 +602,7 @@ export default function LoanDetailPage() {
                                     max={fundingLimit}
                                     step={0.01}
                                     disabled={true}
+                                    className="bg-sky-400 rounded-full"
                                 />
                             </div>
                         </div>

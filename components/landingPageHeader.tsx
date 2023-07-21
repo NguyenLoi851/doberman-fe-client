@@ -32,7 +32,7 @@ export default function LandingPageHeader() {
                                 </Link>
                             </li>
                             <li>
-                                <Link href="/earn" className="btn-sm text-white bg-purple-600 hover:bg-purple-700 ml-3"
+                                <Link href="/earn" className="btn-sm text-white bg-purple-600 hover:bg-purple-700 ml-3 rounded-lg"
                                     style={{ textDecoration: 'none' }}
                                 >
                                     Open App

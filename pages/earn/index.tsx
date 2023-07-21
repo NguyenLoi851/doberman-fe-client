@@ -218,9 +218,9 @@ export default function EarnPage() {
                 <div style={{ marginBottom: '15px', fontSize: '20px' }}>Set up your UID to start</div>
                 <div style={{ display: 'flex', textAlign: 'justify' }}>Unique Identity (UID) is a non-transferrable NFT representing KYC-verification on-chain. A UID is required to participate in the Doberman lending protocol. No personal information is stored on-chain.</div>
               </div>
-              <div style={{ marginTop: '60px' }}>
+              <div style={{}} className="flex items-center">
                 <Link href='/account' >
-                  <div style={{}} className="rounded-md btn-sm text-black bg-sky-50 hover:bg-gray-200 hover:text-black ml-3">
+                  <div style={{}} className="rounded-md btn-sm text-black bg-sky-50 hover:bg-gray-200 hover:text-black ml-3 inline-block align-middle">
                     Go to my account
                   </div>
                 </Link>

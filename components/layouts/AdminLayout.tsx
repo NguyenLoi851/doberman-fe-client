@@ -69,13 +69,13 @@ const AdminLayout: FC<Props> = ({ children }) => {
     return (
         <div>
             <AdminHeader />
-            <Layout style={{ minHeight: '100vh', fontSize: '18px' }}>
-                <Sider collapsible collapsed={collapsed} onCollapse={(value) => setCollapsed(value)}>
+            <Layout style={{ minHeight: '100vh', fontSize: '20px' }}>
+                <Sider collapsible collapsed={collapsed} onCollapse={(value) => setCollapsed(value)} style={{ fontSize: '20px' }}>
                     <div className="demo-logo-vertical" />
                     <Menu theme="dark" mode="inline" items={items} onClick={(e) => handleChooseOption(e.key)} />
                 </Sider>
                 <Layout>
-                    <Content style={{ margin: '10px 16px' }}>
+                    <Content style={{ margin: '10px 16px', fontSize: '20px' }}>
                         {/* <Breadcrumb style={{ margin: '16px 0' }}>
                         <Breadcrumb.Item>User</Breadcrumb.Item>
                         <Breadcrumb.Item>Bill</Breadcrumb.Item>

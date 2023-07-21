@@ -77,7 +77,7 @@ export default function AdminUserAcceptedPage() {
 
     return (
         <div>
-            <div style={{ textAlign: 'center', fontSize: '30px', backgroundColor: '#f5f5f5', paddingLeft: 0 }}>
+            <div style={{ textAlign: 'center', fontSize: '30px', backgroundColor: '#f5f5f5', paddingLeft: 0, paddingBottom: '30px' }}>
                 Users / Accepted
             </div>
             <List
@@ -85,11 +85,14 @@ export default function AdminUserAcceptedPage() {
                 dataSource={registerUsers}
                 renderItem={(item, index) => (
                     <List.Item
-                        style={{ cursor: 'pointer', margin: '24px' }}
+                        style={{ cursor: 'auto', padding: '20px', paddingTop: '40px' }}
+                        className="shadow-lg hover:shadow-xl rounded-lg"
                     >
                         <List.Item.Meta
+                            style={{ fontSize: '20px' }}
+                            className="rounded-lg"
                             avatar={index + 1 + '.'}
-                            title={(item as any).address}
+                            title=<div style={{ fontSize: '20px' }}>{(item as any).address}</div>
                         // description={(item as any).address}
                         />
                     </List.Item>

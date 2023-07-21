@@ -141,7 +141,7 @@ export default function AdminUserRegisterPage() {
 
     return (
         <div>
-            <div style={{ textAlign: 'center', fontSize: '30px', backgroundColor: '#f5f5f5', paddingLeft: 0 }}>
+            <div style={{ textAlign: 'center', fontSize: '30px', backgroundColor: '#f5f5f5', paddingLeft: 0, paddingBottom: '30px' }}>
                 Users / Register
             </div>
             <List
@@ -149,7 +149,7 @@ export default function AdminUserRegisterPage() {
                 dataSource={registerUsers}
                 renderItem={(item, index) => (
                     <List.Item
-                        style={{ cursor: 'pointer', margin: '30px' }}
+                        style={{ cursor: 'auto', margin: '30px' }}
                         actions={[
                             <div style={{ display: 'flex', flexDirection: 'row' }}>
                                 <Button style={{ fontSize: '18px', margin: '10px' }} ><a href={`https://cockpit.sumsub.com/checkus#/applicant/${(item as any).kycId}/basicInfo?clientId=${process.env.NEXT_PUBLIC_S3_CLIENT_ID}`} target='_blank'>Check KYC info</a></Button>,
@@ -158,9 +158,9 @@ export default function AdminUserRegisterPage() {
                         ]}
                     >
                         <List.Item.Meta
-                            style={{ fontSize: '24px' }}
+                            style={{ fontSize: '20px' }}
                             avatar={index + 1 + '.'}
-                            title=<div style={{ fontSize: '24px' }}>{shortenAddress((item as any).address)}</div>
+                            title=<div style={{ fontSize: '20px' }} className="hover:underline hover:underline-offset-2"><a href={`https://mumbai.polygonscan.com/address/${(item as any).address}`}>{shortenAddress((item as any).address)}</a></div>
                         // description={(item as any).address}
                         />
                     </List.Item>
