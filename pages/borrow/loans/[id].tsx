@@ -1,5 +1,3 @@
-"use client";
-
 import { constants, Frequency } from "@/commons/constants";
 import PageLayout from "@/components/layouts/PageLayout";
 import { ApolloClient, gql, InMemoryCache } from "@apollo/client";

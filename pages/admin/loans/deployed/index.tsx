@@ -1,5 +1,3 @@
-"use client";
-
 import { constants } from "@/commons/constants";
 import AdminLayout from "@/components/layouts/AdminLayout";
 import { selectAccessTokenState } from "@/store/accessTokenSlice";

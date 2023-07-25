@@ -7,6 +7,7 @@ export const contractAddr = {
         dobermanFactory: '0xD6a6f619B02D78EB191D875E41539920c8b2c441',
         usdc: '0x901ff11b2e65A8805d175533A5f062EB2f9bD43F',
         seniorPool: '0x9cd22acec917b76968fec7e8ec29d983681e86cd',
-        fidu: '0x67bc0abf395Be2D92b432c8dBd3C153C6BbB8701'
+        fidu: '0x67bc0abf395Be2D92b432c8dBd3C153C6BbB8701',
+        dobermanConfig: '0x012e4f30a508fC768D16Fc352EA603CCB632a0E0',
     }
 }

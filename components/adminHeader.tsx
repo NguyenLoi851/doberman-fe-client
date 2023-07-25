@@ -30,7 +30,7 @@ export default function AdminHeader() {
             <div></div>
             <div></div>
             <div></div>
-            <Button style={{ float: 'right', padding: '30px', fontSize: '18px', fontWeight: 'bold' }} className="btn-sm text-white bg-purple-600 hover:bg-purple-900 ml-3">
+            <Button style={{ float: 'right', padding: '30px', fontSize: '18px', fontWeight: 'bold' }} className="btn-sm text-white bg-purple-600 hover:bg-purple-900 ml-3 rounded-lg">
               <ConnectWallet />
             </Button>
             <div></div>

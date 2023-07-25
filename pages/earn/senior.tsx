@@ -1,5 +1,3 @@
-"use client";
-
 import { contractAddr } from "@/commons/contractAddress";
 import { buildPermitSignature, Domain } from "@/commons/functions";
 import PageLayout from "@/components/layouts/PageLayout";

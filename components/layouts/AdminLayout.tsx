@@ -5,7 +5,7 @@ import {
     PieChartOutlined,
     TeamOutlined,
     UserOutlined,
-
+    SettingOutlined
 } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
 import { Breadcrumb, Layout, Menu, theme } from 'antd';
@@ -48,6 +48,9 @@ const items: MenuItem[] = [
         getItem('Applied', '2'),
         getItem('Deployed', '3'),
     ]),
+    getItem('System', 'sub3', <SettingOutlined />, [
+        getItem('Configuration', '5')
+    ])
     // getItem('Option 1', '1', <PieChartOutlined />),
     // getItem('Option 2', '2', <DesktopOutlined />),
     // getItem('Files', '9', <FileOutlined />),
@@ -65,6 +68,7 @@ const AdminLayout: FC<Props> = ({ children }) => {
         if (key == '2') router.push('/admin/loans/applied')
         if (key == '3') router.push('/admin/loans/deployed')
         if (key == '4') router.push('/admin/users/accepted')
+        if (key == '5') router.push('/admin/settings/config')
     }
     return (
         <div>

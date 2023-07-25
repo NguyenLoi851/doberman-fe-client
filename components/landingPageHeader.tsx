@@ -24,7 +24,7 @@ export default function LandingPageHeader() {
                         <ul className="flex grow justify-end flex-wrap items-center" style={{ listStyleType: 'none' }}>
                             <li>
                                 <Link
-                                    href="/earn"
+                                    href="/borrow/apply"
                                     className="font-medium text-purple-600 hover:text-gray-600 px-4 py-3 flex items-center transition duration-150 ease-in-out"
                                     style={{ textDecoration: 'none' }}
                                 >
