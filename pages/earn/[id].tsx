@@ -228,7 +228,6 @@ export default function LoanDetailPage() {
             if (!loanAddr || loanAddr == "[id]") {
                 return;
             }
-            console.log(loanAddr)
             const res = await client.query({
                 query: gql(tokenDetailLoanQuery),
                 variables: {
@@ -236,7 +235,6 @@ export default function LoanDetailPage() {
                     userId: address ? (address as any).toLowerCase() : "",
                 }
             })
-            console.log(res)
             const res2 = await axios.get(process.env.NEXT_PUBLIC_API_BASE_URL + '/loans/getLoanByFilter', {
                 params: {
                     txHash: res.data.tranchedPool.txHash

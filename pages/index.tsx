@@ -8,13 +8,14 @@ import {
   useSignMessage,
 } from 'wagmi'
 import { useRouter } from 'next/router';
+import { handleRouter } from '@/commons/functions';
 
 export default function LandingPage() {
   const router = useRouter();
 
   return (
     <div>
-      <button onClick={() => router.push('/earn')}>Open App</button>
+      <button onClick={(e) => handleRouter('/earn', e)}>Open App</button>
     </div>
   )
 }

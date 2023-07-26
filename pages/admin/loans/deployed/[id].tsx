@@ -73,7 +73,6 @@ export default function DeployedLoanDetailPage() {
             const fileURLs = fileKeysParse.map((item: any) => {
                 return process.env.NEXT_PUBLIC_S3_BASE_URL as any + item.fileKey
             })
-            console.log('fileURLs', fileURLs)
             setLinks(fileURLs)
         }
     }, [chain, props])

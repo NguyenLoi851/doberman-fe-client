@@ -21,6 +21,7 @@ import { ColumnsType } from "antd/es/table";
 import { shortenAddress } from "@/components/shortenAddress";
 import { MonitorOutlined } from '@ant-design/icons';
 import SumsubWebSdk from '@sumsub/websdk-react'
+import { handleRouter } from "@/commons/functions";
 
 interface Props {
     children: ReactNode;
@@ -207,7 +208,7 @@ export default function AccountPage() {
                 }
                 txData.push({
                     key: item.id,
-                    pool: item.loan == null ? <div style={{ cursor: 'pointer' }} className="hover:underline hover:text-sky-500 underline-offset-4" onClick={() => router.push('/earn/senior')}>Senior Pool</div> : <div style={{ cursor: 'pointer' }} className="hover:underline hover:text-sky-500 underline-offset-4" onClick={() => router.push(`/earn/${item.loan.address}`)}>{(poolDetail as any).projectName}</div>,
+                    pool: item.loan == null ? <div style={{ cursor: 'pointer' }} className="hover:underline hover:text-sky-500 underline-offset-4" onClick={(e) => handleRouter('/earn/senior', e)}>Senior Pool</div> : <div style={{ cursor: 'pointer' }} className="hover:underline hover:text-sky-500 underline-offset-4" onClick={(e) => handleRouter(`/earn/${item.loan.address}`, e)}>{(poolDetail as any).projectName}</div>,
                     action: (ActionPresentation as any)[item.category as any],
                     amount,
                     timestamp: dayjs(Number(item.timestamp) * 1000).format('DD/MM/YYYY HH:mm:ss'),
@@ -417,7 +418,6 @@ export default function AccountPage() {
             const res = await axios.get(process.env.NEXT_PUBLIC_API_BASE_URL + '/kyc/info', {
                 headers: { Authorization: `Bearer ${token}` }
             })
-            console.log("349", res)
             if (!res.data || res.data == '') {
                 setKycStatus(KycStatus.INIT)
                 setCurrAction(currAction == 2 ? 2 : 0)
@@ -440,13 +440,8 @@ export default function AccountPage() {
 
     }
 
-    const handleDetailLoanInfo = async (item: any) => {
-        Router.push({
-            pathname: `/earn/${item.address}`,
-            query: {
-                ...item
-            }
-        })
+    const handleDetailLoanInfo = async (item: any, e?: any) => {
+        handleRouter(`/earn/${item.address}`, e)
     }
 
     useEffect(() => {
@@ -500,7 +495,6 @@ export default function AccountPage() {
             const res = await axios.get(process.env.NEXT_PUBLIC_API_BASE_URL + '/kyc/requestKyc', {
                 headers: { Authorization: `Bearer ${token}` }
             })
-            console.log("422 res", res)
             setKycAccessToken(res.data.token)
         } catch (error) {
             console.log(error)
@@ -650,7 +644,7 @@ export default function AccountPage() {
                                         }
                                         style={{ borderRadius: '5%' }}
                                         className='hover:bg-amber-300 border-2 border-amber-300 shadow-lg hover:shadow-2xl'
-                                        onClick={() => handleDetailLoanInfo(item)}
+                                        onClick={(e) => handleDetailLoanInfo(item, e)}
                                     >
                                         <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
                                             <div>

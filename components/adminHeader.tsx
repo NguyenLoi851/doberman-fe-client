@@ -13,6 +13,7 @@ import Logo from '../public/logo.jpg'
 import Image from 'next/image';
 import styles from './header.module.css'
 import { Button } from 'antd';
+import { handleRouter } from '@/commons/functions';
 
 export default function AdminHeader() {
   const router = useRouter()
@@ -22,7 +23,7 @@ export default function AdminHeader() {
         <div className="shrink-0 mr-4">
           <div style={{ display: 'flex', flexDirection: 'row' }} className="flex grow justify-between flex-wrap items-center">
             <div></div>
-            <Image src={Logo} alt="Logo" className='rounded-full w-16 h-16' style={{ cursor: 'pointer' }} onClick={() => router.push('/earn')} />
+            <Image src={Logo} alt="Logo" className='rounded-full w-16 h-16' style={{ cursor: 'pointer' }} onClick={(e) => handleRouter('/earn', e)} />
             <div></div>
             <div></div>
             <div></div>

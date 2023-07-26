@@ -15,6 +15,7 @@ import styles from './header.module.css'
 import { Dropdown, Space } from 'antd';
 import { DownOutlined, SmileOutlined } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
+import { handleRouter } from '@/commons/functions';
 
 export default function Header() {
   const router = useRouter()
@@ -24,7 +25,7 @@ export default function Header() {
       key: '1',
       label: (
         // <a rel="noopener noreferrer" href="/borrow" >
-        <div onClick={() => router.push('/borrow')}>
+        <div onClick={(e) => handleRouter('/borrow', e)}>
           <div className="text-purple-600 px-4 py-3 flex font-mono items-center border-0" style={{ fontWeight: 'bold', fontSize: '18px', cursor: 'pointer' }} >
             Borrow
           </div>
@@ -36,7 +37,7 @@ export default function Header() {
       key: '2',
       label: (
         // <a rel="noopener noreferrer" href="/account" >
-        <div onClick={() => router.push('/account')}>
+        <div onClick={(e) => handleRouter('/account', e)}>
           <div className="text-purple-600 px-4 py-3 flex font-mono items-center border-0" style={{ fontWeight: 'bold', fontSize: '18px', cursor: 'pointer' }} >
             Dashboard
           </div>
@@ -53,9 +54,9 @@ export default function Header() {
       <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', margin: '10px' }}>
         <div className="shrink-0 mr-4">
           <div style={{ display: 'flex', flexDirection: 'row' }} className="flex grow justify-end flex-wrap items-center">
-            <Image src={Logo} alt="Logo" className='rounded-full w-8 h-8' onClick={() => router.push('/earn')} />
+            <Image src={Logo} alt="Logo" className='rounded-full w-8 h-8' onClick={(e) => handleRouter('/earn', e)} />
             <div>
-              <div className="text-purple-600 px-4 py-3 flex items-center border-0 font-mono" style={{ fontWeight: 'bold', fontSize: '18px', cursor: 'pointer' }} onClick={() => router.push('/earn')}>Deals</div>
+              <div className="text-purple-600 px-4 py-3 flex items-center border-0 font-mono" style={{ fontWeight: 'bold', fontSize: '18px', cursor: 'pointer' }} onClick={(e) => handleRouter('/earn', e)}>Deals</div>
             </div>
             <Dropdown menu={{ items }}>
               <a onClick={(e) => e.preventDefault()}>

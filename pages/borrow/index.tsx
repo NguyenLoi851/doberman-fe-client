@@ -96,7 +96,6 @@ export default function BorrowPage() {
                 address: address
             }
         })
-        console.log("res 99", res);
         if (res.data.loans) {
             setUserLoans(res.data.loans.reverse())
         }
@@ -132,7 +131,6 @@ export default function BorrowPage() {
     }
 
     const handleDetailLoanInfo = (item: any, index: any) => {
-        console.log("handle135", item)
         Router.push({
             pathname: `/borrow/loans/${item.id}`,
             query: {

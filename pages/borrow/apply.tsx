@@ -119,7 +119,6 @@ export default function ApplyNewLoan() {
                 files.forEach((file) => formData.append('files', file as any))
 
                 for (var key in loanInfo) {
-                    console.log("foreach", key, (loanInfo as any)[key as any])
                     formData.append(key, (loanInfo as any)[key as any]);
                 }
 

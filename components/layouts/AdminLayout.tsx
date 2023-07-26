@@ -12,6 +12,7 @@ import { Breadcrumb, Layout, Menu, theme } from 'antd';
 import AdminLandingLayout from '@/components/layouts/AdminLandingLayout';
 import AdminHeader from '../adminHeader';
 import { useRouter } from 'next/router';
+import { handleRouter } from '@/commons/functions';
 
 const { Header, Content, Footer, Sider } = Layout;
 
@@ -63,12 +64,12 @@ const AdminLayout: FC<Props> = ({ children }) => {
     } = theme.useToken();
     const router = useRouter();
 
-    const handleChooseOption = (key: string) => {
-        if (key == '1') router.push('/admin/users/register')
-        if (key == '2') router.push('/admin/loans/applied')
-        if (key == '3') router.push('/admin/loans/deployed')
-        if (key == '4') router.push('/admin/users/accepted')
-        if (key == '5') router.push('/admin/settings/config')
+    const handleChooseOption = (key: string, e?: any) => {
+        if (key == '1') handleRouter('/admin/users/register', e?.domEvent)
+        if (key == '2') handleRouter('/admin/loans/applied', e?.domEvent)
+        if (key == '3') handleRouter('/admin/loans/deployed', e?.domEvent)
+        if (key == '4') handleRouter('/admin/users/accepted', e?.domEvent)
+        if (key == '5') handleRouter('/admin/settings/config', e?.domEvent)
     }
     return (
         <div>
@@ -76,7 +77,7 @@ const AdminLayout: FC<Props> = ({ children }) => {
             <Layout style={{ minHeight: '100vh', fontSize: '20px' }}>
                 <Sider collapsible collapsed={collapsed} onCollapse={(value) => setCollapsed(value)} style={{ fontSize: '20px' }}>
                     <div className="demo-logo-vertical" />
-                    <Menu theme="dark" mode="inline" items={items} onClick={(e) => handleChooseOption(e.key)} />
+                    <Menu theme="dark" mode="inline" items={items} onClick={(e) => handleChooseOption(e.key, e)} />
                 </Sider>
                 <Layout>
                     <Content style={{ margin: '10px 16px', fontSize: '20px' }}>

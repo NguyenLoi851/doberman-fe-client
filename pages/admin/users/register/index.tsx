@@ -35,7 +35,6 @@ export default function AdminUserRegisterPage() {
                 jwtAddress = decode.address
             }
 
-            console.log("address", address, jwtAddress)
             if (!token || exp < (Date.now() / 1000) || (address as any).toLowerCase() != jwtAddress.toLowerCase()) {
                 // sign again
                 const timestamp = Math.round(Date.now() / 1000)
@@ -64,7 +63,6 @@ export default function AdminUserRegisterPage() {
                 headers: { Authorization: `Bearer ${token}` }
             })
 
-            console.log(res2);
             setRegisterUsers(res2.data)
         } catch (error) {
             console.log(error)

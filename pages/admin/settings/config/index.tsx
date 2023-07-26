@@ -41,7 +41,6 @@ export default function AdminConfigPage() {
                 functionName: 'getNumber',
                 args: [3]
             })
-            console.log("res", res)
             setReserveDenominator(res as any)
         } catch (error) {
             console.log(error)

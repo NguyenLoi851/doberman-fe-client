@@ -60,7 +60,6 @@ export default function AdminUserAcceptedPage() {
                 headers: { Authorization: `Bearer ${token}` }
             })
 
-            console.log(res2);
             setRegisterUsers(res2.data)
         } catch (error) {
             console.log(error)

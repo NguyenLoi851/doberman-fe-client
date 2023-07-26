@@ -540,11 +540,6 @@ export default function LoanDetailPage() {
 
             const walletClient = await getWalletClient()
 
-            console.log("nonces", nonces);
-            console.log("walletClient", walletClient);
-            console.log("domain", domain);
-            console.log("sig", signatureDeadline);
-
             // const splitedSignature = await buildPermitSignature(
             //     walletClient as any,
             //     { ...domain },

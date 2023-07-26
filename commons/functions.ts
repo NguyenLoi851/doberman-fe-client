@@ -116,3 +116,11 @@ export const buildMintUIDAllowanceSignature = async (
 
     return signature;
 }
+
+export const handleRouter = (path: string, e?: any) => {
+    if (e?.ctrlKey) {
+        window.open(`${path}`)
+    } else {
+        window.open(`${path}`, '_self')
+    }
+}

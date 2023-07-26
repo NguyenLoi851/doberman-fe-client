@@ -24,6 +24,7 @@ import Link from 'next/link';
 import BigNumber from 'bignumber.js';
 import dayjs from 'dayjs';
 import { readContract } from "@wagmi/core"
+import { handleRouter } from '@/commons/functions';
 interface Props {
   children: ReactNode;
 }
@@ -143,10 +144,7 @@ export default function EarnPage() {
               txHash: item.txHash
             }
           })
-          // console.log("hello", {
-          //   ...item,
-          //   ...res2.data
-          // })
+
           return {
             ...item,
             ...res2.data
@@ -194,10 +192,6 @@ export default function EarnPage() {
     }
     getLoans()
   }, [address])
-
-  const handleDetailLoanInfo = async (itemAddr: any) => {
-    router.push(`/earn/${itemAddr}`)
-  }
 
   const handleDetailSeniorLoanInfo = async () => {
     Router.push({
@@ -301,7 +295,7 @@ export default function EarnPage() {
                   }
                   style={{ borderRadius: '5%' }}
                   className='hover:bg-yellow-300 border-2 border-amber-300 shadow-lg hover:shadow-2xl'
-                  onClick={() => handleDetailLoanInfo((item as any).address)}
+                  onClick={(e) => handleRouter(`/earn/${(item as any).address}`, e)}
                 >
                   <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
                     <div>
@@ -340,7 +334,7 @@ export default function EarnPage() {
             dataSource={closeLoans}
             renderItem={(item, index) => (
               <List.Item
-                actions={[<div className='btn-sm bg-sky-300 text-black rounded-md hover:bg-sky-500 hover:text-white' onClick={() => handleDetailLoanInfo((item as any).address)}>View Detail</div>]}
+                actions={[<div className='btn-sm bg-sky-300 text-black rounded-md hover:bg-sky-500 hover:text-white' onClick={(e) => handleRouter(`/earn/${(item as any).address}`, e)}>View Detail</div>]}
                 style={{ cursor: 'pointer', marginTop: '12px', marginBottom: '12px' }}
                 className='bg-white rounded-lg shadow-lg hover:shadow-2xl'>
                 <List.Item.Meta
@@ -363,7 +357,7 @@ export default function EarnPage() {
             dataSource={auctionLoans}
             renderItem={(item, index) => (
               <List.Item
-                actions={[<div className='btn-sm bg-sky-300 text-black rounded-md hover:bg-sky-500 hover:text-white' onClick={() => handleDetailLoanInfo((item as any).address)}>View Detail</div>]}
+                actions={[<div className='btn-sm bg-sky-300 text-black rounded-md hover:bg-sky-500 hover:text-white' onClick={(e) => handleRouter(`/earn/${(item as any).address}`, e)}>View Detail</div>]}
                 style={{ cursor: 'pointer', marginTop: '12px', marginBottom: '12px' }}
                 className='bg-white rounded-lg shadow-lg hover:shadow-2xl'>
                 <List.Item.Meta
