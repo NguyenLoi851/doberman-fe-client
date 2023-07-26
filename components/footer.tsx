@@ -10,9 +10,9 @@ export default function Footer() {
     return (
         <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', padding: '10px', marginLeft: '280px', marginRight: '280px' }} className="">
             <div style={{ display: 'flex', flexDirection: 'row', marginRight: '50px' }}>
-                <button className="text-purple-600 px-4 py-3 flex font-mono items-center border-0" style={{ fontWeight: 'bold', fontSize: '18px', cursor: 'pointer' }} >About</button>
-                <button className="text-purple-600 px-4 py-3 flex font-mono items-center border-0" style={{ fontWeight: 'bold', fontSize: '18px', cursor: 'pointer' }} >Terms</button>
-                <button className="text-purple-600 px-4 py-3 flex font-mono items-center border-0" style={{ fontWeight: 'bold', fontSize: '18px', cursor: 'pointer' }} >Privacy</button>
+                <button className="text-purple-600 px-4 py-3 flex font-mono items-center border-0" style={{ fontWeight: 'bold', fontSize: '18px', cursor: 'pointer', backgroundColor: '#f9f9f9' }} >About</button>
+                <button className="text-purple-600 px-4 py-3 flex font-mono items-center border-0" style={{ fontWeight: 'bold', fontSize: '18px', cursor: 'pointer', backgroundColor: '#f9f9f9' }} >Terms</button>
+                <button className="text-purple-600 px-4 py-3 flex font-mono items-center border-0" style={{ fontWeight: 'bold', fontSize: '18px', cursor: 'pointer', backgroundColor: '#f9f9f9' }} >Privacy</button>
             </div>
             <div style={{ display: 'flex', flexDirection: 'row' }}>
                 <Link href='https://discord.gg/7FHgxdyW' target='_blank'>

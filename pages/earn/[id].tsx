@@ -581,7 +581,7 @@ export default function LoanDetailPage() {
                         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                             <div className="grid grid-cols-3 gap-12" style={{ marginTop: '30px', fontSize: '16px' }}>
                                 <Statistic title="Fundable At" value={dayjs(Number((loanDetailInfo as any).fundableAt) * 1000).format('DD/MM/YYYY hh:mm:ss')} />
-                                <Statistic title="Term" value={Number((loanDetailInfo as any).loanTerm)} suffix="months" />
+                                <Statistic title="Term" value={(Number((loanDetailInfo as any).termEndTime) - Number((loanDetailInfo as any).termStartTime)) / 60} suffix="months" />
                                 <Statistic title="Interest Rate (APR)" value={Number((loanDetailInfo as any).interestRate)} suffix="%" />
                                 <Statistic title="Junior Deposited Amount (USDC)" value={juniorDeposited} precision={2} />
                                 <Statistic title="Senior Deposited Amount (USDC)" value={seniorDeposited} precision={2} />
