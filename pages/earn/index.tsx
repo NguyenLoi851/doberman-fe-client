@@ -152,8 +152,8 @@ export default function EarnPage() {
         })
 
         await Promise.all(addMetadata).then((result2) => {
-          let result21 = result2.filter(item => (item.companyName && !(Number(item.creditLine.balance) > 0 && (Number(item.creditLine.termEndTime) + Number(item.creditLine.paymentPeriodInDays) * 60 < Math.floor(Date.now() / 1000)))))
-          let result22 = result2.filter(item => (item.companyName && (Number(item.creditLine.balance) > 0 && (Number(item.creditLine.termEndTime) + Number(item.creditLine.paymentPeriodInDays) * 60 < Math.floor(Date.now() / 1000)))))
+          let result21 = result2.filter(item => (item.companyName && !(Number(item.creditLine.balance) > 0 && (Number(item.creditLine.termEndTime) + Number(item.creditLine.paymentPeriodInDays) * 60 < Math.floor(Date.now() / 1000)) && (Number(item.creditLine.auctionEnd) == 0 || Math.floor(Date.now() / 1000) < Number(item.creditLine.auctionEnd)))))
+          let result22 = result2.filter(item => (item.companyName && (Number(item.creditLine.balance) > 0 && (Number(item.creditLine.termEndTime) + Number(item.creditLine.paymentPeriodInDays) * 60 < Math.floor(Date.now() / 1000)) && (Number(item.creditLine.auctionEnd) == 0 || Math.floor(Date.now() / 1000) < Number(item.creditLine.auctionEnd)))))
           setCloseLoans(result21 as any)
           setAuctionLoans(result22 as any)
         })
@@ -334,8 +334,8 @@ export default function EarnPage() {
             dataSource={closeLoans}
             renderItem={(item, index) => (
               <List.Item
-                actions={[<div className='btn-sm bg-sky-300 text-black rounded-md hover:bg-sky-500 hover:text-white' onClick={(e) => handleRouter(`/earn/${(item as any).address}`, e)}>View Detail</div>]}
-                style={{ cursor: 'pointer', marginTop: '12px', marginBottom: '12px' }}
+                actions={[<div style={{ cursor: 'pointer' }} className='btn-sm bg-sky-300 text-black rounded-md hover:bg-sky-500 hover:text-white' onClick={(e) => handleRouter(`/earn/${(item as any).address}`, e)}>View Detail</div>]}
+                style={{ marginTop: '12px', marginBottom: '12px' }}
                 className='bg-white rounded-lg shadow-lg hover:shadow-2xl'>
                 <List.Item.Meta
                   avatar={index + 1 + '.'}
@@ -357,8 +357,8 @@ export default function EarnPage() {
             dataSource={auctionLoans}
             renderItem={(item, index) => (
               <List.Item
-                actions={[<div className='btn-sm bg-sky-300 text-black rounded-md hover:bg-sky-500 hover:text-white' onClick={(e) => handleRouter(`/earn/${(item as any).address}`, e)}>View Detail</div>]}
-                style={{ cursor: 'pointer', marginTop: '12px', marginBottom: '12px' }}
+                actions={[<div style={{ cursor: 'pointer' }} className='btn-sm bg-sky-300 text-black rounded-md hover:bg-sky-500 hover:text-white' onClick={(e) => handleRouter(`/earn/${(item as any).address}`, e)}>View Detail</div>]}
+                style={{ marginTop: '12px', marginBottom: '12px' }}
                 className='bg-white rounded-lg shadow-lg hover:shadow-2xl'>
                 <List.Item.Meta
                   avatar={index + 1 + '.'}

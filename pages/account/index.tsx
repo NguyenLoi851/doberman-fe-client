@@ -86,6 +86,7 @@ export default function AccountPage() {
             }
             loan {
                 address
+                txHash
             }
         }
     }`
@@ -143,6 +144,10 @@ export default function AccountPage() {
             title: 'Timestamp',
             dataIndex: 'timestamp',
             width: 200,
+            sorter: (a, b) => {
+                return dayjs(a.timestamp, "DD/MM/YYYY HH:mm:ss").unix() - dayjs(b.timestamp, "DD/MM/YYYY HH:mm:ss").unix();
+            },
+            defaultSortOrder: 'descend'
         },
         {
             title: 'Tx',
@@ -189,12 +194,23 @@ export default function AccountPage() {
             }
 
             const txData: DataType[] = []
-            res.data.transactions.map((item: any) => {
+            console.log("===========================")
+            const poolDetailPromise = res.data.transactions.map(async (item: any) => {
                 let poolDetail
                 if (item.loan != null && totalResult) {
                     poolDetail = (totalResult).filter(pool => (pool as any).address.toLowerCase() == item.loan.address)
                     if (poolDetail.length > 0) {
                         poolDetail = poolDetail[0]
+                    }
+                    else {
+                        const res2 = await axios.get(process.env.NEXT_PUBLIC_API_BASE_URL + '/loans/getLoanByFilter', {
+                            params: {
+                                txHash: item.loan.txHash
+                            }
+                        })
+                        console.log("res2data", res2.data.projectName)
+                        poolDetail = { projectName: res2.data.projectName }
+                        console.log("🚀 ~ file: index.tsx:208 ~ res.data.transactions.map ~ poolDetail:", poolDetail)
                     }
                 }
 
@@ -206,6 +222,7 @@ export default function AccountPage() {
                 } else {
                     amount = '$ ' + Number(BigNumber(item.receivedAmount || item.sentAmount).div(BigNumber(constants.ONE_MILLION))).toLocaleString()
                 }
+                console.log(poolDetail, amount)
                 txData.push({
                     key: item.id,
                     pool: item.loan == null ? <div style={{ cursor: 'pointer' }} className="hover:underline hover:text-sky-500 underline-offset-4" onClick={(e) => handleRouter('/earn/senior', e)}>Senior Pool</div> : <div style={{ cursor: 'pointer' }} className="hover:underline hover:text-sky-500 underline-offset-4" onClick={(e) => handleRouter(`/earn/${item.loan.address}`, e)}>{(poolDetail as any).projectName}</div>,
@@ -215,6 +232,9 @@ export default function AccountPage() {
                     tx: <div><MonitorOutlined style={{ padding: '5px' }} /><a href={`https://mumbai.polygonscan.com/tx/${item.transactionHash}`} target='_blank' className="underline underline-offset-2">Tx</a></div>,
                 })
             })
+
+            await Promise.all(poolDetailPromise)
+
             setHistoryTx(txData as any)
         } catch (error) {
             console.log(error)

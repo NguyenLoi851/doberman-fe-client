@@ -62,6 +62,7 @@ export default function LoanDetailPage() {
     const [loadingSavesChanges, setLoadingSavesChanges] = useState(false)
     const [loadingDeletes, setLoadingDeletes] = useState(false)
     const [historyTx, setHistoryTx] = useState([])
+    const [estimateDrawdownAmount, setEstimateDrawdownAmount] = useState(0)
 
     interface DataType {
         key: React.Key;
@@ -205,6 +206,11 @@ export default function LoanDetailPage() {
             }
             if (res.data.tranchedPool.length > 0) {
                 setTranchedPool(res.data.tranchedPool[0])
+                let tranchedPoolTmp = res.data.tranchedPool[0]
+                const drawdownAmount = BigNumber((tranchedPoolTmp as any).juniorDeposited).plus(BigNumber((tranchedPoolTmp as any).seniorDeposited)).isGreaterThan(BigNumber((tranchedPoolTmp as any).fundingLimit)) ?
+                    BigNumber((tranchedPoolTmp as any).fundingLimit) : BigNumber((tranchedPoolTmp as any).juniorDeposited).plus(BigNumber((tranchedPoolTmp as any).seniorDeposited))
+
+                setEstimateDrawdownAmount(drawdownAmount.toNumber())
             }
 
             if (res.data.tranchedPool && res.data.tranchedPool.length > 0 && res.data.tranchedPool[0].hasOwnProperty('creditLineAddress')) {
@@ -463,14 +469,11 @@ export default function LoanDetailPage() {
     const handleDrawdown = async () => {
         setDrawdownLoading(true)
         try {
-            const drawdownAmount = BigNumber((tranchedPool as any).juniorDeposited).plus(BigNumber((tranchedPool as any).seniorDeposited)).isGreaterThan(BigNumber((tranchedPool as any).fundingLimit)) ?
-                BigNumber((tranchedPool as any).fundingLimit) : BigNumber((tranchedPool as any).juniorDeposited).plus(BigNumber((tranchedPool as any).seniorDeposited))
-
             const { hash } = await writeContract({
                 address: borrowerProxy as any,
                 abi: Borrower,
                 functionName: 'drawdown',
-                args: [(tranchedPool as any).address, drawdownAmount, sendToAddress]
+                args: [(tranchedPool as any).address, BigNumber(estimateDrawdownAmount), sendToAddress]
             })
             const { status } = await waitForTransaction({
                 // confirmations: 6,
@@ -1043,8 +1046,8 @@ export default function LoanDetailPage() {
                                             value={((tranchedPool as any).juniorDeposited) / constants.ONE_MILLION + ((tranchedPool as any).seniorDeposited) / constants.ONE_MILLION}
                                             max={((tranchedPool as any).fundingLimit) / constants.ONE_MILLION}
                                             step={0.01}
-                                            disabled={true}
-                                            className="bg-sky-400 rounded-full"
+                                            disabled={false}
+                                            className="rounded-full"
                                         />
                                     </div>
                                 </div>
@@ -1155,7 +1158,8 @@ export default function LoanDetailPage() {
                         onCancel={handleCancel}
                         okText=<div className="text-black">Drawdown</div>
                     >
-                        <div style={{ margin: '5px' }}>Address to receipt fund token</div>
+                        <div style={{ margin: '5px' }}>Drawdown amount: <span style={{ fontWeight: 'bold', fontSize: '28px' }}>{(BigNumber(estimateDrawdownAmount).div(BigNumber(constants.ONE_MILLION))).toNumber().toLocaleString()}</span> USDC</div>
+                        <div style={{ margin: '5px' }}>Choose address to receipt fund token:</div>
                         <div style={{ marginTop: '5px', marginBottom: '0px' }}>
                             <Input value={sendToAddress} onChange={handleSetSendToAddress}
                                 placeholder="0x..." className="rounded-md"

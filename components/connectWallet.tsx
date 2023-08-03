@@ -127,7 +127,7 @@ export default function ConnectWallet() {
                   {usdcBalance.toLocaleString()}
                 </div>
                 <div style={{ margin: '10px' }}>
-                  USDC
+                  <a href='https://mumbai.polygonscan.com/address/0x901ff11b2e65A8805d175533A5f062EB2f9bD43F' target='_blank'>USDC</a>
                 </div>
               </div>
 
@@ -136,7 +136,7 @@ export default function ConnectWallet() {
                   {fiduBalance.toLocaleString()}
                 </div>
                 <div style={{ margin: '10px' }}>
-                  FIDU
+                  <a href='https://mumbai.polygonscan.com/address/0x67bc0abf395Be2D92b432c8dBd3C153C6BbB8701' target='_blank'>FIDU</a>
                 </div>
               </div>
               <div className='flex justify-center' onClick={() => disconnect()}>
@@ -150,7 +150,7 @@ export default function ConnectWallet() {
           </Tooltip>
         ) : (
           <div>
-            <button onClick={() => switchNetwork?.(constants.MUMBAI_ID)}>Wrong network</button>
+            <div style={{ fontWeight: 'bold' }} onClick={() => switchNetwork?.(constants.MUMBAI_ID)}>Wrong network</div>
           </div>
         )
       ) : (

@@ -26,7 +26,7 @@ export default function BorrowPage() {
     const [borrowerCreated, setBorrowerCreated] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [userLoans, setUserLoans] = useState([])
-    const antIcon = <LoadingOutlined style={{ fontSize: 24 }} spin />;
+    const antIcon = <LoadingOutlined style={{ fontSize: 24, color: 'white' }} spin />;
     const [linkProxyLoading, setLinkProxyLoading] = useState(false)
 
     const showModal = async () => {
@@ -173,8 +173,8 @@ export default function BorrowPage() {
                                 dataSource={userLoans}
                                 renderItem={(item, index) => (
                                     <List.Item
-                                        style={{ cursor: 'pointer', marginTop: '12px', marginBottom: '12px' }}
-                                        actions={[<div className='btn-sm border-2 border-black text-black rounded-md hover:bg-slate-200' onClick={() => handleDetailLoanInfo(item, index + 1)}>View Detail</div>]}
+                                        style={{ marginTop: '12px', marginBottom: '12px' }}
+                                        actions={[<div className='btn-sm border-2 border-black text-black rounded-md hover:bg-slate-200' style={{ cursor: 'pointer' }} onClick={() => handleDetailLoanInfo(item, index + 1)}>View Detail</div>]}
                                         className='bg-white rounded-lg border-amber-300 shadow-lg hover:shadow-2xl'>
                                         <List.Item.Meta
                                             avatar={index + 1 + '.'}
@@ -191,7 +191,7 @@ export default function BorrowPage() {
                             />
                         </div>
                         <Modal title="Link Proxy Wallet" open={isModalOpen && !borrowerCreated} onOk={handleOk} onCancel={handleCancel}
-                            okText=<div className="text-black">
+                            okText=<div className="text-white">
                                 {linkProxyLoading == true && <Spin indicator={antIcon} style={{ marginRight: '5px' }} />}
                                 Link proxy
                             </div>

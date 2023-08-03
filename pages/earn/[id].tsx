@@ -80,6 +80,7 @@ export default function LoanDetailPage() {
                 functionName: 'getInterestAndPrincipalOwedAsOfCurrent',
                 chainId
             })
+            console.log("resres", res)
             setInterestOwe(Number(BigNumber((res as any)[0]).div(BigNumber(constants.ONE_MILLION))))
             setPrincipleOwe(Number(BigNumber((res as any)[1]).div(BigNumber(constants.ONE_MILLION))))
         } catch (error) {
@@ -412,8 +413,13 @@ export default function LoanDetailPage() {
 
 
         } catch (error) {
+            console.log(error)
             try {
-                toast.error((JSON.parse(JSON.stringify(error)) as any).shortMessage.split(':')[1])
+                if ((JSON.parse(JSON.stringify(error)) as any).shortMessage.split(':')[1].trim() == 'ERC20') {
+                    toast.error((JSON.parse(JSON.stringify(error)) as any).shortMessage.split(':')[2])
+                } else {
+                    toast.error((JSON.parse(JSON.stringify(error)) as any).shortMessage.split(':')[1])
+                }
             } catch (error2) {
                 console.log(JSON.stringify(error2))
             }
@@ -448,6 +454,8 @@ export default function LoanDetailPage() {
                 args: [BigNumber(wantBidAmount).multipliedBy(BigNumber(constants.ONE_MILLION)), signatureDeadline, splitedSignature.v, splitedSignature.r, splitedSignature.s],
             })
 
+            handleWantBidAmount(0)
+
             const { status } = await waitForTransaction({
                 hash: hash,
                 // confirmations: 6,
@@ -462,7 +470,11 @@ export default function LoanDetailPage() {
 
         } catch (error) {
             try {
-                toast.error((JSON.parse(JSON.stringify(error)) as any).shortMessage.split(':')[1])
+                if ((JSON.parse(JSON.stringify(error)) as any).shortMessage.split(':')[1].trim() == 'ERC20') {
+                    toast.error((JSON.parse(JSON.stringify(error)) as any).shortMessage.split(':')[2])
+                } else {
+                    toast.error((JSON.parse(JSON.stringify(error)) as any).shortMessage.split(':')[1])
+                }
             } catch (error2) {
                 console.log(JSON.stringify(error2))
             }
@@ -509,7 +521,7 @@ export default function LoanDetailPage() {
     }
 
     const handleBidNextSmallestLivePrice = async () => {
-        setWantBidAmount((loanDetailInfo as any).creditLine.auctionLivePrice == '0' ? Number((interestOwe + principleOwe)) : Number((loanDetailInfo as any).creditLine.auctionLivePrice) * 1.1)
+        setWantBidAmount((loanDetailInfo as any).creditLine.auctionLivePrice == '0' ? Number((interestOwe + principleOwe)) : (Number(BigNumber((loanDetailInfo as any).creditLine.auctionLivePrice).div(BigNumber(constants.ONE_MILLION))) * 1.1))
     }
 
     return (
@@ -599,8 +611,8 @@ export default function LoanDetailPage() {
                                     value={juniorDeposited + seniorDeposited + wantInvestAmount}
                                     max={fundingLimit}
                                     step={0.01}
-                                    disabled={true}
-                                    className="bg-sky-400 rounded-full"
+                                    disabled={false}
+                                    className="rounded-full"
                                 />
                             </div>
                         </div>
@@ -668,14 +680,14 @@ export default function LoanDetailPage() {
                                             <div style={{ marginTop: '10px' }}>
                                                 <Descriptions style={{ margin: '15px' }}>
                                                     <Descriptions.Item span={3} label="Current Winner">
-                                                        {(loanDetailInfo as any).creditLine.auctionWinner == '0x0000000000000000000000000000000000000000' ? "No one" :
+                                                        {['0x0000000000000000000000000000000000000000', '0x'].includes((loanDetailInfo as any).creditLine.auctionWinner) ? "No one" :
                                                             <a className="text-sky-700 hover:text-sky-900 hover:underline hover:underline-offset-4" href={`https://mumbai.polygonscan.com/address/${(loanDetailInfo as any).creditLine.auctionWinner}`} target="_blank">
                                                                 {shortenAddress((loanDetailInfo as any).creditLine.auctionWinner)}
                                                             </a>
                                                         }
                                                     </Descriptions.Item>
-                                                    <Descriptions.Item span={3} label="Current Live Price">{Number((loanDetailInfo as any).creditLine.auctionLivePrice).toLocaleString()} USDC</Descriptions.Item>
-                                                    <Descriptions.Item span={3} label="Next Smallest  Price">{(loanDetailInfo as any).creditLine.auctionLivePrice == 0 ? (interestOwe + principleOwe).toLocaleString() : (Number((loanDetailInfo as any).creditLine.auctionLivePrice) * 1.1).toLocaleString()} USDC</Descriptions.Item>
+                                                    <Descriptions.Item span={3} label="Current Live Price">{Number(BigNumber((loanDetailInfo as any).creditLine.auctionLivePrice).div(BigNumber(constants.ONE_MILLION))).toLocaleString()} USDC</Descriptions.Item>
+                                                    <Descriptions.Item span={3} label="Next Smallest Price">{(loanDetailInfo as any).creditLine.auctionLivePrice == 0 ? (interestOwe + principleOwe).toLocaleString() : (Number(BigNumber((loanDetailInfo as any).creditLine.auctionLivePrice).div(BigNumber(constants.ONE_MILLION))) * 1.1).toLocaleString()} USDC</Descriptions.Item>
                                                 </Descriptions>
                                             </div>
                                             <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', justifyContent: 'end' }}>
@@ -696,8 +708,8 @@ export default function LoanDetailPage() {
                                                         Next Smallest Price
                                                     </Button>
                                                 </div>
-                                                {Math.floor(Date.now() / 1000) > Number((loanDetailInfo as any).creditLine.auctionEnd) ?
-                                                    <Button loading={loadingBid} onClick={handleBid} style={{ marginLeft: '50px', marginRight: '50px', marginBottom: '25px', cursor: 'default' }} className="btn-sm border-2 border-black rounded-lg">Auction Ended</Button>
+                                                {(Math.floor(Date.now() / 1000) > Number((loanDetailInfo as any).creditLine.auctionEnd) && Number((loanDetailInfo as any).creditLine.auctionEnd) > 0) ?
+                                                    <Button disabled={true} style={{ marginLeft: '50px', marginRight: '50px', marginBottom: '25px', cursor: 'default' }} className="btn-sm border-2 border-black rounded-lg">Auction Ended</Button>
                                                     :
                                                     <Button loading={loadingBid} onClick={handleBid} style={{ marginLeft: '50px', marginRight: '50px', marginBottom: '25px', cursor: 'pointer' }} className="btn-sm border-2 border-black hover:bg-sky-100 rounded-lg">Bid</Button>
                                                 }
