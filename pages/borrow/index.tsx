@@ -183,8 +183,8 @@ export default function BorrowPage() {
                                             style={{ alignItems: 'justify', marginLeft: '10px' }}
                                         />
                                         {(item as any).deployed ?
-                                            <Statistic title="Status" value="Deployed" valueStyle={{ color: '#65A30D' }} /> :
-                                            <Statistic title="Status" value="Undeployed" valueStyle={{ color: '#FCD34D' }} />
+                                            <Statistic className="border-dashed border-2 border-indigo-600 rounded-lg p-2" title="Status" value="Deployed" valueStyle={{ color: '#65A30D' }} /> :
+                                            <Statistic className="border-dashed border-2 border-indigo-600 rounded-lg p-2" title="Status" value="Undeployed" valueStyle={{ color: '#FCD34D' }} />
                                         }
                                     </List.Item>
                                 )}
