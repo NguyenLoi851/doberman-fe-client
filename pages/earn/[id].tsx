@@ -654,7 +654,7 @@ export default function LoanDetailPage() {
                                                 addonAfter="USDC"
                                             />
                                         </div>
-                                        <Button loading={loadingDeposit} onClick={handleDeposit} style={{ margin: '20px', marginTop: '35px', cursor: 'pointer' }} className="btn-sm border-2 border-black hover:bg-sky-200 rounded-lg">Deposit</Button>
+                                        <Button disabled={wantInvestAmount == 0} loading={loadingDeposit} onClick={handleDeposit} style={{ margin: '20px', marginTop: '35px', cursor: 'pointer' }} className="btn-sm border-2 border-black hover:bg-sky-200 rounded-lg">Deposit</Button>
                                     </div>
 
                                     <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
