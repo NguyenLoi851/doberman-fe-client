@@ -527,8 +527,13 @@ export default function LoanDetailPage() {
                 toast.error("Transaction reverted")
             }
         } catch (error) {
+            console.log(error)
             try {
-                toast.error((JSON.parse(JSON.stringify(error)) as any).shortMessage.split(':')[1])
+                if ((JSON.parse(JSON.stringify(error)) as any).shortMessage.split(':')[1].trim() == 'ERC20') {
+                    toast.error((JSON.parse(JSON.stringify(error)) as any).shortMessage.split(':')[2])
+                } else {
+                    toast.error((JSON.parse(JSON.stringify(error)) as any).shortMessage.split(':')[1])
+                }
             } catch (error2) {
                 console.log(JSON.stringify(error2))
             }
