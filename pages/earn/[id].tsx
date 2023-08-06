@@ -71,6 +71,7 @@ export default function LoanDetailPage() {
     const [interestOwe, setInterestOwe] = useState(0)
     const [principleOwe, setPrincipleOwe] = useState(0)
     const [links, setLinks] = useState('')
+    const [termInDaysFromScDirectly, setTermInDaysFromScDirectly] = useState(0)
 
     const getInterestAndPrincipalOwedAsOfCurrent = async () => {
         try {
@@ -315,6 +316,20 @@ export default function LoanDetailPage() {
         }
     }
 
+    const getTermInDayFromScDirectly = async () => {
+        try {
+            const res = await readContract({
+                address: creditLineAddr as any,
+                abi: CreditLine,
+                functionName: 'termInDays',
+                chainId
+            })
+            setTermInDaysFromScDirectly(res as any)
+        } catch (error) {
+            console.log(error)
+        }
+    }
+
     const getAvailableWithdraw = async (tokenIdsArr: any) => {
         if (tokenIdsArr.length == 0) {
             return;
@@ -352,6 +367,7 @@ export default function LoanDetailPage() {
 
     useEffect(() => {
         getLoanDetailInfo()
+        getTermInDayFromScDirectly()
         setChainId(chain?.id || constants.MUMBAI_ID)
         if (address != undefined && address != null && address != '0x0000000000000000000000000000000000000000') {
             getUIDBalanace()
@@ -593,7 +609,7 @@ export default function LoanDetailPage() {
                         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                             <div className="grid grid-cols-3 gap-12" style={{ marginTop: '30px', fontSize: '16px' }}>
                                 <Statistic title="Fundable At" value={dayjs(Number((loanDetailInfo as any).fundableAt) * 1000).format('DD/MM/YYYY hh:mm:ss')} />
-                                <Statistic title="Term" value={(Number((loanDetailInfo as any).termEndTime) - Number((loanDetailInfo as any).termStartTime)) / 60} suffix="months" />
+                                <Statistic title="Term" value={(Number((loanDetailInfo as any).termEndTime) - Number((loanDetailInfo as any).termStartTime)) != 0 ? (Number((loanDetailInfo as any).termEndTime) - Number((loanDetailInfo as any).termStartTime)) / 60 : termInDaysFromScDirectly} suffix="months" />
                                 <Statistic title="Interest Rate (APR)" value={Number((loanDetailInfo as any).interestRate)} suffix="%" />
                                 <Statistic title="Junior Deposited Amount (USDC)" value={juniorDeposited} precision={2} />
                                 <Statistic title="Senior Deposited Amount (USDC)" value={seniorDeposited} precision={2} />
