@@ -820,7 +820,7 @@ export default function LoanDetailPage() {
                     <div className="grid grid-cols-3 border-2 border-slate-400 rounded-lg" style={{ margin: '20px' }}>
                         <Statistic style={{ margin: '30px' }} suffix="months" title="Loan terms" value={(loanDetailInfo as any).loanTerm} />
                         <Statistic style={{ margin: '30px' }} title="Term start date" value={dayjs(Number((loanDetailInfo as any).termStartTime * 1000)).format("DD/MM/YYYY HH:mm:ss").toString()} />
-                        <Statistic style={{ margin: '30px' }} title="Term start date" value={dayjs(Number((loanDetailInfo as any).termEndTime * 1000)).format("DD/MM/YYYY HH:mm:ss").toString()} />
+                        <Statistic style={{ margin: '30px' }} title="Term end date" value={dayjs(Number((loanDetailInfo as any).termEndTime * 1000)).format("DD/MM/YYYY HH:mm:ss").toString()} />
                         <Statistic style={{ margin: '30px' }} suffix="months" title="Payment Frequency" value={InterestPaymentFrequency[(loanDetailInfo as any).interestPaymentFrequency]} />
                         <Statistic style={{ margin: '30px' }} title="Repayment structure" value="Bullet" />
                         <Statistic style={{ margin: '30px' }} title="Total interest payments (USDC)" value={(juniorDeposited + seniorDeposited) / 100 * Number((loanDetailInfo as any).interestRate) / 365 * Number((loanDetailInfo as any).loanTerm) * 100} precision={2} />
