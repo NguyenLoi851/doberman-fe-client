@@ -150,8 +150,8 @@ export default function AdminUserRegisterPage() {
                         style={{ cursor: 'auto', margin: '30px' }}
                         actions={[
                             <div style={{ display: 'flex', flexDirection: 'row' }}>
-                                <Button style={{ fontSize: '18px', margin: '10px' }} ><a href={`https://cockpit.sumsub.com/checkus#/applicant/${(item as any).kycId}/basicInfo?clientId=${process.env.NEXT_PUBLIC_S3_CLIENT_ID}`} target='_blank'>Check KYC info</a></Button>,
-                                <Button style={{ fontSize: '18px', margin: '10px' }} onClick={() => handleSignForMintUIDToken(item)}>Accept</Button>,
+                                <Button style={{ fontSize: '18px', margin: '10px' }} ><a href={`https://cockpit.sumsub.com/checkus#/applicant/${(item as any).kycId}/basicInfo?clientId=${process.env.NEXT_PUBLIC_S3_CLIENT_ID}`} target='_blank'>Check KYC info</a></Button>
+                                <Button style={{ fontSize: '18px', margin: '10px' }} onClick={() => handleSignForMintUIDToken(item)}>Accept</Button>
                             </div>
                         ]}
                     >
